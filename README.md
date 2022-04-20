@@ -14,3 +14,11 @@ Gets from mqtt broker
 
 ToDo:
 Get from mqtt averange min rooms sensors temperature and averange max rooms target temperature to automatically control heat.
+
+
+![image](https://user-images.githubusercontent.com/43485433/164272781-76c3ceb3-d773-43dc-bf9c-7fe399e58799.png)
+
+HomeAssistaNT:
+
+![image](https://user-images.githubusercontent.com/43485433/164273022-fdb00038-e56e-4a14-9947-2d9fbffecdc8.png)
+![image](https://user-images.githubusercontent.com/43485433/164273183-3ccdbe4d-10ee-48ee-986c-9ee5c221af64.png)
