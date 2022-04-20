@@ -142,7 +142,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <span id="%tempCOThermometerSetS%">%THCOSET%</span>
     <sup class="units">&deg;C</sup></B>
     <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="text" name="tempCOset" value="%THCOSET%" style="width:50px">
+    </B>ZMIEŃ NA: <input type="number" max="80" min="20" step="0.5" name="tempCOset" value="%THCOSET%" style="width:50px">
     <input type="submit" style="width:45px"></font
   </p>
   <p>
@@ -151,7 +151,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <span id="%cutOffTempS%">%cutOffTempVAL%</span>
     <sup class="units">&deg;C</sup></B>
     <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="text" name="tempCutOffset" value="%cutOffTempVAL%" style="width:50px">
+    </B>ZMIEŃ NA: <input type="number" max="20" min="-20" step="0.5" name="tempCutOffset" value="%cutOffTempVAL%" style="width:50px">
     <input type="submit" style="width:45px"></font>
   </p>
   <p>
@@ -171,7 +171,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <span id="%tempHWThermometerSetS%">%DHWSET%</span>
     <sup class="units">&deg;C</sup></B>
     <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="text" name="tempHWset" value="%DHWSET%" style="width:50px">
+    </B>ZMIEŃ NA: <input type="number" max="80" min="20" step="0.5" name="tempHWset" value="%DHWSET%" style="width:50px">
     <input type="submit" style="width:45px"></font>
   </p>
   <p>
@@ -185,7 +185,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <span id="%tempROOMThermometerSetS%">%ROOMSET%</span>
     <sup class="units">&deg;C</sup></B>
     <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="text" name="tempROOMset" value="%ROOMSET%" style="width:50px">
+    </B>ZMIEŃ NA: <input type="number" max="25" min="15" step="0.5" name="tempROOMset" value="%ROOMSET%" style="width:50px">
     <input type="submit" style="width:45px"></font>
   </p>
 
@@ -750,7 +750,7 @@ String uptimedana(unsigned long started_local) {
 
 #include <EEPROM.h>
 
-#define CONFIG_VERSION "VER03"
+#define CONFIG_VERSION "V00"sensitive_sizeS
 
 // Where in EEPROM?
 #define CONFIG_START 32
@@ -769,11 +769,11 @@ typedef struct
   float dhwTarget;       //hot water temp set
   float roomtemp;        //now is static sensor so for while save last value
   float temp_NEWS;
-  char ssid[32];
-  char pass[32];
-  char mqtt_server[32];
-  char mqtt_user[32];
-  char mqtt_password[32];
+  char ssid[sensitive_size];
+  char pass[sensitive_size];
+  char mqtt_server[sensitive_size*2];
+  char mqtt_user[sensitive_size];
+  char mqtt_password[sensitive_size];
   int mqtt_port;
   char COPUMP_GET_TOPIC[255];  //temperatura outside avg NEWS
   char NEWS_GET_TOPIC[255];   //pompa CO status
@@ -816,6 +816,7 @@ bool loadConfig() {
     mqtt_port = CONFIGURATION.mqtt_port;
     COPUMP_GET_TOPIC=String(CONFIGURATION.COPUMP_GET_TOPIC);
     NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC);
+
 
     return true; // return 1 if config loaded
   }

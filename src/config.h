@@ -13,7 +13,7 @@
 
 //#define debug
 #define debug1
-#define me_version "1.19d"
+#define me_version "1.19e"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
@@ -43,13 +43,15 @@
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char *ssid = SSID_Name;
-char *pass = SSID_PAssword;
+#define sensitive_size 32
+#define sensitive_sizeS "32" //length of ssid,passwd and mqtt needed as string for version check -important 2 letters
+char ssid[sensitive_size] = SSID_Name;
+char pass[sensitive_size] = SSID_PAssword;
 
 // Your MQTT broker address and credentials
-char *mqtt_server = MQTT_servername;
-char *mqtt_user = MQTT_username;
-char *mqtt_password = MQTT_Password_data;
+char mqtt_server[sensitive_size*2] = MQTT_servername;
+char mqtt_user[sensitive_size] = MQTT_username;
+char mqtt_password[sensitive_size] = MQTT_Password_data;
 int mqtt_port = MQTT_port_No;
 
 // Master OpenTherm Shield pins configuration
