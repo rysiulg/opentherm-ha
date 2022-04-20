@@ -244,10 +244,10 @@ void handleGetTemp() {
 
 void printProgress(size_t prg, size_t sz) {
   int content_len = 255;
-  #ifdef debug
+  #ifdef debug1
   Serial.printf("Progress: %d%%\n", (prg * 100) / content_len);
   #endif
-  WebSerial.print("Progress: ");
+  WebSerial.print(F("Progress: "));
   WebSerial.println((prg * 100) / sz);
 }
 
@@ -261,7 +261,9 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
     response->addHeader("Refresh", "15");
     response->addHeader("Location", "/");
     request->send(response);
-    Serial.println("Update");
+    #ifdef debug
+    Serial.println(F("Update"));
+    #endif
     content_len = request->contentLength();
     // if filename includes LittleFS, update the LittleFS partition
     int cmd = (filename.indexOf("LittleFS") > -1) ? U_LittleFS : U_FLASH;
@@ -294,8 +296,10 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
       Update.printError(Serial);
     } else {
 //      SaveEnergy();
-      Serial.println("Update complete");
-      WebSerial.println("Update complete");
+      #ifdef debug
+      Serial.println(F("Update complete"));
+      #endif
+      WebSerial.println(F("Update complete"));
       Serial.flush();
       WiFi.forceSleepBegin();
       webserver.end();
@@ -311,7 +315,7 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 
 void WebServers() {
   #ifdef debug
-    Serial.println("subWerbServers...");
+    Serial.println(F("subWerbServers..."));
   #endif
   webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest * request) {
 //    AsyncWebHandler->setAuthentication("", "");
@@ -380,8 +384,10 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
-            Serial.println("Liczba not a valid number, ignoring...");
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            #ifdef debug
+            Serial.println(F("Liczba not a valid number, ignoring..."));
+            #endif
+            WebSerial.println(F("Liczba not a valid number, ignoring..."));
           }
           else {
             if (liczba>opcohi) liczba=opcohi;
@@ -390,7 +396,7 @@ void WebServers() {
             op_override = liczba;
  //           op = liczba;
             message = String(liczba);
-            WebSerial.print("WebReceived change Boiler CO Set to: ");
+            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
             WebSerial.println(message);
           }
       } else {
@@ -402,15 +408,17 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
-            Serial.println("Liczba not a valid number, ignoring...");
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            #ifdef debug
+            Serial.println(F("Liczba not a valid number, ignoring..."));
+            #endif
+            WebSerial.println(F("Liczba not a valid number, ignoring..."));
           }
           else {
             if (liczba>cutoffhi) liczba=cutoffhi;
             if (liczba<cutofflo) liczba=cutofflo;
             cutOffTemp = liczba;
             message = String(liczba);
-            WebSerial.print("WebReceived change TempCutOff Set to: ");
+            WebSerial.print(F("WebReceived change TempCutOff Set to: "));
             WebSerial.println(message);
           }
       } else {
@@ -422,15 +430,17 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
-            Serial.println("Liczba not a valid number, ignoring...");
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            #ifdef debug
+            Serial.println(F("Liczba not a valid number, ignoring..."));
+            #endif
+            WebSerial.println(F("Liczba not a valid number, ignoring..."));
           }
           else {
             if (liczba>ophi) liczba=ophi;
             if (liczba<oplo) liczba=oplo;
             dhwTarget = liczba;
             message = String(liczba);
-            WebSerial.print("WebReceived change Boiler CO Set to: ");
+            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
             WebSerial.println(message);
           }
       } else {
@@ -442,15 +452,17 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
-            Serial.println("Liczba not a valid number, ignoring...");
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            #ifdef debug
+            Serial.println(F("Liczba not a valid number, ignoring..."));
+            #endif
+            WebSerial.println(F("Liczba not a valid number, ignoring..."));
           }
           else {
             if (liczba>roomtemphi) liczba=roomtemphi;
             if (liczba<roomtemplo) liczba=roomtemplo;
             sp = liczba;
             message = String(liczba);
-            WebSerial.print("WebReceived change Boiler CO Set to: ");
+            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
             WebSerial.println(message);
           }
       } else {
@@ -462,14 +474,16 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
-            Serial.println("Liczba not a valid number, ignoring...");
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            #ifdef debug
+            Serial.println(F("Liczba not a valid number, ignoring..."));
+            #endif
+            WebSerial.println(F("Liczba not a valid number, ignoring..."));
           }
           else {
             if (liczba==2) automodeCO=true;
             if (liczba==1) automodeCO=false;  //mode heat and off is controlled by outside temp cutoff
             message = String(liczba);
-            WebSerial.print("WebReceived change Boiler Mode CO to: ");
+            WebSerial.print(F("WebReceived change Boiler Mode CO to: "));
             WebSerial.print(String(message)+" ");
             WebSerial.println(automodeCO ? "Auto" : "Heat/Off" );
           }
@@ -482,7 +496,9 @@ void WebServers() {
           message.replace(",",".");
           float liczba = message.toFloat();
           if (isnan(liczba) || !isValidNumber(message)) {
+            #ifdef debug
             Serial.println("Liczba not a valid number, ignoring...");
+            #endif
             WebSerial.println("Liczba not a valid number, ignoring...");
           }
           else {
@@ -520,7 +536,9 @@ void WebServers() {
   DefaultHeaders::Instance().addHeader("Title",me_lokalizacja);
 
 	webserver.begin();
+  #ifdef debug
 	Serial.println("HTTP server started");
+  #endif
 }
 
 

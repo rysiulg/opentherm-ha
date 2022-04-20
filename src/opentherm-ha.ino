@@ -875,6 +875,9 @@ void setup()
   Serial.println(("Connecting to " + String(ssid)));
   WiFi.mode(WIFI_STA);
   WiFi.hostname(String(me_lokalizacja).c_str());
+  WiFi.setAutoReconnect(true);
+  WiFi.setAutoConnect(true);
+  WiFi.persistent(true);
   WiFi.begin(ssid, pass);
 
   int deadCounter = 20;
@@ -894,8 +897,7 @@ void setup()
   {
     Serial.println(F("ok"));
   }
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
+
 
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);

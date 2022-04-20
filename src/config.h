@@ -11,8 +11,9 @@
 
 // v.1.19 added load/save config to eeprom
 
-#define debug
-#define me_version "1.19c"
+//#define debug
+#define debug1
+#define me_version "1.19d"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."

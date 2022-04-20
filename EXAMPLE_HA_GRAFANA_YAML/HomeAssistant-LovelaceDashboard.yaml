@@ -1,0 +1,142 @@
+views:
+  - type: panel
+    theme: Backend-selected
+    title: GAZ-opentherm
+    icon: mdi:home-thermometer-outline
+    path: openterm-gaz
+    badges: []
+    cards:
+      - type: iframe
+        url: >-
+          http://ha.marm:3000/api/hassio_ingress/makM_M35wfUq8fCZnIvVIFEJ-4zsf8WRudUdWZ927ro/d-solo/ByVTCss7k/piecco?orgId=0&panelId=2&kiosk=1"
+        aspect_ratio: 100%
+        title: Dane z pieca CO-GAZ
+      - type: entities
+        entities:
+          - binary_sensor.ot_boiler_ch_state
+          - sensor.ot_boiler_temperature
+          - sensor.ot_boiler_temperature_return
+          - sensor.ot_boiler_temperature_setpoint
+          - sensor.ot_current_remote_temperature
+          - sensor.ot_current_remote_temperature_setpoint
+          - binary_sensor.ot_diag_diagnostic
+          - binary_sensor.ot_diag_fault
+          - sensor.ot_diag_interr
+          - binary_sensor.ot_domestic_hot_water_dhw_state
+          - binary_sensor.ot_domestic_hot_water_software_dhw_state
+          - sensor.ot_domestic_hot_water_temperature
+          - sensor.ot_domestic_hot_water_temperature_setpoint
+          - sensor.ot_flame_level
+          - binary_sensor.ot_flame_state
+          - sensor.ot_log
+          - sensor.ot_room_other_pressure
+          - sensor.ot_temp_cutoff
+        title: OpenTherm GAS-CO
+  - theme: Backend-selected
+    title: GAZ-opentherm-pojed
+    path: openterm-gaz-pojed
+    badges:
+      - entity: binary_sensor.ot_domestic_hot_water_dhw_state
+      - entity: binary_sensor.ot_domestic_hot_water_software_dhw_state
+      - entity: sensor.ot_domestic_hot_water_temperature
+      - entity: binary_sensor.ot_boiler_ch_state
+      - entity: sensor.ot_boiler_software_ch_state_and_mode
+      - entity: sensor.ot_boiler_temperature_return
+      - entity: sensor.ot_boiler_temperature
+      - entity: binary_sensor.ot_flame_state
+      - entity: sensor.ot_flame_level
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: thermostat
+                entity: climate.ot_boiler_co
+                name: Woda w CO
+              - type: thermostat
+                entity: climate.ot_hot_water
+                name: Gor¹ca Woda CWU
+          - type: thermostat
+            entity: climate.ot_boiler_roomtemp_control_co
+          - type: horizontal-stack
+            cards:
+              - type: light
+              - type: thermostat
+                entity: climate.ot_cutofftemp
+                name: Temp_progu_Grzania
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                name: P³omieñ
+                tap_action:
+                  action: more-info
+                entity: binary_sensor.ot_flame_state
+                icon: mdi:fire
+                show_state: true
+                hold_action:
+                  action: none
+              - type: gauge
+                entity: sensor.ot_flame_level
+                name: Moc P³omienia
+                unit: '%'
+                min: 0
+                max: 100
+                needle: true
+                severity:
+                  green: 0
+                  yellow: 0
+                  red: 0
+      - type: iframe
+        url: >-
+          http://ha.marm:3000/api/hassio_ingress/makM_M35wfUq8fCZnIvVIFEJ-4zsf8WRudUdWZ927ro/d/ByVTCss7k/piecco?orgId=1&viewPanel=2&kiosk=0
+        aspect_ratio: 100%
+      - hours_to_show: 24
+        graph: line
+        type: sensor
+        entity: sensor.ot_boiler_temperature_return
+        detail: 1
+        name: Powrót temp
+      - hours_to_show: 24
+        graph: line
+        type: sensor
+        entity: sensor.ot_domestic_hot_water_temperature
+        detail: 1
+        unit: C
+        name: Temperatura Wody U¿ytkowej
+      - type: entities
+        entities:
+          - entity: sensor.ot_boiler_software_ch_state_and_mode
+          - entity: binary_sensor.ot_boiler_ch_state
+          - entity: sensor.ot_boiler_temperature_setpoint
+          - entity: sensor.ot_boiler_temperature
+          - entity: sensor.ot_boiler_temperature_return
+          - entity: sensor.ot_domestic_hot_water_temperature
+          - entity: sensor.ot_current_remote_temperature
+          - entity: sensor.ot_current_remote_temperature_setpoint
+          - entity: binary_sensor.ot_diag_diagnostic
+          - entity: binary_sensor.ot_diag_fault
+          - entity: sensor.ot_diag_interr
+          - entity: binary_sensor.ot_domestic_hot_water_dhw_state
+          - entity: binary_sensor.ot_domestic_hot_water_software_dhw_state
+          - entity: sensor.ot_domestic_hot_water_temperature_setpoint
+          - entity: sensor.ot_flame_level
+          - entity: binary_sensor.ot_flame_state
+          - entity: sensor.ot_log
+          - entity: sensor.ot_room_other_pressure
+          - entity: sensor.ot_temp_cutoff
+        title: OpenTherm GAS-CO
+      - hours_to_show: 24
+        graph: line
+        type: sensor
+        entity: sensor.ot_boiler_temperature
+        detail: 1
+        name: Temperatura do CO
+        unit: C
+      - hours_to_show: 24
+        graph: line
+        type: sensor
+        entity: sensor.srednia_temp_na_zewnatrz
+        detail: 2
+        name: Srednia Temp na Zewnatrz NEWS

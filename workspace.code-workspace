@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"system_error": "cpp",
+			"string_view": "cpp",
+			"regex": "cpp",
+			"string": "cpp",
+			"array": "cpp",
+			"initializer_list": "cpp",
+			"ranges": "cpp",
+			"utility": "cpp"
+		}
+	}
+}
