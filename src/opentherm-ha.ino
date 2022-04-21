@@ -69,6 +69,7 @@ float dhwTarget = 51, // domyslna temperatura docelowa wody uzytkowej
       tempCWU = 0,
       pressure = 0;
 
+
 String LastboilerResponseError;
 
 int temp_NEWS_count = 0,
@@ -84,7 +85,10 @@ unsigned long ts = 0, new_ts = 0, // timestamp
               lastmqtt_reconnect = 0,
               lastSaveConfig = 0,
               lastSpSet = 0,
-              WiFipreviousMillis = 0;
+              WiFipreviousMillis = 0,
+              start_flame_time = 0;    //Flame Starts work
+
+float    flame_used_power = 0;         //for count powerkWh between samples (boiler rated*flame power) use integer end when div use % do get decimal value
 
 bool heatingEnabled = true,
      enableHotWater = true,
@@ -356,7 +360,11 @@ void opentherm_update_data(unsigned long mqttdallas)
   status_Fault = ot.isFault(response);
   status_CHActive = ot.isCentralHeatingActive(response);
   status_WaterActive = ot.isHotWaterActive(response);
+  bool status_flame_tmp = status_FlameOn;
   status_FlameOn = ot.isFlameOn(response);
+  if (status_flame_tmp != status_FlameOn) {
+    status_FlameOn? start_flame_time=millis() : start_flame_time=0;  //After change flame status If flame is on get timer, else reset timer
+  }
   status_Cooling = ot.isCoolingActive(response);
   status_Diagnostic = ot.isDiagnostic(response);
   flame_level = ot.getModulation();
@@ -388,6 +396,20 @@ void updateData()
     boilermode = "heat";
   else
     boilermode = "off";
+
+    unsigned long flame_elapsed_time = (millis()-start_flame_time);
+    String flame_used_energy=String(((flame_used_power)*1000)/1,4);  //unit W
+    WebSerial.print(String(millis())+": flame_used_power Wh: "); WebSerial.println(String(flame_used_power));
+    WebSerial.print(String(millis())+": flame_elapsed_time: "); WebSerial.println(String(flame_elapsed_time));
+    WebSerial.print(String(millis())+": flame_W used: "); WebSerial.println(String(flame_used_energy));
+    WebSerial.println("Flame level: "+String(flame_level));
+    flame_used_power=0;
+    start_flame_time=0;
+
+
+
+
+
 
   client.setBufferSize(512);
   if (status_Fault)
@@ -426,6 +448,7 @@ void updateData()
                   ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) + "\",\"" +
                   OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
                   ",\"" + OT + FLAME_LEVEL + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_energy) + payloadvalue_startend_val +
                   ",\"" + OT + TEMP_CUTOFF + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
                   "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
 
@@ -463,6 +486,8 @@ void updateData()
     client.publish((BOILER_HA_TOPIC + "_" + BOILER_SOFTWARE_CH_STATE_MODE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"uniq_id\": \"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\",\"frc_upd\":true,\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
     client.publish((BOILER_HABS_TOPIC + "_" + FLAME_STATE + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_STATE + "\",\"uniq_id\": \"" + OT + FLAME_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + FLAME_STATE + "}}\",\"frc_upd\":true,\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
     client.publish((BOILER_HA_TOPIC + "_" + FLAME_LEVEL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_LEVEL + "\",\"uniq_id\": \"" + OT + FLAME_LEVEL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_LEVEL + "}}\",\"frc_upd\":true,\"dev_cla\":\"power\",\"unit_of_meas\":\"%\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W + "\",\"uniq_id\": \"" + OT + FLAME_W + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W + "}}\",\"frc_upd\":true,\"dev_cla\":\"power\",\"unit_of_meas\":\"W\",\"state_class\":\"measurement\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+
     client.publish((BOILER_HA_TOPIC + "_" + TEMP_CUTOFF + "/config").c_str(), ("{\"name\":\"" + OT + TEMP_CUTOFF + "\",\"uniq_id\": \"" + OT + TEMP_CUTOFF + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
     client.publish((HOT_WATER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Hot Water\",\"uniq_id\": \"" + OT + "Hot_Water\", \
@@ -516,8 +541,8 @@ void updateData()
     client.publish((ROOM_OTHERS_HACLI_TOPIC + "cutoff_climate/config").c_str(), ("{\"name\":\"" + OT + "CutoffTemp\",\"uniq_id\": \"" + OT + "CutoffTemp\", \
 \"modes\":\"\", \
 \"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + BOILER_TOPIC + "\", \
-\"current_temperature_template\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\", \
+\"current_temperature_topic\":\"" + NEWS_GET_TOPIC + "\", \
+\"current_temperature_template\":\"{{value}}\", \
 \"temperature_command_topic\":\"" + TEMP_CUTOFF_SET_TOPIC + "\", \
 \"temperature_state_topic\":\"" + BOILER_TOPIC + "\", \
 \"temperature_state_template\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\", \
@@ -923,6 +948,11 @@ void loop()
 {
   unsigned long now = millis() + 100; // TO AVOID compare -2>10000 which is true ??? why?
   // check mqtt is available and connected in other case check values in api.
+  if (status_FlameOn) {
+    flame_used_power += ((flame_level/100)*boiler_rated_kWh/((millis()-start_flame_time)/hour)*1000);
+    //flame_elapsed_time = millis()-start_flame_time;
+  }
+
   if (mqtt_offline_retrycount == mqtt_offline_retries)
   {
     if ((now - lastmqtt_reconnect) > mqtt_offline_reconnect_after_ms)

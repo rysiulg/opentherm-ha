@@ -529,7 +529,7 @@ String processor(const String var) {
     ptr+="<br></td><td>";
     ptr+=tempicon+"<span class=\"dht-labels\">"+String(DHW_Temp_Set)+"</span>";
     ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempHWThermometerSetS)+"\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempHWThermometerSetS)+"\" type=\"range\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempHWset)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempHWThermometerSetS)+"');\">";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempHWThermometerSetS)+"\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempHWThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempHWThermometerSetS)+"\" type=\"range\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempHWset)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempHWThermometerSetS)+"');\">";
     ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
     ptr+="</td></tr>";
 
@@ -540,7 +540,7 @@ String processor(const String var) {
     ptr+="<br></td><td>";
     ptr+=tempicon+"<span class=\"dht-labels\">"+String(Set_Temperature_for_CO_heat)+"</span>";
     ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempCOThermometerSetS)+"\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempCOThermometerSetS)+"\" type=\"range\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempCOset)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempCOThermometerSetS)+"');\">";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempCOThermometerSetS)+"\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempCOThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempCOThermometerSetS)+"\" type=\"range\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempCOset)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempCOThermometerSetS)+"');\">";
     ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
     ptr+="</td></tr>";
 
@@ -551,7 +551,7 @@ String processor(const String var) {
     ptr+="<br></td><td>";
     ptr+=tempicon+"<span class=\"dht-labels\">"+String(Room_Temp_Set)+"</span>";
     ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempROOMThermometerSetS)+"\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(sp,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempROOMThermometerSetS)+"\" type=\"range\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempROOMset)+"\" value=\""+String(sp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempROOMThermometerSetS)+"');\">";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempROOMThermometerSetS)+"\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(sp,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempROOMThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempROOMThermometerSetS)+"\" type=\"range\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempROOMset)+"\" value=\""+String(sp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempROOMThermometerSetS)+"');\">";
     ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
     ptr+="</td></tr>";
 
@@ -562,7 +562,7 @@ String processor(const String var) {
     ptr+="<br></td><td>";
     ptr+=tempicon+"<span class=\"dht-labels\">"+String(Outside_Cutoff_Below)+"</span>";
     ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(cutOffTempS)+"\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(cutOffTempS)+"\" type=\"range\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_cutOffTempSet)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(cutOffTempS)+"');\">";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(cutOffTempS)+"\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(cutOffTempS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(cutOffTempS)+"\" type=\"range\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_cutOffTempSet)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(cutOffTempS)+"');\">";
     ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
     ptr+="</td></tr>";
 
@@ -577,10 +577,9 @@ String processor(const String var) {
     String tmp;
     unsigned long int step=125;
     unsigned long int refreshtime = 9100;
-    ptr="function uTI(e,n){document.getElementById(n).value=e}\n";
+    ptr="function uTI(e,n){document.getElementById(n).value=e};\n";
     tmp=String(uptimelink);  //spanid
-    refreshtime+=step;
-    ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime/2)+");\n";
+    refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime/2)+");\n";
     tmp=String(tempCOThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(dallThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";

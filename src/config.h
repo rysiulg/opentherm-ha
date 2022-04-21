@@ -13,13 +13,18 @@
 
 //#define debug
 #define debug1
-#define me_version "1.19f"
+#define me_version "1.19g"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
 #define stopka MFG " 04-2022"
 #define wwwport 80
 #define PL_lang
+
+#define hour 60*60
+#define boiler_rated_kWh 24
+
+//#boiler_gas_conversion_to_m3  1
 
 #include "sensivity-config-data.h" //it have definitions of sensivity data
 #include "config-translate.h" //definitions polish/english translate
@@ -88,6 +93,7 @@ const String BOILER_SOFTWARE_CH_STATE_MODE = BOILER + "_software_ch_state_and_mo
 const String FLAME_STATE = "flame_state";
 const String FLAME_LEVEL = "flame_level";
 const String TEMP_CUTOFF = "temp_cutoff";
+const String FLAME_W = "flame_used_energy";
 
 const String HOT_WATER_TEMPERATURE = HOT_WATER + TEMPERATURE;
 const String HOT_WATER_TEMPERATURE_SETPOINT = HOT_WATER + TEMPERATURE + "_setpoint";
