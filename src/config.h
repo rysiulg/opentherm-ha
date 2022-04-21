@@ -13,15 +13,16 @@
 
 //#define debug
 #define debug1
-#define me_version "1.19e"
+#define me_version "1.19f"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
 #define stopka MFG " 04-2022"
 #define wwwport 80
-
+#define PL_lang
 
 #include "sensivity-config-data.h" //it have definitions of sensivity data
+#include "config-translate.h" //definitions polish/english translate
 #ifndef SSID_Name
 #define SSID_Name "SSID_Name"
 #endif

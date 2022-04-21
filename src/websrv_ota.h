@@ -17,6 +17,9 @@ bool isValidNumber(String str);
 #define cutOffTempVAL "tempCutOffset"
 #define flameprocS "flameprocS"
 #define flameprocSVAL "flameprocSVAL"
+#define NEWS_lastTimeS "NEWS_lastTimeS"
+#define NEWS_lastTime "NEWS_lastTime"
+
 
 #define tempROOMThermometerSetS "tempROOMThermometerSetS"
 #define tempROOMThermometerS "tempROOMThermometerS"
@@ -81,150 +84,30 @@ const char index_html[] PROGMEM = R"rawliteral(
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="30">
+  <meta http-equiv="refresh" content="3600">
   <title>%me_lokalizacja%</title>
 
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 
   <style>
-    html {
-     font-family: Arial;
-     display: inline-block;
-     margin: 0px auto;
-     text-align: center;
-    }
-    h2 { font-size: 2.1rem; }
-    p { font-size: 2.2rem; }
-    .units { font-size: 1.1rem; }
-    .dht-labels{
-      font-size: 1.3rem;
-      vertical-align:middle;
-      padding-bottom: 8px;
-    }
+    %stylesectionadd%
   </style>
 </head>
 <body>
   <div class='s'><svg version='1.1' width="75px" height="75px" id='l' x='0' y='0' viewBox='0 0 200 200' xml:space='preserve'><path d='M59.3,2.5c18.1,0.6,31.8,8,40.2,23.5c3.1,5.7,4.3,11.9,4.1,18.3c-0.1,3.6-0.7,7.1-1.9,10.6c-0.2,0.7-0.1,1.1,0.6,1.5c12.8,7.7,25.5,15.4,38.3,23c2.9,1.7,5.8,3.4,8.7,5.3c1,0.6,1.6,0.6,2.5-0.1c4.5-3.6,9.8-5.3,15.7-5.4c12.5-0.1,22.9,7.9,25.2,19c1.9,9.2-2.9,19.2-11.8,23.9c-8.4,4.5-16.9,4.5-25.5,0.2c-0.7-0.3-1-0.2-1.5,0.3c-4.8,4.9-9.7,9.8-14.5,14.6c-5.3,5.3-10.6,10.7-15.9,16c-1.8,1.8-3.6,3.7-5.4,5.4c-0.7,0.6-0.6,1,0,1.6c3.6,3.4,5.8,7.5,6.2,12.2c0.7,7.7-2.2,14-8.8,18.5c-12.3,8.6-30.3,3.5-35-10.4c-2.8-8.4,0.6-17.7,8.6-22.8c0.9-0.6,1.1-1,0.8-2c-2-6.2-4.4-12.4-6.6-18.6c-6.3-17.6-12.7-35.1-19-52.7c-0.2-0.7-0.5-1-1.4-0.9c-12.5,0.7-23.6-2.6-33-10.4c-8-6.6-12.9-15-14.2-25c-1.5-11.5,1.7-21.9,9.6-30.7C32.5,8.9,42.2,4.2,53.7,2.7c0.7-0.1,1.5-0.2,2.2-0.2C57,2.4,58.2,2.5,59.3,2.5z M76.5,81c0,0.1,0.1,0.3,0.1,0.6c1.6,6.3,3.2,12.6,4.7,18.9c4.5,17.7,8.9,35.5,13.3,53.2c0.2,0.9,0.6,1.1,1.6,0.9c5.4-1.2,10.7-0.8,15.7,1.6c0.8,0.4,1.2,0.3,1.7-0.4c11.2-12.9,22.5-25.7,33.4-38.7c0.5-0.6,0.4-1,0-1.6c-5.6-7.9-6.1-16.1-1.3-24.5c0.5-0.8,0.3-1.1-0.5-1.6c-9.1-4.7-18.1-9.3-27.2-14c-6.8-3.5-13.5-7-20.3-10.5c-0.7-0.4-1.1-0.3-1.6,0.4c-1.3,1.8-2.7,3.5-4.3,5.1c-4.2,4.2-9.1,7.4-14.7,9.7C76.9,80.3,76.4,80.3,76.5,81z M89,42.6c0.1-2.5-0.4-5.4-1.5-8.1C83,23.1,74.2,16.9,61.7,15.8c-10-0.9-18.6,2.4-25.3,9.7c-8.4,9-9.3,22.4-2.2,32.4c6.8,9.6,19.1,14.2,31.4,11.9C79.2,67.1,89,55.9,89,42.6z M102.1,188.6c0.6,0.1,1.5-0.1,2.4-0.2c9.5-1.4,15.3-10.9,11.6-19.2c-2.6-5.9-9.4-9.6-16.8-8.6c-8.3,1.2-14.1,8.9-12.4,16.6C88.2,183.9,94.4,188.6,102.1,188.6z M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/></svg>
-  <h2>
-  ESP CO Server %ver%</h2>
+  <h2>%ver%</h2>
   <p>
   <sup class="units">Uptime <b><span id="%uptime%">%uptimewart%</span></B></sup>
   <br/>
 <sup class="units">%dane%</sup>
-<font size="5" color="pink">Strona odświeża się co ok. 30sekund powodując skasowanie niezapisanych wartości w polach "ZMIEŃ NA"</font><br>
   </p>
-  <form action="/get">
+   %bodywstaw%
   <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Zewnątrz Średnia NEWS:</span><B>
-    <span id="%dallThermometerS%">%NEWS%</span>
-    <sup class="units">&deg;C</sup></B>
-    <font size="4" color="blue"> Aktualne od: <B><span id="%NEWS_lastTimeS%">%NEWS_lastTime%</span></B> </font>
-  </p>
-  <p>
-  <LABEL FOR="BOILMOD">Tryb pracy CO:</LABEL>
-  <INPUT TYPE="Radio" ID="BOILMOD" Name="boilermodewww" Value="2" %BOILMOD2%>Automatyczny
-  <INPUT TYPE="Radio" ID="BOILMOD" Name="boilermodewww" Value="1" %BOILMOD1%>Grzanie/Wyłączone
-  </p><p>
-  <LABEL FOR="HWMOD">Tryb pracy CWU:</LABEL>
-  <INPUT TYPE="Radio" ID="HWMOD" Name="boilerhwwww" Value="1" %HWMOD1%>Grzanie
-  <INPUT TYPE="Radio" ID="HWMOD" Name="boilerhwwww" Value="0" %HWMOD0%>Wyłączone
-  </p>
-
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Boilera i do CO</span><B>
-    <span id="%tempCOThermometerS%">%TH%</span>
-    <sup class="units">&deg;C</sup></B>
-
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura do CO USTAW: </span><B>
-    <span id="%tempCOThermometerSetS%">%THCOSET%</span>
-    <sup class="units">&deg;C</sup></B>
-    <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="number" max="80" min="20" step="0.5" name="tempCOset" value="%THCOSET%" style="width:50px">
-    <input type="submit" style="width:45px"></font
-  </p>
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura progu grzania CO gdy średnia NEWS: &lt; </span><B>
-    <span id="%cutOffTempS%">%cutOffTempVAL%</span>
-    <sup class="units">&deg;C</sup></B>
-    <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="number" max="20" min="-20" step="0.5" name="tempCutOffset" value="%cutOffTempVAL%" style="width:50px">
-    <input type="submit" style="width:45px"></font>
-  </p>
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Powrotu:</span><B>
-    <span id="%tempCORETThermometerS%">%THRET%</span>
-    <sup class="units">&deg;C</sup></B>
-  </p>
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura WODY:</span><B>
-    <span id="%tempHWThermometerS%">%DHW%</span>
-    <sup class="units">&deg;C</sup></B>
-
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Wody Docel.: </span><B>
-    <span id="%tempHWThermometerSetS%">%DHWSET%</span>
-    <sup class="units">&deg;C</sup></B>
-    <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="number" max="80" min="20" step="0.5" name="tempHWset" value="%DHWSET%" style="width:50px">
-    <input type="submit" style="width:45px"></font>
-  </p>
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Pokoju</span><B>
-    <span id="%tempROOMThermometerS%">%ROOM%</span>
-    <sup class="units">&deg;C</sup></B>
-
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>
-    <span class="dht-labels">Temperatura Pokoju Docel.: </span><B>
-    <span id="%tempROOMThermometerSetS%">%ROOMSET%</span>
-    <sup class="units">&deg;C</sup></B>
-    <font size="4" color="red">
-    </B>ZMIEŃ NA: <input type="number" max="25" min="15" step="0.5" name="tempROOMset" value="%ROOMSET%" style="width:50px">
-    <input type="submit" style="width:45px"></font>
-  </p>
-
-  <form>
-  <br><br><p>
     <span class="units">%stopkawebsite%</span>
   </p>
 </body>
 <script>
-  setInterval(function () {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%dallThermometerS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%dallThermometerS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempCOThermometerS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempCOThermometerS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempCOThermometerSetS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempCOThermometerSetS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempCORETThermometerS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempCORETThermometerS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempHWThermometerS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempHWThermometerS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempHWThermometerSetS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempHWThermometerSetS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%cutOffTempS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%cutOffTempS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%NEWS_lastTimeS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%NEWS_lastTimeS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempROOMThermometerS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempROOMThermometerS%", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%tempROOMThermometerSetS%").innerHTML = this.responseText; }};
-    xhttp.open("GET", "/%tempROOMThermometerSetS%", true); xhttp.send();
-  }, 10000 ) ;
-  setInterval(function () {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("links").innerHTML = this.responseText;}};
-    xhttp.open("GET", "/links", true); xhttp.send();
-    xhttp.onreadystatechange = function() { if (this.readyState == 4 && this.status == 200) { document.getElementById("%uptime%").innerHTML = this.responseText;}};
-    xhttp.open("GET", "/%uptime%", true); xhttp.send();
-  }, 11000 ) ;
+  %scriptsectionreplace%
 </script>
 </html>)rawliteral";
 //******************************************************************************************
@@ -312,7 +195,6 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 }
 
 
-
 void WebServers() {
   #ifdef debug
     Serial.println(F("subWerbServers..."));
@@ -335,9 +217,6 @@ void WebServers() {
     // Send a GET request to <IP>/get?message=<message>
   webserver.on("/"uptimelink , HTTP_GET, [](AsyncWebServerRequest * request) {
   //  request.setAuthentication("", "");
-    request->send(200, "text/plain; charset=utf-8", String(uptimedana(started)));
-  }).setAuthentication("", "");
-  webserver.on("/"uptimelink , HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(started)));
   }).setAuthentication("", "");
   webserver.on("/"dallThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
@@ -371,8 +250,9 @@ void WebServers() {
   webserver.on("/"tempROOMThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(sp,1));
   }).setAuthentication("", "");
-
-
+  webserver.on("/"NEWS_lastTimeS, HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/plain; charset=utf-8", String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet)));
+  }).setAuthentication("", "");
 
 
 
@@ -550,91 +430,11 @@ String processor(const String var) {
 //    Serial.println(var);
   #endif
   if (var == "ver") {
-    String a = "v. ";
+    String a = "ESP CO Server v. ";
     a += me_version;
     a += "<br>";
-    a += client.connected()? "MQTT Podłączony: "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT Rozłączony: "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
-
-
+    a += client.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
     return a;
-  }
-  if (var == "NEWS") {
-    return String(temp_NEWS);
-  }
-  if (var == "NEWS_lastTime") {
-    return String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet));  //last update time
-  }
-  if (var == "NEWS_lastTimeS") {
-    return String("NEWS_lastTimeS");  //last update time
-  }
-    if (var == dallThermometerS) {
-    return String(dallThermometerS);
-  }
-  if (var == "TH") {
-    return String(tempBoiler,1);
-  }
-  if (var == "THCOSET") {
-    return String(tempBoilerSet,1);
-  }
-  if (var == tempCOThermometerS) {
-    return String(tempCOThermometerS);
-  }
-  if (var == tempCOThermometerSetS) {
-    return String(tempCOThermometerSetS);
-  }
-  if (var == "tempCOset") {
-    return String(tempCOset);
-  }
-  if (var == tempCORETThermometerS) {
-    return String(tempCORETThermometerS);
-  }
-  if (var == "THRET") {
-    return String(retTemp,1);
-  }
-  if (var == tempHWThermometerS) {
-    return String(tempHWThermometerS);
-  }
-  if (var == tempHWThermometerSetS) {
-    return String(tempHWThermometerSetS);
-  }
-  if (var == "tempHWset") {
-    return String(dhwTarget,1);
-  }
-  if (var == "DHW") {
-    return String(tempCWU,1);
-  }
-  if (var == "DHWSET") {
-    return String(dhwTarget,1);
-  }
-  if (var == cutOffTempSet) {
-    return String(cutOffTempSet);
-  }
-  if (var == cutOffTempS) {
-    return String(cutOffTempS);
-  }
-  if (var == "cutOffTempVAL") {
-    return String(cutOffTemp,1);
-  }
-
-  if (var == "BOILMOD2") {
-    return String(automodeCO?"Checked":"");
-  }
-  if (var == "BOILMOD1") {
-    return String(automodeCO?"":"Checked");
-  }
-  if (var == "HWMOD1") {
-    return String(enableHotWater?"Checked":"");
-  }
-  if (var == "HWMOD0") {
-    return String(enableHotWater?"":"Checked");
-  }
-
-
-  if (var == "ROOM") {
-    return String(roomtemp,1);
-  }
-  if (var == "ROOMSET") {
-    return String(sp,1);
   }
 
   if (var == "dane") {
@@ -653,54 +453,143 @@ String processor(const String var) {
     a += "<br>";
     a += LastboilerResponseError;
     a += "<br></B>";
-//    if ("isadslinitialised="") a += "Tak"; else a += "Nie";
 
-//    if (ownother.length()>0) {
-//      a += " Własny string ownother: ";
-//      a += ownother;
-//    }
-//    a += " GASlast: ";
-//    a += gasCOMeterS->getlast();
     #ifdef debug
       Serial.println(F("Raport Hosta po read_eprom: "));
     #endif
     return String(a);
   }
-  if (var == "uptime") {
-    return String(uptimelink);
-  }
-//  if (var == "json") {
-//    return String(savedjson);
-//  }
+
   if (var == "uptimewart") {
     return String(uptimedana(started));
   }
   if (var == "me_lokalizacja") {
     return String(me_lokalizacja);
   }
+
+  if (var == "uptime") {
+    return String(uptimelink);
+  }
+
+  if (var=="stylesectionadd") {
+    String ptr;
+    ptr="html{font-family:Arial;display:inline-block;margin:0 auto;text-align:center}\
+    h2{font-size:2.1rem}\
+    p{font-size:2.2rem}\
+    .units{font-size:1.1rem}\
+    .dht-labels{font-size:1.3rem;vertical-align:middle;padding-bottom:8px}\
+    .dht-labels-temp{font-size:3.3rem;font-weight:700;vertical-align:middle;padding-bottom:8px}\
+    table,td,th{border-color:green;border-collapse:collapse;border-style:outset;margin-left:auto;margin-right:auto;border:0;text-align:center;padding-left: 40px;padding-right: 50px;padding-top: 5px;padding-bottom: 10px;}\
+    input{margin:.4rem}\
+    td{height:auto;width:auto}";
+    return String(ptr);
+  }
+
   if (var == "stopkawebsite") {
     String ptr;
       ptr = "</span>&nbsp;";
       if (status_FlameOn) {
-        ptr += "<i class='fas fa-fire' style='color: red'></i>";
-        ptr += "<span class='dht-labels'>Płomień aktywny. Moc palnika: </span><B>";
-        ptr += String(flame_level,0);
-        ptr += "<sup class=\"units\">&#37;</sup></B>";
+        ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
         ptr += "<br>";
       }
       if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
-      if (heatingEnabled) ptr += "<span class='dht-labels'><B>Ogrzewanie CO włączone<br></B></span>";
-      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>Piec w trybie aktywnego grzania CO<br></B></span></font>";
-      if (enableHotWater) ptr += "<span class='dht-labels'><B>Podgrzewanie WODY CWU włączone<br></B></span>";
-      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>Piec w trybie aktywnego podgrzewania CWU wody użytkowej<br></B></span></font>";
-
-      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>Tryb Chłodzenia<br></B></span></font>";
-      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>Tryb Diagnostyczny<br></B></span></font>";
-      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>Pompa CO pieca węglowego aktywna -dezaktywuje grzanie;)<br></B><br></span></font>";
-      ptr += "<br><span class='units'><a href='/update'>Aktualizacja</a> &nbsp; &nbsp;&nbsp; <a href='/webserial'>Serial Terminal</a>&nbsp;";
+      if (heatingEnabled) ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON)+"<br></B></span>";
+      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
+      if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
+      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
+      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
+      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
+      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
+      ptr += "<br><span class='units'><a href='/update'>"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial'>"+String(Web_Serial)+"</a>&nbsp;";
       ptr += "<br>&copy; ";
       ptr += stopka;
       ptr += "<br>";
+    return String(ptr);
+  }
+
+  if (var=="bodywstaw") {
+    String ptr;
+    const float tempstep=0.5;
+    const String tempicon="<i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;font-size:36px;text-shadow:2px 2px 4px #000000;\"></i>&nbsp;&nbsp;";
+    ptr="<form action=\"/get\">";
+
+    ptr+="<p>"+tempicon+"<span class=\"dht-labels\">"+String(Temp_NEWS)+"</span><B><span class=\"dht-labels-temp\" id=\""+String(dallThermometerS)+"\">"+String(temp_NEWS)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<font size=\"4\" color=\"blue\">"+String(ActualFrom)+"<B><span id=\""+String(NEWS_lastTimeS)+"\">"+String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet))+"</span></B> </font></p>";
+
+    ptr+="<p><table><tr>";
+    ptr+="<td><B><LABEL FOR=\"BOILMOD\">"+String(Boler_mode)+"</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"2\" "+String(automodeCO?"Checked":"")+">"+String(Automatic_mode)+"</td>";
+    ptr+="<td><B><LABEL FOR=\"HWMOD\">"+String(DHW_Mode)+"</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"1\" "+String(enableHotWater?"Checked":"")+">"+String(Heating)+"</td>";
+    ptr+="</tr><tr><td><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"1\" "+String(automodeCO?"":"Checked")+">"+String(Heating)+"/"+String(Off)+"</td>";
+    ptr+="<td><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"0\" "+String(enableHotWater?"":"Checked")+">"+String(Off)+"</td></tr>";
+
+    ptr+="<tr><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(DHW_Temp)+"</span>";
+    ptr+="<br><B>";
+    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempHWThermometerS)+"\">"+String(tempCWU,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<br></td><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(DHW_Temp_Set)+"</span>";
+    ptr+="<br>";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempHWThermometerSetS)+"\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempHWThermometerSetS)+"\" type=\"range\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempHWset)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempHWThermometerSetS)+"');\">";
+    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
+    ptr+="</td></tr>";
+
+    ptr+="<tr><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Boiler_And_CO_Temperature)+"</span>";
+    ptr+="<br><B>";
+    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCOThermometerS)+"\">"+String(tempBoiler,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<br></td><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Set_Temperature_for_CO_heat)+"</span>";
+    ptr+="<br>";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempCOThermometerSetS)+"\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempCOThermometerSetS)+"\" type=\"range\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempCOset)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempCOThermometerSetS)+"');\">";
+    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
+    ptr+="</td></tr>";
+
+   ptr+="<tr><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Room_Temp)+"</span>";
+    ptr+="<br><B>";
+    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempROOMThermometerS)+"\">"+String(roomtemp,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<br></td><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Room_Temp_Set)+"</span>";
+    ptr+="<br>";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempROOMThermometerSetS)+"\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(sp,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempROOMThermometerSetS)+"\" type=\"range\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempROOMset)+"\" value=\""+String(sp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempROOMThermometerSetS)+"');\">";
+    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
+    ptr+="</td></tr>";
+
+   ptr+="<tr><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Return_temp)+"</span>";
+    ptr+="<br><B>";
+    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCORETThermometerS)+"\">"+String(retTemp,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<br></td><td>";
+    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Outside_Cutoff_Below)+"</span>";
+    ptr+="<br>";
+    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(cutOffTempS)+"\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:auto;\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(cutOffTempS)+"\" type=\"range\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_cutOffTempSet)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(cutOffTempS)+"');\">";
+    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
+    ptr+="</td></tr>";
+
+    ptr+="</table></form><br>";
+
+    return ptr;
+  }
+
+
+  if (var=="scriptsectionreplace") {
+    String ptr;
+    String tmp;
+    unsigned long int step=125;
+    unsigned long int refreshtime = 9100;
+    ptr="function uTI(e,n){document.getElementById(n).value=e}\n";
+    tmp=String(uptimelink);  //spanid
+    refreshtime+=step;
+    ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime/2)+");\n";
+    tmp=String(tempCOThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(dallThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempCORETThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempHWThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempHWThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(NEWS_lastTimeS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempROOMThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     return String(ptr);
   }
   #ifdef debug

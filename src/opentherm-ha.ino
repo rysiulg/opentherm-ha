@@ -935,8 +935,8 @@ void loop()
     {
       WebSerial.println(F("MQTT connection problem -now try get temp data alternative way (room temp and NEWS temp and Carbon CO Water pump status"));
       // best place to function get values from http when mqtt is unavailable
-      lastNEWSSet = now; // reset counter news temp with alternative parse value way
-      temp_NEWS_count = 0;
+      //lastNEWSSet = now; // reset counter news temp with alternative parse value way
+      //temp_NEWS_count = 0;
     }
   }
   else
