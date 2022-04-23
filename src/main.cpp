@@ -14,6 +14,7 @@
 #include <PubSubClient.h>
 #include <OpenTherm.h>
 #include "config.h"
+#include "main.h"
 //#include <ArduinoHA.h>  //HomeAssistant
 #include <WebSerial.h>
 
@@ -28,80 +29,6 @@
 AsyncWebServer webserver(wwwport);
 // for ota webs
 
-const unsigned long extTempTimeout_ms = 180 * 1000,
-                    statusUpdateInterval_ms = 0.9 * 1000,
-                    spOverrideTimeout_ms = 180 * 1000,
-                    mqttUpdateInterval_ms = 16 * 1000,
-                    temp_NEWS_interval_reduction_time_ms = 30 * 60 * 1000, // time to laps between temp_NEWS reduction by 5%
-                    mqtt_offline_reconnect_after_ms = 15 * 60 * 1000,      // time when mqtt is offline to wait for next reconnect (15minutes)
-                    save_config_every = 15 * 60 * 1000,                    // time saveing config values in eeprom (15minutes)
-                    WiFiinterval = 30 * 1000;
-
-// upper and lower bounds on heater level
-const float ophi = 65,               // upper max heat water
-            oplo = 30,               // lower min heat water
-            opcohi = 60,             // upper max heat boiler to CO
-            opcolo = oplo,           // lower min heat boiler to CO
-            cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
-            cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
-            roomtemphi = 25,         // upper max to set of room temperature
-            roomtemplo = 15,         // lower min to set of room temperature
-            noCommandSpOverride = 32; //heating water temperature for fail mode (no external temp provided) for co
-
-unsigned int runNumber = 0, // count of restarts
-             publishhomeassistantconfig = 4,                               // licznik wykonan petli -strat od 0
-             publishhomeassistantconfigdivider = 5;                        // publishhomeassistantconfig % publishhomeassistantconfigdivider -publikacja gdy reszta z dzielenia =0 czyli co te ilosc wykonan petli opoznionej update jest wysylany config
-
-float dhwTarget = 51, // domyslna temperatura docelowa wody uzytkowej
-      sp = 20.5,       // set point roomtemp
-      roomtemp = 21,     // current temperature
-      roomtemp_last = 0, // prior temperature
-      ierr = 25,         // integral error
-      dt = 0,            // time between measurements
-      //       op = 0, //PID controller output
-      retTemp = 0,                         // return temperature
-      temp_NEWS = 0,                       // avg temperatura outside -getting this from mqtt topic as averange from 4 sensors North West East South
-      cutOffTemp = 2,                      // outside temp setpoint to cutoff heating co. CO heating is disabled if outside temp (temp_NEWS) is above this value
-      op_override = noCommandSpOverride, // boiler tempset on heat mode
-      flame_level = 0,
-      tempBoiler = 0,
-      tempBoilerSet = op_override, // temp boiler set -mainly used in auto mode and for display on www actual temp
-      tempCWU = 0,
-      pressure = 0;
-
-
-String LastboilerResponseError;
-
-int temp_NEWS_count = 0,
-    mqtt_offline_retrycount = 0,
-    mqtt_offline_retries = 10; // retries to mqttconnect before timewait
-
-unsigned long ts = 0, new_ts = 0, // timestamp
-              lastUpdate = 0,
-              lastUpdatemqtt = 0,
-              lastTempSet = 0,
-              lastcutOffTempSet = 0,
-              lastNEWSSet = 0,
-              lastmqtt_reconnect = 0,
-              lastSaveConfig = 0,
-              lastSpSet = 0,
-              WiFipreviousMillis = 0,
-              start_flame_time = 0;    //Flame Starts work
-
-float    flame_used_power = 0;         //for count powerkWh between samples (boiler rated*flame power) use integer end when div use % do get decimal value
-
-bool heatingEnabled = true,
-     enableHotWater = true,
-     CO_PumpWorking = false, // value from mqtt -if set co heating is disabled -second heating engine is working (in my case Wood/Carbon heater)
-     automodeCO = false,     // tryb automatyczny zalezny od temp zewnetrznej i pracy pompy CO kotla weglowego
-     receivedmqttdata = false,
-     tmanual = false,
-     status_Fault,
-     status_CHActive,
-     status_WaterActive,
-     status_FlameOn,
-     status_Cooling,
-     status_Diagnostic;
 
 OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
 DallasTemperature sensors(&oneWire);
@@ -168,7 +95,7 @@ void recvMsg(uint8_t *data, size_t len)
     WebSerial.println("Size CONFIG: " + String(sizeof(CONFIGURATION)));
     saveConfig();
   }
-  if (d == "RESET-CONFIG")
+  if (d == "RESET_CONFIG")
   {
     WebSerial.println(F("RESET config to DEFAULT VALUES and restart..."));
     WebSerial.println("Size CONFIG: " + String(sizeof(CONFIGURATION)));
@@ -180,31 +107,13 @@ void recvMsg(uint8_t *data, size_t len)
     saveConfig();
     restart();
   }
-  if (d == "LOGCONFIG")
+  if (d == "RESET_FLAMETOTAL")
   {
-    WebSerial.println("Saved CONFIG:");
-    WebSerial.println("COPUMP_GET_TOPIC " + String(CONFIGURATION.COPUMP_GET_TOPIC));
-
-    WebSerial.println("heatingEnabled " + String(CONFIGURATION.heatingEnabled));
-    WebSerial.println("enableHotWater " + String(CONFIGURATION.enableHotWater));
-    WebSerial.println("automodeCO " + String(CONFIGURATION.automodeCO));
-    WebSerial.println("tempBoilerSet " + String(CONFIGURATION.tempBoilerSet));
-    WebSerial.println("sp: " + String(CONFIGURATION.sp));
-    WebSerial.println("cutOffTemp " + String(CONFIGURATION.cutOffTemp));
-    WebSerial.println("op_override" + String(CONFIGURATION.op_override));
-    WebSerial.println("dhwTarget " + String(CONFIGURATION.dhwTarget));
-    WebSerial.println("roomtemp " + String(CONFIGURATION.roomtemp));
-    WebSerial.println("temp_NEWS " + String(CONFIGURATION.temp_NEWS));
-    WebSerial.println("ssid " + String(CONFIGURATION.ssid));
-    WebSerial.println("pass " + String(CONFIGURATION.pass));
-    WebSerial.println("mqtt_server " + String(CONFIGURATION.mqtt_server));
-    WebSerial.println("mqtt_user " + String(CONFIGURATION.mqtt_user));
-    WebSerial.println("mqtt_password " + String(CONFIGURATION.mqtt_password));
-    WebSerial.println("mqtt_port " + String(CONFIGURATION.mqtt_port));
-
-    WebSerial.println("NEWS_GET_TOPIC " + String(CONFIGURATION.NEWS_GET_TOPIC));
-    WebSerial.println("Size CONFIG: " + String(sizeof(CONFIGURATION)));
+    WebSerial.println(F("RESET flame Total var to 0..."));
+    flame_used_power_kwh=0;
+    saveConfig();
   }
+
   if (d == "CO")
   {
     // espClient.connect("esp-b2c08e/dallThermometerS");
@@ -242,7 +151,7 @@ void recvMsg(uint8_t *data, size_t len)
   }
   if (d == "HELP")
   {
-    WebSerial.println(F("KOMENDY: RESTART, RECONNECT, ROOMTEMP+/-, ROOMTEMP0, SAVE, LOGCONFIG, RESET-CONFIG"));
+    WebSerial.println(F("KOMENDY: RESTART, RECONNECT, ROOMTEMP+/-, ROOMTEMP0, SAVE, RESET_CONFIG, RESET_FLAMETOTAL"));
   }
 }
 
@@ -363,7 +272,8 @@ void opentherm_update_data(unsigned long mqttdallas)
   bool status_flame_tmp = status_FlameOn;
   status_FlameOn = ot.isFlameOn(response);
   if (status_flame_tmp != status_FlameOn) {
-    status_FlameOn? start_flame_time=millis() : start_flame_time=0;  //After change flame status If flame is on get timer, else reset timer
+    if (status_FlameOn) {start_flame_time=millis();} else start_flame_time=0;  //After change flame status If flame is on get timer, else reset timer
+    flame_time=start_flame_time;
   }
   status_Cooling = ot.isCoolingActive(response);
   status_Diagnostic = ot.isDiagnostic(response);
@@ -397,16 +307,15 @@ void updateData()
   else
     boilermode = "off";
 
-    unsigned long flame_elapsed_time = (millis()-start_flame_time);
-    String flame_used_energy=String(((flame_used_power)*1000)/1,4);  //unit W
-    WebSerial.print(String(millis())+": flame_used_power Wh: "); WebSerial.println(String(flame_used_power));
-    WebSerial.print(String(millis())+": flame_elapsed_time: "); WebSerial.println(String(flame_elapsed_time));
-    WebSerial.print(String(millis())+": flame_W used: "); WebSerial.println(String(flame_used_energy));
-    WebSerial.println("Flame level: "+String(flame_level));
+    //unsigned long flame_elapsed_time = (millis()-flame_time);
+    //String flame_used_energy=String(((flame_used_power))/1,4);  //unit kWh
+    // WebSerial.print(String(millis())+": flame_used_power kWh: "); WebSerial.println(String(flame_used_power_kwh));
+    // WebSerial.print(String(millis())+": flame_elapsed_time: "); WebSerial.println(String(flame_elapsed_time));
+    // WebSerial.print(String(millis())+": flame_W used: "); WebSerial.println(String(flame_used_energy));
+    // WebSerial.println("Flame level: "+String(flame_level));
     flame_used_power=0;
     start_flame_time=0;
-
-
+    //flame_time=0;
 
 
 
@@ -448,7 +357,8 @@ void updateData()
                   ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) + "\",\"" +
                   OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
                   ",\"" + OT + FLAME_LEVEL + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
-                  ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_energy) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_power,4) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_W_TOTAL + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh,4) + payloadvalue_startend_val +
                   ",\"" + OT + TEMP_CUTOFF + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
                   "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
 
@@ -465,30 +375,31 @@ void updateData()
 
     // homeassistant/sensor/BB050B_OPENTHERM_OT10_lo/config = {"name":"Opentherm OPENTHERM OT10 lo","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_lo","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['lo']}}"} (retained) problem
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
-    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_FAULT + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_FAULT + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_FAULT + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_FAULT + "}}\",\"frc_upd\":true,\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_DIAG + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_DIAG + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_DIAG + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_DIAG + "}}\",\"frc_upd\":true,\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HA_TOPIC + "_" + INTEGRAL_ERROR_GET_TOPIC + "/config").c_str(), ("{\"name\":\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"uniq_id\": \"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + INTEGRAL_ERROR_GET_TOPIC + "}}\",\"frc_upd\":true,\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HA_TOPIC + "_" + LOGS + "/config").c_str(), ("{\"name\":\"" + OT + LOGS + "\",\"uniq_id\": \"" + OT + LOGS + "\",\"stat_t\":\"" + LOG_GET_TOPIC + "\",\"val_tpl\":\"{{ value }}\",\"frc_upd\":true,\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_FAULT + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_FAULT + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_FAULT + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_FAULT + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_DIAG + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_DIAG + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_DIAG + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_DIAG + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((DIAG_HA_TOPIC + "_" + INTEGRAL_ERROR_GET_TOPIC + "/config").c_str(), ("{\"name\":\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"uniq_id\": \"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + INTEGRAL_ERROR_GET_TOPIC + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((DIAG_HA_TOPIC + "_" + LOGS + "/config").c_str(), ("{\"name\":\"" + OT + LOGS + "\",\"uniq_id\": \"" + OT + LOGS + "\",\"stat_t\":\"" + LOG_GET_TOPIC + "\",\"val_tpl\":\"{{ value }}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_PRESSURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_PRESSURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_PRESSURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_PRESSURE + "}}\",\"frc_upd\":true,\"dev_cla\":\"pressure\",\"unit_of_meas\": \"hPa\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_PRESSURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_PRESSURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_PRESSURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_PRESSURE + "}}\",\"dev_cla\":\"pressure\",\"unit_of_meas\": \"hPa\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE_SETPOINT + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_CH_STATE + "}}\",\"frc_upd\":true,\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_SOFTWARE_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_SOFTWARE_CH_STATE + "}}\",\"frc_upd\":true,\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_SOFTWARE_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_SOFTWARE_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_RET + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_RET + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_RET + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_RET + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_SETPOINT + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HABS_TOPIC + "_" + BOILER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_CH_STATE + "\",\"uniq_id\": \"" + OT + BOILER_CH_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + BOILER_CH_STATE + "}}\",\"frc_upd\":true,\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_SOFTWARE_CH_STATE_MODE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"uniq_id\": \"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\",\"frc_upd\":true,\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HABS_TOPIC + "_" + FLAME_STATE + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_STATE + "\",\"uniq_id\": \"" + OT + FLAME_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + FLAME_STATE + "}}\",\"frc_upd\":true,\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + FLAME_LEVEL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_LEVEL + "\",\"uniq_id\": \"" + OT + FLAME_LEVEL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_LEVEL + "}}\",\"frc_upd\":true,\"dev_cla\":\"power\",\"unit_of_meas\":\"%\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W + "\",\"uniq_id\": \"" + OT + FLAME_W + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W + "}}\",\"frc_upd\":true,\"dev_cla\":\"power\",\"unit_of_meas\":\"W\",\"state_class\":\"measurement\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_RET + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_RET + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_RET + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_RET + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HABS_TOPIC + "_" + BOILER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_CH_STATE + "\",\"uniq_id\": \"" + OT + BOILER_CH_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + BOILER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + BOILER_SOFTWARE_CH_STATE_MODE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"uniq_id\": \"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HABS_TOPIC + "_" + FLAME_STATE + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_STATE + "\",\"uniq_id\": \"" + OT + FLAME_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + FLAME_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + FLAME_LEVEL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_LEVEL + "\",\"uniq_id\": \"" + OT + FLAME_LEVEL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_LEVEL + "}}\",\"dev_cla\":\"power\",\"unit_of_meas\":\"%\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W + "\",\"uniq_id\": \"" + OT + FLAME_W + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"measurement\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W_TOTAL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W_TOTAL + "\",\"uniq_id\": \"" + OT + FLAME_W_TOTAL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W_TOTAL + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"total_increasing\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((BOILER_HA_TOPIC + "_" + TEMP_CUTOFF + "/config").c_str(), ("{\"name\":\"" + OT + TEMP_CUTOFF + "\",\"uniq_id\": \"" + OT + TEMP_CUTOFF + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\",\"frc_upd\":true,\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    client.publish((BOILER_HA_TOPIC + "_" + TEMP_CUTOFF + "/config").c_str(), ("{\"name\":\"" + OT + TEMP_CUTOFF + "\",\"uniq_id\": \"" + OT + TEMP_CUTOFF + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
     client.publish((HOT_WATER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Hot Water\",\"uniq_id\": \"" + OT + "Hot_Water\", \
 \"modes\":[\"off\",\"heat\"], \
@@ -786,7 +697,6 @@ void callback(char *topic, byte *payload, unsigned int length)
     if (payloadStr == "on" or payloadStr == "ON" or payloadStr == "On" or payloadStr == "1")
     {
       CO_PumpWorking = true;
-      automodeCO = true;
       receivedmqttdata = true;
     }
     else if (payloadStr == "off" or payloadStr == "OFF" or payloadStr == "Off" or payloadStr == "0")
@@ -948,10 +858,7 @@ void loop()
 {
   unsigned long now = millis() + 100; // TO AVOID compare -2>10000 which is true ??? why?
   // check mqtt is available and connected in other case check values in api.
-  if (status_FlameOn) {
-    flame_used_power += ((flame_level/100)*boiler_rated_kWh/((millis()-start_flame_time)/hour)*1000);
-    //flame_elapsed_time = millis()-start_flame_time;
-  }
+
 
   if (mqtt_offline_retrycount == mqtt_offline_retries)
   {
@@ -987,10 +894,30 @@ void loop()
     lastUpdate = now;
     opentherm_update_data(lastUpdatemqtt); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
   }
+  if (status_FlameOn) {
+    unsigned long nowtime = millis();
+    float boiler_power =0;
+
+    if (retTemp<boiler_50_30_ret) boiler_power=boiler_50_30; else boiler_power=boiler_80_60;
+    double boilerpower = boiler_power*(flame_level/100); //kW
+    double time_to_hour = (nowtime-start_flame_time)/(double(hour_s));
+    flame_used_power += boilerpower*time_to_hour/1000;
+    flame_used_power_kwh += boilerpower*time_to_hour/1000;
+    // WebSerial.print(String(start_flame_time));
+    // WebSerial.print(": millis()-start_flame_time "+String((millis()-start_flame_time),10));
+    // WebSerial.print(": ((millis()-start_flame_time)/1000)/hour_s "+String((((millis()-start_flame_time)/1000)/(double(hour_s))),10));
+    // WebSerial.print(": time_to_hour "+String(time_to_hour,10));
+    // WebSerial.print(": boiler_power "+String(boiler_power,4));
+    // WebSerial.print(", boilerpower "+String(boilerpower,4));
+    // WebSerial.print(": flame_used_power "+String(flame_used_power,4));
+    // WebSerial.println(": boil_power_kwh "+String(boilerpower*time_to_hour/1000,10));
+    // WebSerial.println(": flame_used_power_kwh "+String(flame_used_power_kwh,10));
+    start_flame_time = nowtime;
+  }
   if (((now - lastUpdatemqtt) > mqttUpdateInterval_ms) or (receivedmqttdata == true))
   {
     lastUpdatemqtt = now;
-    updateData();
+    updateData();    //update to mqtt
   }
   //#define abs(x) ((x)>0?(x):-(x))
   if ((now - lastNEWSSet) > temp_NEWS_interval_reduction_time_ms)

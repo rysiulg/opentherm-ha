@@ -19,7 +19,7 @@ bool isValidNumber(String str);
 #define flameprocSVAL "flameprocSVAL"
 #define NEWS_lastTimeS "NEWS_lastTimeS"
 #define NEWS_lastTime "NEWS_lastTime"
-
+#define do_stopkawebsiteS "do_stopkawebsiteS"
 
 #define tempROOMThermometerSetS "tempROOMThermometerSetS"
 #define tempROOMThermometerS "tempROOMThermometerS"
@@ -36,6 +36,8 @@ unsigned long  started = 0; //do mierzenia czasu uptime bez resetu
 const char htmlup[] PROGMEM = R"rawliteral(
   <form method='POST' action='/doUpdate' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>)rawliteral";
 
+
+String do_stopkawebsite();
 //******************************************************************************************
 
 String PrintHex8(const uint8_t *data, char separator, uint8_t length) // prints 8-bit data in hex , uint8_t length
@@ -103,7 +105,8 @@ const char index_html[] PROGMEM = R"rawliteral(
   </p>
    %bodywstaw%
   <p>
-    <span class="units">%stopkawebsite%</span>
+    <span id="%do_stopkawebsiteS%" class="units">%stopkawebsite%</span>
+    %stopkawebsite0%
   </p>
 </body>
 <script>
@@ -243,6 +246,12 @@ void WebServers() {
   webserver.on("/"cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet)));
   }).setAuthentication("", "");
+  webserver.on("/"do_stopkawebsiteS, HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(200, "text/plain; charset=utf-8", do_stopkawebsite());
+  }).setAuthentication("", "");
+
+
+
 
   webserver.on("/"tempROOMThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(roomtemp,1));
@@ -470,6 +479,7 @@ String processor(const String var) {
   if (var == "uptime") {
     return String(uptimelink);
   }
+  if (var == "do_stopkawebsiteS") return String(do_stopkawebsiteS);
 
   if (var=="stylesectionadd") {
     String ptr;
@@ -486,26 +496,17 @@ String processor(const String var) {
   }
 
   if (var == "stopkawebsite") {
+    return do_stopkawebsite();
+  }
+  if (var == "stopkawebsite0") {
     String ptr;
-      ptr = "</span>&nbsp;";
-      if (status_FlameOn) {
-        ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
-        ptr += "<br>";
-      }
-      if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
-      if (heatingEnabled) ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON)+"<br></B></span>";
-      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
-      if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
-      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
-      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
-      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
-      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
-      ptr += "<br><span class='units'><a href='/update'>"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial'>"+String(Web_Serial)+"</a>&nbsp;";
+      ptr = "<br><span class='units'><a href='/update'>"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial'>"+String(Web_Serial)+"</a>&nbsp;";
       ptr += "<br>&copy; ";
       ptr += stopka;
       ptr += "<br>";
     return String(ptr);
   }
+
 
   if (var=="bodywstaw") {
     String ptr;
@@ -556,9 +557,9 @@ String processor(const String var) {
     ptr+="</td></tr>";
 
    ptr+="<tr><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Return_temp)+"</span>";
+    ptr+=tempicon+"<span class=\"dht-labels\"><font color=\""+String((retTemp<boiler_50_30_ret)? "darkgreen" : "black")+"\">"+String(Return_temp)+"</span>";
     ptr+="<br><B>";
-    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCORETThermometerS)+"\">"+String(retTemp,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
+    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCORETThermometerS)+"\">"+String(retTemp,1)+"</span><sup class=\"units\">&deg;C</sup></B></font>";
     ptr+="<br></td><td>";
     ptr+=tempicon+"<span class=\"dht-labels\">"+String(Outside_Cutoff_Below)+"</span>";
     ptr+="<br>";
@@ -589,6 +590,7 @@ String processor(const String var) {
     tmp=String(NEWS_lastTimeS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempROOMThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(do_stopkawebsiteS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     return String(ptr);
   }
   #ifdef debug
@@ -598,10 +600,30 @@ String processor(const String var) {
   return String();
 
 }
+
+String do_stopkawebsite() {
+      String ptr;
+      ptr = "&nbsp;";
+      if (status_FlameOn) {
+        ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
+        ptr += "<br>";
+      }
+      if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
+      if (heatingEnabled) ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON)+"<br></B></span>";
+      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
+      if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
+      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
+      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
+      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
+      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
+      if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
+      ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
+    return String(ptr);
+}
 //******************************************************************************************
 String uptimedana(unsigned long started_local) {
   String wynik = " ";
-  if (started_local<1000) return "< 1 sek.";
+  if (started_local<1000) return "< 1 "+String(t_sek)+" ";
   #ifdef debug
     Serial.print(F("Uptimedana: "));
   #endif
@@ -609,24 +631,24 @@ String uptimedana(unsigned long started_local) {
   if (partia >= 24 * 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
     partia -= podsuma * 24 * 60 * 60 * 1000;
-    wynik += (String)podsuma + " dni ";
+    wynik += (String)podsuma + " "+String(t_day)+" ";
 
   }
   if (partia >= 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 60 * 1000);
     partia -= podsuma * 60 * 60 * 1000;
-    wynik += (String)podsuma + " godz. ";
+    wynik += (String)podsuma + " "+String(t_hour)+" ";
   }
   if (partia >= 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 1000);
     partia -= podsuma * 60 * 1000;
-    wynik += (String)podsuma + " min. ";
+    wynik += (String)podsuma + " "+String(t_min)+" ";
     //Serial.println(podsuma);
   }
   if (partia >= 1 * 1000 ) {
     unsigned long  podsuma = partia / 1000;
     partia -= podsuma * 1000;
-    wynik += (String)podsuma + " sek. ";
+    wynik += (String)podsuma + " "+String(t_sek)+" ";
     //Serial.println(podsuma);
   }
   #ifdef debug
@@ -646,7 +668,6 @@ String uptimedana(unsigned long started_local) {
 typedef struct
 {
   char version[6]; // place to detect if settings actually are written
-  unsigned int runNumber; // incremented on reboot
   bool heatingEnabled;
   bool enableHotWater;
   bool automodeCO;
@@ -665,6 +686,8 @@ typedef struct
   int mqtt_port;
   char COPUMP_GET_TOPIC[255];  //temperatura outside avg NEWS
   char NEWS_GET_TOPIC[255];   //pompa CO status
+  char NEWS_GET_TOPIC1[255];   //pompa CO status for 1st temp room sensor
+  char NEWS_GET_TOPIC2[255];   //pompa CO status for 2nd temp room sensor
 } configuration_type;
 
 // with DEFAULT values!
@@ -674,6 +697,9 @@ configuration_type CONFIGURATION;
 bool loadConfig() {
   // is it correct?
   if (sizeof(CONFIGURATION)<1024) EEPROM.begin(1024); else EEPROM.begin(sizeof(CONFIGURATION)+128); //Size can be anywhere between 4 and 4096 bytes.
+  EEPROM.get(1,runNumber);
+  runNumber++;
+  EEPROM.get(1+sizeof(runNumber),flame_used_power_kwh);
   if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
       EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
       EEPROM.read(CONFIG_START + 2) == CONFIG_VERSION[2] &&
@@ -684,8 +710,6 @@ bool loadConfig() {
     for (unsigned int i=0; i<sizeof(configuration_type); i++){
       *((char*)&CONFIGURATION + i) = EEPROM.read(CONFIG_START + i);
     }
-    CONFIGURATION.runNumber++;
-    runNumber = CONFIGURATION.runNumber;
     heatingEnabled = CONFIGURATION.heatingEnabled;
     enableHotWater = CONFIGURATION.enableHotWater;
     automodeCO = CONFIGURATION.automodeCO;
@@ -704,15 +728,22 @@ bool loadConfig() {
     mqtt_port = CONFIGURATION.mqtt_port;
     COPUMP_GET_TOPIC=String(CONFIGURATION.COPUMP_GET_TOPIC);
     NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC);
-
+    NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC1);
+    NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC2);
 
     return true; // return 1 if config loaded
   }
+  //try get only my important values
+
   return false; // return 0 if config NOT loaded
 }
 
 // save the CONFIGURATION in to EEPROM
 void saveConfig() {
+
+  EEPROM.put(1, runNumber);
+  EEPROM.put(1+sizeof(runNumber), flame_used_power_kwh);
+
   strcpy(CONFIGURATION.version,CONFIG_VERSION);
   CONFIGURATION.heatingEnabled = heatingEnabled;
   CONFIGURATION.enableHotWater = enableHotWater;
@@ -732,6 +763,8 @@ void saveConfig() {
   CONFIGURATION.mqtt_port = mqtt_port;
   strcpy(CONFIGURATION.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str());
   strcpy(CONFIGURATION.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str());
+  strcpy(CONFIGURATION.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str());
+  strcpy(CONFIGURATION.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str());
 
 
   for (unsigned int i=0; i<sizeof(configuration_type); i++)

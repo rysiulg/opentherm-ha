@@ -13,7 +13,7 @@
 
 //#define debug
 #define debug1
-#define me_version "1.19g"
+#define me_version "1.20"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
@@ -21,8 +21,11 @@
 #define wwwport 80
 #define PL_lang
 
-#define hour 60*60
+#define hour_s 60*60          //hour in second
 #define boiler_rated_kWh 24
+#define boiler_50_30 20.7     //boiler technical factory set data at working 50st and return 30st
+#define boiler_50_30_ret 31     //boiler technical factory set data at working 50st and return 30st -assume that is that mode if rettemp i under 31degC
+#define boiler_80_60 19.5     //boiler technical factory set data at working 80st and return 60st
 
 //#boiler_gas_conversion_to_m3  1
 
@@ -59,6 +62,7 @@ char mqtt_server[sensitive_size*2] = MQTT_servername;
 char mqtt_user[sensitive_size] = MQTT_username;
 char mqtt_password[sensitive_size] = MQTT_Password_data;
 int mqtt_port = MQTT_port_No;
+const int mqtt_Retain = 1;
 
 // Master OpenTherm Shield pins configuration
 const int OT_IN_PIN = D1;  // for Arduino, 4 for ESP8266 (D2), 21 for ESP32
@@ -77,7 +81,6 @@ const String deviceid = "\"dev\":{\"ids\":\"OpenTherm_GAS\",\"name\":\"OpenTherm
 const String BASE_TOPIC = "opentherm-thermostat";
 const String BASE_HA_TOPIC = "homeassistant";
 const String ROOM_TEMP = "current_remote";
-const int mqtt_Retain = 1;
 const String QOS = "0";
 const String OT = "ot_";
 const String BOILER = "boiler";
@@ -94,6 +97,7 @@ const String FLAME_STATE = "flame_state";
 const String FLAME_LEVEL = "flame_level";
 const String TEMP_CUTOFF = "temp_cutoff";
 const String FLAME_W = "flame_used_energy";
+const String FLAME_W_TOTAL = "flame_used_energy_total";
 
 const String HOT_WATER_TEMPERATURE = HOT_WATER + TEMPERATURE;
 const String HOT_WATER_TEMPERATURE_SETPOINT = HOT_WATER + TEMPERATURE + "_setpoint";
@@ -130,12 +134,12 @@ const String DIAGS_OTHERS_FAULT = DIAGS + "_" + "fault";
 const String DIAGS_OTHERS_DIAG = DIAGS + "_" + "diagnostic";
 
 //Homeassistant Autodiscovery topics
-const String BOILER_HA_TOPIC = BASE_HA_TOPIC + "/sensor/" + BASE_TOPIC + "/";              //+"/state"
-const String BOILER_HABS_TOPIC = BASE_HA_TOPIC + "/binary_sensor/" + BASE_TOPIC + "/";     //+"/state"
+const String BOILER_HA_TOPIC = BASE_HA_TOPIC + "/sensor/" + BASE_TOPIC + "/" + BOILER;              //+"/state"
+const String BOILER_HABS_TOPIC = BASE_HA_TOPIC + "/binary_sensor/" + BASE_TOPIC + "/" + BOILER;     //+"/state"
 const String BOILER_HACLI_TOPIC = BASE_HA_TOPIC + "/climate/" + BASE_TOPIC + "/" + BOILER; //+"/state"
 
 const String HOT_WATER_HA_TOPIC = BASE_HA_TOPIC + "/sensor/" + BASE_TOPIC + "/";                 //+"/state"
-const String HOT_WATER_HABS_TOPIC = BASE_HA_TOPIC + "/binary_sensor/" + BASE_TOPIC + "/";        //+"/state"
+const String HOT_WATER_HABS_TOPIC = BASE_HA_TOPIC + "/binary_sensor/" + BASE_TOPIC + "/" + HOT_WATER;        //+"/state"
 const String HOT_WATER_HACLI_TOPIC = BASE_HA_TOPIC + "/climate/" + BASE_TOPIC + "/" + HOT_WATER; //+"/state"
 
 const String ROOM_OTHERS_HA_TOPIC = BASE_HA_TOPIC + "/sensor/" + BASE_TOPIC + "/" + ROOM_OTHERS;     //+"/state"

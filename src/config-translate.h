@@ -26,6 +26,12 @@
 #define Outside_Cutoff_Below "Temperatura progu grzania CO gdy średnia NEWS: &lt; "
 #define msg_Connected "Połączony"
 #define msg_disConnected "Rozłączony"
+#define Flame_total "Suma mocy płomienia: "
+#define Flame_time "Czas pracy płomienia: "
+#define t_day "dni"
+#define t_hour "godz."
+#define t_min "min."
+#define t_sek "sek."
 #else
 #define Boiler_And_CO_Temperature "Boiler And CO Temperature"
 #define Set_Temperature_for_CO_heat "Set Temperature for CO heat: "
@@ -54,4 +60,10 @@
 #define Outside_Cutoff_Below "Heat Cutoff Temperature when outside NEWS &lt; "
 #define msg_Connected "Connected"
 #define msg_disConnected "Disconnected"
+#define Flame_total "Flame total: "
+#define Flame_time "Flame uptime: "
+#define t_day "day(s)"
+#define t_hour "hour"
+#define t_min "min."
+#define t_sek "sec."
 #endif
