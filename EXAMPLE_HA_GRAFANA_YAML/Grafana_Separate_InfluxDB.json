@@ -27,6 +27,23 @@
   "liveNow": true,
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [],
+      "title": "Row title",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
       "description": "Dane z pieca CO opentherm",
       "fieldConfig": {
         "defaults": {
@@ -191,7 +208,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "P�omie�"
+              "options": "Płomień"
             },
             "properties": [
               {
@@ -233,7 +250,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Temperatura boiler �adanie CO"
+              "options": "Temperatura boiler żadanie CO"
             },
             "properties": [
               {
@@ -263,7 +280,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "�rednia NEWS"
+              "options": "Średnia NEWS"
             },
             "properties": [
               {
@@ -351,10 +368,10 @@
         ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
+        "h": 21,
+        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 2,
       "options": {
@@ -380,8 +397,7 @@
         {
           "alias": "Temperatura CWU set",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -392,21 +408,21 @@
             },
             {
               "params": [
-                "null"
+                "previous"
               ],
               "type": "fill"
             }
           ],
-          "measurement": "�C",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "A",
+          "refId": "DHW_SP",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "domestic_hot_water_temperature_setpoint"
                 ],
                 "type": "field"
               },
@@ -416,20 +432,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_domestic_hot_water_temperature_setpoint"
-            }
-          ]
+          "tags": []
         },
         {
-          "alias": "P�omie�",
+          "alias": "Płomień",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -446,7 +454,7 @@
             }
           ],
           "hide": false,
-          "measurement": "state",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT mean(\"value\") FROM \" \" WHERE (\"entity_id\" = 'ot_flame_state') AND $timeFilter GROUP BY time($__interval) fill(previous)",
@@ -457,7 +465,7 @@
             [
               {
                 "params": [
-                  "value"
+                  "flame_state"
                 ],
                 "type": "field"
               },
@@ -467,19 +475,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_flame_state"
-            }
-          ]
+          "tags": []
         },
         {
           "alias": "dhw_flag",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -487,10 +488,16 @@
                 "$__interval"
               ],
               "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "state",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT mean(\"value\")  AS \"alias\" FROM \"state\" WHERE (\"entity_id\" = 'ot_domestic_hot_water_dhw_state') AND $timeFilter GROUP BY time($__interval)",
@@ -501,7 +508,7 @@
             [
               {
                 "params": [
-                  "value"
+                  "domestic_hot_water_dhw_state"
                 ],
                 "type": "field"
               },
@@ -517,20 +524,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_domestic_hot_water_dhw_state"
-            }
-          ]
+          "tags": []
         },
         {
           "alias": "CH_flag",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -541,13 +540,13 @@
             },
             {
               "params": [
-                "null"
+                "previous"
               ],
               "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "state",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "CH_F",
@@ -556,7 +555,7 @@
             [
               {
                 "params": [
-                  "value"
+                  "boiler_ch_state"
                 ],
                 "type": "field"
               },
@@ -572,20 +571,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_boiler_ch_state"
-            }
-          ]
+          "tags": []
         },
         {
           "alias": "Temperatura CWU",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -596,22 +587,22 @@
             },
             {
               "params": [
-                "null"
+                "linear"
               ],
               "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "�C",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "E",
+          "refId": "DHW",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "domestic_hot_water_temperature"
                 ],
                 "type": "field"
               },
@@ -621,20 +612,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_domestic_hot_water_temperature"
-            }
-          ]
+          "tags": []
         },
         {
           "alias": "Temperatura-boiler-grzania",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -645,22 +628,22 @@
             },
             {
               "params": [
-                "null"
+                "linear"
               ],
               "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "�C",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "F",
+          "refId": "BT",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "boiler_temperature"
                 ],
                 "type": "field"
               },
@@ -670,20 +653,12 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_boiler_temperature"
-            }
-          ]
+          "tags": []
         },
         {
           "alias": "Temperatura powrotu",
           "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
+            "uid": "s3Q_YJQnk"
           },
           "groupBy": [
             {
@@ -694,22 +669,22 @@
             },
             {
               "params": [
-                "null"
+                "linear"
               ],
               "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "�C",
+          "measurement": "BOILER_mqqt_MARM",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "G",
+          "refId": "BT_RET",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "value"
+                  "boiler_temperature_return"
                 ],
                 "type": "field"
               },
@@ -719,17 +694,135 @@
               }
             ]
           ],
-          "tags": [
-            {
-              "condition": "OR",
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_boiler_temperature_return"
-            }
-          ]
+          "tags": []
         },
         {
-          "alias": "Temperatura boiler �adanie CO",
+          "alias": "Temperatura boiler żadanie CO",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "linear"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "BT_SP",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "boiler_temperature_setpoint"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Procent mocy palnika GAZ",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "FLAME_LEVEL",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "flame_level"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Remote Temp",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "linear"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT difference(mean(\"value\")) FROM \"°C\" WHERE (\"entity_id\" = 'ot_current_remote_temperature') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": false,
+          "refId": "ROOM_TEMP",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "current_remote_temperature"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Średnia NEWS",
           "datasource": {
             "type": "influxdb",
             "uid": "RG8UHiFnz"
@@ -743,64 +836,16 @@
             },
             {
               "params": [
-                "null"
+                "linear"
               ],
               "type": "fill"
             }
           ],
           "hide": false,
-          "measurement": "�C",
+          "measurement": "°C",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "H",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_boiler_temperature_setpoint"
-            }
-          ]
-        },
-        {
-          "alias": "�rednia NEWS",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": false,
-          "measurement": "�C",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "I",
+          "refId": "NEWS",
           "resultFormat": "time_series",
           "select": [
             [
@@ -825,104 +870,6 @@
           ]
         },
         {
-          "alias": "Procent mocy palnika GAZ",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": false,
-          "measurement": "%",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "J",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_flame_level"
-            }
-          ]
-        },
-        {
-          "alias": "Remote Temp",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "RG8UHiFnz"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "0"
-              ],
-              "type": "fill"
-            }
-          ],
-          "hide": true,
-          "measurement": "�C",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT difference(mean(\"value\")) FROM \"�C\" WHERE (\"entity_id\" = 'ot_current_remote_temperature') AND $timeFilter GROUP BY time($__interval) fill(null)",
-          "rawQuery": false,
-          "refId": "B",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "entity_id",
-              "operator": "=",
-              "value": "ot_current_remote_temperature"
-            }
-          ]
-        },
-        {
           "alias": "Pompa CO",
           "datasource": {
             "type": "influxdb",
@@ -937,7 +884,7 @@
             },
             {
               "params": [
-                "null"
+                "previous"
               ],
               "type": "fill"
             }
@@ -948,7 +895,7 @@
           "policy": "default",
           "query": "SELECT mean(\"value\") FROM \"state\" WHERE (\"entity_id\" = 'co_aktywujemy_go_masa') AND $timeFilter GROUP BY time($__interval) fill(null)",
           "rawQuery": false,
-          "refId": "C",
+          "refId": "CO_PUMP",
           "resultFormat": "time_series",
           "select": [
             [
@@ -981,7 +928,7 @@
             "conversions": [
               {
                 "destinationType": "boolean",
-                "targetField": "P�omie�"
+                "targetField": "Płomień"
               },
               {
                 "destinationType": "boolean",
@@ -989,7 +936,263 @@
               },
               {
                 "destinationType": "boolean",
-                "targetField": ""
+                "targetField": "dhw_flag"
+              },
+              {
+                "destinationType": "boolean",
+                "targetField": "CH_flag"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 27,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "W.mean"
+            },
+            "properties": [
+              {
+                "id": "custom.scaleDistribution",
+                "value": {
+                  "log": 10,
+                  "type": "log"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Flame State"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "first",
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Flame Level",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "FLAME_LEVEL",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "flame_level"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Flame State",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "FLAME_STATE",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "flame_state"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "Flame used energy",
+          "datasource": {
+            "uid": "s3Q_YJQnk"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "BOILER_mqqt_MARM",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "USED_ENERGY",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "flame_used_energy"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "Panel Title",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "boolean",
+                "targetField": "Flame State"
               }
             ],
             "fields": {}
@@ -1014,6 +1217,6 @@
   "timezone": "",
   "title": "PiecCO",
   "uid": "ByVTCss7k",
-  "version": 40,
+  "version": 52,
   "weekStart": ""
 }
