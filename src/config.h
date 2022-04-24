@@ -10,14 +10,14 @@
 */
 
 // v.1.19 added load/save config to eeprom
+// v1.20 added counting used power
+// v1.21 added influxdb integration
 
 //#define debug
 #define debug1
-#define me_version "1.20"
 #define me_lokalizacja "BOILER_mqqt_MARM"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
-#define stopka MFG " 04-2022"
 #define wwwport 80
 #define PL_lang
 
@@ -26,6 +26,7 @@
 #define boiler_50_30 20.7     //boiler technical factory set data at working 50st and return 30st
 #define boiler_50_30_ret 31     //boiler technical factory set data at working 50st and return 30st -assume that is that mode if rettemp i under 31degC
 #define boiler_80_60 19.5     //boiler technical factory set data at working 80st and return 60st
+#define  ENABLE_INFLUX        //if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
 
 //#boiler_gas_conversion_to_m3  1
 
@@ -49,6 +50,24 @@
 #ifndef MQTT_servername
 #define MQTT_servername "MQTT_servername"     //default mqtt port
 #endif
+
+#ifdef ENABLE_INFLUX
+#ifndef INFLUXDB_URL
+#define INFLUXDB_URL "http://localhost:8086"
+#endif
+// InfluxDB 2 server or cloud API authentication token (Use: InfluxDB UI -> Load Data -> Tokens -> <select token>) but I use only version 1 as default in HomeAssistant
+#ifndef INFLUXDB_DB_NAME
+#define INFLUXDB_DB_NAME "test"
+#endif
+#ifndef INFLUXDB_USER
+#define INFLUXDB_USER "test"
+#endif
+#ifndef INFLUXDB_PASSWORD
+#define INFLUXDB_PASSWORD "test"
+#endif
+#endif
+
+
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
@@ -76,7 +95,7 @@ const int ROOM_TEMP_SENSOR_PIN = D5; // 0; //for Arduino, 14 for ESP8266 (D5), 1
    if setter is used - thermostat works with external values, bypassing built-in sensor
    if no values on setter for more than 1 minute - thermostat falls back to built-in sensor
 */
-const String deviceid = "\"dev\":{\"ids\":\"OpenTherm_GAS\",\"name\":\"OpenTherm GAS-CO\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \"ESP8266_GASBoiler\",\"\mf\":\"" + String(MFG) + "\"}";
+
 
 const String BASE_TOPIC = "opentherm-thermostat";
 const String BASE_HA_TOPIC = "homeassistant";

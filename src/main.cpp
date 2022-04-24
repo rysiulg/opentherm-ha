@@ -13,7 +13,6 @@
 #include <DallasTemperature.h>
 #include <PubSubClient.h>
 #include <OpenTherm.h>
-#include "config.h"
 #include "main.h"
 //#include <ArduinoHA.h>  //HomeAssistant
 #include <WebSerial.h>
@@ -35,6 +34,11 @@ DallasTemperature sensors(&oneWire);
 OpenTherm ot(OT_IN_PIN, OT_OUT_PIN);
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+#ifdef ENABLE_INFLUX
+InfluxDBClient InfluxClient(INFLUXDB_URL, INFLUXDB_DB_NAME);
+Point InfluxSensor(String(me_lokalizacja));
+#endif
 
 // ESP8266WebServer server(80);
 
@@ -318,8 +322,6 @@ void updateData()
     //flame_time=0;
 
 
-
-
   client.setBufferSize(512);
   if (status_Fault)
     WebSerial.println("Błąd: " + String(status_Fault ? "on" : "off"));
@@ -354,8 +356,8 @@ void updateData()
                   ",\"" + OT + BOILER_TEMPERATURE_RET + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +
                   ",\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(tempBoilerSet, 1) + payloadvalue_startend_val +
                   ",\"" + OT + BOILER_CH_STATE + "\": " + payloadvalue_startend_val + String(status_CHActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) + "\",\"" +
-                  OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) +
+                  "\",\"" + OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
                   ",\"" + OT + FLAME_LEVEL + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
                   ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_power,4) + payloadvalue_startend_val +
                   ",\"" + OT + FLAME_W_TOTAL + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh,4) + payloadvalue_startend_val +
@@ -367,6 +369,48 @@ void updateData()
                   ",\"" + OT + DIAGS_OTHERS_DIAG + "\": " + payloadvalue_startend_val + String(status_Diagnostic ? payloadON : payloadOFF) + payloadvalue_startend_val +
                   ",\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\": " + payloadvalue_startend_val + String(ierr) + payloadvalue_startend_val +
                   "}").c_str(), mqtt_Retain); //"heat" : "off")
+
+#ifdef ENABLE_INFLUX
+  InfluxSensor.clearFields();
+  // Report RSSI of currently connected network
+  InfluxSensor.addField("rssi", WiFi.RSSI());
+  InfluxSensor.addField(String(ROOM_OTHERS_TEMPERATURE), roomtemp);
+  InfluxSensor.addField(String(ROOM_OTHERS_TEMPERATURE_SETPOINT), sp);
+  InfluxSensor.addField(String(ROOM_OTHERS_PRESSURE), pressure);
+  InfluxSensor.addField(String(HOT_WATER_TEMPERATURE), tempCWU);
+  InfluxSensor.addField(String(HOT_WATER_TEMPERATURE_SETPOINT), dhwTarget);
+  InfluxSensor.addField(String(HOT_WATER_SOFTWARE_CH_STATE), enableHotWater ? 1 : 0);
+  InfluxSensor.addField(String(HOT_WATER_CH_STATE), status_WaterActive ? 1 : 0);
+  InfluxSensor.addField(String(BOILER_TEMPERATURE), tempBoiler);
+  InfluxSensor.addField(String(BOILER_TEMPERATURE_SETPOINT), tempBoilerSet);
+  InfluxSensor.addField(String(BOILER_TEMPERATURE_RET), retTemp);
+  InfluxSensor.addField(String(BOILER_CH_STATE), status_CHActive ? 1 : 0);
+  int boilermodewart = 0;
+  if (boilermode == "auto")
+    boilermodewart = 2;
+  if (boilermode == "heat")
+    boilermodewart = 1;
+  InfluxSensor.addField(String(BOILER_SOFTWARE_CH_STATE_MODE), boilermodewart);
+  InfluxSensor.addField(String(FLAME_STATE), status_FlameOn ? 1 : 0);
+  InfluxSensor.addField(String(FLAME_LEVEL), flame_level);
+  InfluxSensor.addField(String(FLAME_W), flame_used_power);
+  InfluxSensor.addField(String(FLAME_W_TOTAL), flame_used_power_kwh);
+  InfluxSensor.addField(String(TEMP_CUTOFF), cutOffTemp);
+  InfluxSensor.addField(String(DIAGS_OTHERS_FAULT), status_Fault ? "1" : "0");
+  InfluxSensor.addField(String(DIAGS_OTHERS_DIAG), status_Diagnostic ? "1" : "0");
+  InfluxSensor.addField(String(INTEGRAL_ERROR_GET_TOPIC), ierr);
+  InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponseError);
+
+  // Print what are we exactly writing
+  WebSerial.print("Writing to InfluxDB: ");
+  WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
+  // Write point
+  if (!InfluxClient.writePoint(InfluxSensor))
+  {
+    WebSerial.print("InfluxDB write failed: ");
+    WebSerial.println(InfluxClient.getLastErrorMessage());
+  }
+#endif
 
   publishhomeassistantconfig++; // zwiekszamy licznik wykonan wyslania mqtt by co publishhomeassistantconfigdivider wysłań wysłać autoconfig discovery dla homeassisatnt
   if (publishhomeassistantconfig % publishhomeassistantconfigdivider == 0)
@@ -839,6 +883,8 @@ void setup()
 
   ot.begin(handleInterrupt);
 
+
+
   // Init DS18B20 sensor
   sensors.begin();
   sensors.requestTemperatures();
@@ -852,6 +898,24 @@ void setup()
   WebSerial.begin(&webserver);
   WebSerial.msgCallback(recvMsg);
   WebServers();
+
+  #ifdef ENABLE_INFLUX
+  //InfluxDB
+  InfluxClient.setConnectionParamsV1(INFLUXDB_URL, INFLUXDB_DB_NAME, INFLUXDB_USER, INFLUXDB_PASSWORD);
+  // Alternatively, set insecure connection to skip server certificate validation
+  InfluxClient.setInsecure();
+  // Add tags
+  InfluxSensor.addTag("device", me_lokalizacja);
+    // Check server connection
+  if (InfluxClient.validateConnection()) {
+    WebSerial.print("Connected to InfluxDB: ");
+    WebSerial.println(InfluxClient.getServerUrl());
+  } else {
+    WebSerial.print("InfluxDB connection failed: ");
+    WebSerial.println(InfluxClient.getLastErrorMessage());
+  }
+  #endif
+
 }
 
 void loop()
@@ -901,8 +965,8 @@ void loop()
     if (retTemp<boiler_50_30_ret) boiler_power=boiler_50_30; else boiler_power=boiler_80_60;
     double boilerpower = boiler_power*(flame_level/100); //kW
     double time_to_hour = (nowtime-start_flame_time)/(double(hour_s));
-    flame_used_power += boilerpower*time_to_hour/1000;
-    flame_used_power_kwh += boilerpower*time_to_hour/1000;
+    flame_used_power += boilerpower*time_to_hour/1000/1000;
+    flame_used_power_kwh += boilerpower*time_to_hour/1000/1000;
     // WebSerial.print(String(start_flame_time));
     // WebSerial.print(": millis()-start_flame_time "+String((millis()-start_flame_time),10));
     // WebSerial.print(": ((millis()-start_flame_time)/1000)/hour_s "+String((((millis()-start_flame_time)/1000)/(double(hour_s))),10));
