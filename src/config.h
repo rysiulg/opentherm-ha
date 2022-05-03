@@ -15,7 +15,7 @@
 
 //#define debug
 #define debug1
-#define me_lokalizacja "BOILER_mqqt_MARM"
+#define me_lokalizacja "BOILER_GAZ"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
 #define wwwport 80
@@ -96,6 +96,8 @@ const int ROOM_TEMP_SENSOR_PIN = D5; // 0; //for Arduino, 14 for ESP8266 (D5), 1
    if no values on setter for more than 1 minute - thermostat falls back to built-in sensor
 */
 
+#define InitTemp 85             //temperatura inicjalna gdy brak odczuty
+float floor1_temp = InitTemp, floor2_temp = InitTemp, floor1_tempset = InitTemp, floor2_tempset = InitTemp;  //temps from floor1 nad floor2 temp is min of temps and tempset is max set value
 
 const String BASE_TOPIC = "opentherm-thermostat";
 const String BASE_HA_TOPIC = "homeassistant";
@@ -139,6 +141,13 @@ const String MODE_SET_TOPIC = BASE_TOPIC + "/SET/" + BOILER_SOFTWARE_CH_STATE_MO
 const String TEMP_DHW_SET_TOPIC = BASE_TOPIC + "/SET/" + HOT_WATER_TEMPERATURE_SETPOINT + "/set";    // dhwTarget
 String COPUMP_GET_TOPIC = "COWoda_mqqt_MARM/switch/bcddc2b2c08e/pump2CO/state";                      // temperatura outside avg NEWS
 String NEWS_GET_TOPIC = "COWoda_mqqt_MARM/sensor/bcddc2b2c08e/WENS_Outside_Temp_AVG/state";          // pompa CO status
+
+String ROOMS_F1_GET_TOPIC = "FLOORH1/sensor/room/attributes";          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
+#define roomF1temp_json "FL1_room_temperature_0_min"
+#define roomF1tempset_json "FL1_room_temperature_setpoint_0_max"
+String ROOMS_F2_GET_TOPIC = "FLOORH2/sensor/room/attributes";          // pompa CO status
+#define roomF2temp_json "FL2_room_temperature_0_min"
+#define roomF2tempset_json "FL2_room_temperature_setpoint_0_max"
 
 // logs topic
 const String DIAGS = "diag";

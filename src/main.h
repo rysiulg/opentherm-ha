@@ -35,7 +35,7 @@ const char version[10+1] =
   '\0'
 };
 const String me_version = String(version);
-const String  stopka = String(MFG)+" "+version[2]+version[3]+"-20"+version[0]+version[1];
+const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
 const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"\mf\":\"" + String(MFG) + "\"}";
 
 const unsigned long extTempTimeout_ms = 180 * 1000,

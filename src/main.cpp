@@ -339,7 +339,9 @@ void updateData()
     WebSerial.println("Status_Diagnostic: " + String(status_Diagnostic ? "on" : "off"));
 
   client.publish(ROOM_OTHERS_TOPIC.c_str(),
-                 ("{\"" + OT + ROOM_OTHERS_TEMPERATURE + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
+                 ("{\"rssi\":"+ String(WiFi.RSSI()) + \
+                  ",\"CRT\":"+ String(runNumber) + \
+                  ",\"" + OT + ROOM_OTHERS_TEMPERATURE + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
                   ",\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(sp) + payloadvalue_startend_val +
                   ",\"" + OT + ROOM_OTHERS_PRESSURE + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
                   "}").c_str(), mqtt_Retain); //"heat" : "off")
@@ -374,6 +376,7 @@ void updateData()
   InfluxSensor.clearFields();
   // Report RSSI of currently connected network
   InfluxSensor.addField("rssi", WiFi.RSSI());
+  InfluxSensor.addField("CRT", runNumber);
   InfluxSensor.addField(String(ROOM_OTHERS_TEMPERATURE), roomtemp);
   InfluxSensor.addField(String(ROOM_OTHERS_TEMPERATURE_SETPOINT), sp);
   InfluxSensor.addField(String(ROOM_OTHERS_PRESSURE), pressure);
@@ -458,8 +461,11 @@ void updateData()
 \"mode_state_template\": \"{{value_json." + OT + HOT_WATER_SOFTWARE_CH_STATE + "}}\", \
 \"mode_command_topic\": \"" + STATE_DHW_SET_TOPIC + "\", \
 \"mode_command_template\" : \"{% set values = { 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"min_temp\": \"" + oplo + "\", \
-\"max_temp\": \"" + ophi + "\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + oplo + ", \
+\"max_temp\": " + ophi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
     client.publish((BOILER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler CO\",\"uniq_id\": \"" + OT + "Boiler_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
@@ -474,8 +480,11 @@ void updateData()
 \"mode_state_template\": \"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\", \
 \"mode_command_topic\": \"" + MODE_SET_TOPIC + "\", \
 \"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"min_temp\": \"" + opcolo + "\", \
-\"max_temp\": \"" + opcohi + "\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + opcolo + ", \
+\"max_temp\": " + opcohi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
     client.publish((ROOM_OTHERS_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + OT + "Boiler_RoomTemp_Control_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
@@ -490,8 +499,11 @@ void updateData()
 \"mode_state_template\": \"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\", \
 \"mode_command_topic\": \"" + MODE_SET_TOPIC + "\", \
 \"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"min_temp\": \"" + roomtemplo + "\", \
-\"max_temp\": \"" + roomtemphi + "\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + roomtemplo + ", \
+\"max_temp\": " + roomtemphi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
     client.publish((ROOM_OTHERS_HACLI_TOPIC + "cutoff_climate/config").c_str(), ("{\"name\":\"" + OT + "CutoffTemp\",\"uniq_id\": \"" + OT + "CutoffTemp\", \
 \"modes\":\"\", \
@@ -502,8 +514,11 @@ void updateData()
 \"temperature_state_topic\":\"" + BOILER_TOPIC + "\", \
 \"temperature_state_template\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\", \
 \"temperature_unit\":\"C\", \
-\"min_temp\": \"" + cutofflo + "\", \
-\"max_temp\": \"" + cutoffhi + "\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + cutofflo + ", \
+\"max_temp\": " + cutoffhi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
   }
 
@@ -543,14 +558,109 @@ bool isValidNumber(String str)
   return valid;
 }
 
+#include <ArduinoJson.h>
 void callback(char *topic, byte *payload, unsigned int length)
 {
   const String topicStr(topic);
 
   String payloadStr = convertPayloadToStr(payload, length);
   payloadStr.trim();
+String ROOMS_F1_GET_TOPIC = "FLOORH1_mqqt_MARM/sensor/room/attributes";          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
 
-  if (topicStr == TEMP_SETPOINT_SET_TOPIC)
+  if (topicStr == ROOMS_F1_GET_TOPIC) //topic min temp and max setpoint from floor 1
+  {
+    payloadStr.replace(",", ".");
+    DynamicJsonDocument root(1024);
+    deserializeJson(root, payloadStr);
+    String Sfloor1_temp = root[roomF1temp_json];
+    String Sfloor1_tempset = root[roomF1tempset_json];
+#ifdef debug
+    Serial.println("Set target temperature floor1_temp: " + String(floor1_temp));
+    Serial.println("Set target temperature floor1_tempset: " + String(floor1_tempset));
+#endif
+    WebSerial.println("Set target temperature floor1_temp: " + String(floor1_temp));
+    Serial.println("Set target temperature floor1_tempset: " + String(floor1_tempset));
+    float f1t = Sfloor1_temp.toFloat();
+    float f1ts = Sfloor1_tempset.toFloat();
+
+    if (isnan(f1t) || !isValidNumber(Sfloor1_temp))
+    {
+#ifdef debug
+      Serial.println("Setpoint is not a valid number, ignoring...");
+#endif
+      WebSerial.println("Setpoint is not a valid number, ignoring...");
+    }
+    else
+    {
+      if (f1t > roomtemphi) f1t = roomtemphi;
+      if (f1t < roomtemplo) f1t = roomtemplo;
+      floor1_temp = f1t;
+      receivedmqttdata = true;
+    }
+
+    if (isnan(f1ts) || !isValidNumber(Sfloor1_tempset))
+    {
+#ifdef debug
+      Serial.println("Setpoint is not a valid number, ignoring...");
+#endif
+      WebSerial.println("Setpoint is not a valid number, ignoring...");
+    }
+    else
+    {
+      if (f1ts > roomtemphi) f1ts = roomtemphi;
+      if (f1ts < roomtemplo) f1ts = roomtemplo;
+      floor1_tempset = f1ts;
+      receivedmqttdata = true;
+    }
+  }
+  else if (topicStr == ROOMS_F1_GET_TOPIC) //topic min temp and max setpoint from floor 1
+  {
+    payloadStr.replace(",", ".");
+    DynamicJsonDocument root(1024);
+    deserializeJson(root, payloadStr);
+
+    String Sfloor2_temp = root[roomF2temp_json];
+    String Sfloor2_tempset = root[roomF2tempset_json];
+#ifdef debug
+    Serial.println("Set target temperature floor2_temp: " + String(floor2_temp));
+    Serial.println("Set target temperature floor2_tempset: " + String(floor2_tempset));
+#endif
+    WebSerial.println("Set target temperature floor2_temp: " + String(floor2_temp));
+    Serial.println("Set target temperature floor2_tempset: " + String(floor2_tempset));
+    float f2t = Sfloor2_temp.toFloat();
+    float f2ts = Sfloor2_tempset.toFloat();
+
+    if (isnan(f2t) || !isValidNumber(Sfloor2_temp))
+    {
+#ifdef debug
+      Serial.println("Setpoint is not a valid number, ignoring...");
+#endif
+      WebSerial.println("Setpoint is not a valid number, ignoring...");
+    }
+    else
+    {
+      if (f2t > roomtemphi) f2t = roomtemphi;
+      if (f2t < roomtemplo) f2t = roomtemplo;
+      floor2_temp = f2t;
+      receivedmqttdata = true;
+    }
+
+    if (isnan(f2ts) || !isValidNumber(Sfloor2_tempset))
+    {
+#ifdef debug
+      Serial.println("Setpoint is not a valid number, ignoring...");
+#endif
+      WebSerial.println("Setpoint is not a valid number, ignoring...");
+    }
+    else
+    {
+      if (f2ts > roomtemphi) f2ts = roomtemphi;
+      if (f2ts < roomtemplo) f2ts = roomtemplo;
+      floor2_tempset = f2ts;
+      receivedmqttdata = true;
+    }
+  }
+  else   if (topicStr == TEMP_SETPOINT_SET_TOPIC)
   {
     payloadStr.replace(",", ".");
 #ifdef debug
@@ -964,9 +1074,14 @@ void loop()
 
     if (retTemp<boiler_50_30_ret) boiler_power=boiler_50_30; else boiler_power=boiler_80_60;
     double boilerpower = boiler_power*(flame_level/100); //kW
-    double time_to_hour = (nowtime-start_flame_time)/(double(hour_s));
-    flame_used_power += boilerpower*time_to_hour/1000/1000;
-    flame_used_power_kwh += boilerpower*time_to_hour/1000/1000;
+    double time_to_hour = (nowtime-start_flame_time)/(double(hour_s)*1000);
+    flame_used_power += boilerpower*time_to_hour/1000;
+    flame_used_power_kwh += boilerpower*time_to_hour/1000;
+    WebSerial.println("nowtime: "+String(nowtime));
+    WebSerial.println("BoilerPower: "+String(boilerpower,6));
+    WebSerial.println("time_to_hour: "+String(time_to_hour));
+    WebSerial.println("flame_used_power bp*time/1k/1k: "+String(flame_used_power,6));
+
     // WebSerial.print(String(start_flame_time));
     // WebSerial.print(": millis()-start_flame_time "+String((millis()-start_flame_time),10));
     // WebSerial.print(": ((millis()-start_flame_time)/1000)/hour_s "+String((((millis()-start_flame_time)/1000)/(double(hour_s))),10));
@@ -981,6 +1096,14 @@ void loop()
   if (((now - lastUpdatemqtt) > mqttUpdateInterval_ms) or (receivedmqttdata == true))
   {
     lastUpdatemqtt = now;
+    if (floor2_tempset!=InitTemp && floor1_tempset!=InitTemp) roomtemp=(floor2_tempset+floor1_tempset)/2;
+    if (floor2_tempset!=InitTemp && floor1_tempset==InitTemp) roomtemp=floor2_tempset;
+    if (floor2_tempset==InitTemp && floor1_tempset!=InitTemp) roomtemp=floor1_tempset;
+    if (floor2_temp!=InitTemp && floor1_temp!=InitTemp) roomtemp=(floor2_temp+floor1_temp)/2;
+    if (floor2_temp!=InitTemp && floor1_temp==InitTemp) roomtemp=floor2_temp;
+    if (floor2_temp==InitTemp && floor1_temp!=InitTemp) roomtemp=floor1_temp;
+
+
     updateData();    //update to mqtt
   }
   //#define abs(x) ((x)>0?(x):-(x))
