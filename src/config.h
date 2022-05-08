@@ -65,6 +65,7 @@
 #ifndef INFLUXDB_PASSWORD
 #define INFLUXDB_PASSWORD "test"
 #endif
+#define InfluxMeasurments "MARMpl_Measurments"
 #endif
 
 
@@ -88,7 +89,7 @@ const int OT_IN_PIN = D1;  // for Arduino, 4 for ESP8266 (D2), 21 for ESP32
 const int OT_OUT_PIN = D2; // for Arduino, 5 for ESP8266 (D1), 22 for ESP32
 
 // Temperature sensor pin
-const int ROOM_TEMP_SENSOR_PIN = D5; // 0; //for Arduino, 14 for ESP8266 (D5), 18 for ESP32
+const int ROOM_TEMP_SENSOR_PIN = D0; // 0; //for Arduino, 14 for ESP8266 (D5), 18 for ESP32
 
 /*
    current temperature topics
@@ -143,11 +144,11 @@ String COPUMP_GET_TOPIC = "COWoda_mqqt_MARM/switch/bcddc2b2c08e/pump2CO/state"; 
 String NEWS_GET_TOPIC = "COWoda_mqqt_MARM/sensor/bcddc2b2c08e/WENS_Outside_Temp_AVG/state";          // pompa CO status
 
 String ROOMS_F1_GET_TOPIC = "FLOORH1/sensor/room/attributes";          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
-#define roomF1temp_json "FL1_room_temperature_0_min"
-#define roomF1tempset_json "FL1_room_temperature_setpoint_0_max"
+#define roomF1temp_json "FL1_room_temperature_0"
+#define roomF1tempset_json "FL1_room_temperature_setpoint_0"
 String ROOMS_F2_GET_TOPIC = "FLOORH2/sensor/room/attributes";          // pompa CO status
-#define roomF2temp_json "FL2_room_temperature_0_min"
-#define roomF2tempset_json "FL2_room_temperature_setpoint_0_max"
+#define roomF2temp_json "FL2_room_temperature_0"
+#define roomF2tempset_json "FL2_room_temperature_setpoint_0"
 
 // logs topic
 const String DIAGS = "diag";

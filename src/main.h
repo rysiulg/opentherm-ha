@@ -3,6 +3,8 @@
   #include <ESP8266HTTPClient.h>
   #include <InfluxDbClient.h>
 #endif
+#include <ArduinoJson.h>
+
 
 const char version[10+1] =
 {
@@ -36,7 +38,7 @@ const char version[10+1] =
 };
 const String me_version = String(version);
 const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
-const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"\mf\":\"" + String(MFG) + "\"}";
+const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
 
 const unsigned long extTempTimeout_ms = 180 * 1000,
                     statusUpdateInterval_ms = 0.9 * 1000,
@@ -54,7 +56,7 @@ const float ophi = 65,               // upper max heat water
             opcolo = oplo,           // lower min heat boiler to CO
             cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
             cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
-            roomtemphi = 25,         // upper max to set of room temperature
+            roomtemphi = 30,         // upper max to set of room temperature
             roomtemplo = 15,         // lower min to set of room temperature
             noCommandSpOverride = 32; //heating water temperature for fail mode (no external temp provided) for co
 
@@ -117,8 +119,9 @@ bool heatingEnabled = true,
 
 
 
-
-
+bool PayloadStatus(String payloadStr, bool state);
+bool PayloadtoValidFloatCheck(String payloadStr);
+float PayloadtoValidFloat(String payloadStr,bool withtemps_minmax=false, float mintemp=InitTemp,float maxtemp=InitTemp);
 void recvMsg(uint8_t *data, size_t len);
 void IRAM_ATTR handleInterrupt();
 float getTemp();

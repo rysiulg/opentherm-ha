@@ -1,0 +1,78 @@
+; PlatformIO Project Configuration File
+;
+;   Build options: build flags, source filter
+;   Upload options: custom upload port, speed and extra flags
+;   Library options: dependencies, extra library storages
+;   Advanced options: extra scripting
+;
+; Please visit documentation for the other options and examples
+; http://docs.platformio.org/page/projectconf.html
+
+[platformio]
+build_dir = /Users/sfardoux/temp/tempplatformio
+src_dir = AstroSync
+data_dir = Astrosync/data
+
+
+[env:featheresp32]
+platform = https://github.com/platformio/platform-espressif32.git#feature/stage
+board = featheresp32
+framework = arduino
+build_flags = -fpermissive -DESP32 -DHUZZAH32
+ -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+monitor_baud = 115200
+monitor_port = /dev/cu.SLAB_USBtoUART
+upload_port = /dev/cu.SLAB_USBtoUART
+extra_scripts = post:partitions.py
+
+
+[env:featheresp32Oled]
+platform = https://github.com/platformio/platform-espressif32.git#feature/stage
+board = featheresp32
+framework = arduino
+build_flags = -fpermissive -DESP32 -DHUZZAH32 -DHUZZAH32OLED
+ -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+monitor_baud = 115200
+monitor_port = /dev/cu.SLAB_USBtoUART
+upload_port = /dev/cu.SLAB_USBtoUART
+
+[env:TTGOts12]
+platform = https://github.com/platformio/platform-espressif32.git#feature/stage
+board = esp32dev
+framework = arduino
+build_flags = -fpermissive -DESP32 -DTTGOTS12
+ -DUSER_SETUP_LOADED=1
+ -DSPI_FREQUENCY=27000000
+ -DST7735_DRIVER=1
+ -DTFT_WIDTH=128
+ -DTFT_HEIGHT=160
+ -DST7735_GREENTAB2=1
+ -DTFT_CS=16
+ -DTFT_DC=17
+ -DTFT_RST=-1
+ -DTFT_MISO=-1
+ -DTFT_MOSI=23
+ -DTFT_SCLK=5
+ -DLOAD_GLCD=1
+ -DLOAD_FONT2=1
+ -DLOAD_FONT4=1
+ -DLOAD_FONT6=1
+ -DLOAD_FONT7=1
+ -DLOAD_FONT8=1
+ -DLOAD_GFXFF=1
+ -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+monitor_baud = 115200
+monitor_port = /dev/cu.SLAB_USBtoUART20
+upload_port = /dev/cu.SLAB_USBtoUART20
+extra_scripts = post:partitions.py
+
+[env:heltec_wifi_kit_32]
+platform = https://github.com/platformio/platform-espressif32.git#feature/stage
+board = heltec_wifi_kit_32
+framework = arduino
+build_flags = -fpermissive -DESP32 -DHELTEC_WK32
+ -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+monitor_baud = 115200
+monitor_port = /dev/cu.SLAB_USBtoUART
+upload_port = /dev/cu.SLAB_USBtoUART
+extra_scripts = post:partitions.py

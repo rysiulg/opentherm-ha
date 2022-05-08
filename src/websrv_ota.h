@@ -34,8 +34,8 @@ uint8_t mac[6] = {strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), strtol(
 unsigned long  started = 0; //do mierzenia czasu uptime bez resetu
 
 const char htmlup[] PROGMEM = R"rawliteral(
-  <form method='POST' action='/doUpdate' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>)rawliteral";
-
+  <form method='POST' action='/doUpdate' enctype='multipart/form-data'><input type='file' name='update' accept=".bin,.bin.gz"><input type='submit' value='Update'></form>)rawliteral";
+//static const char successResponse[] PROGMEM =  "<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...";
 
 String do_stopkawebsite();
 //******************************************************************************************
@@ -80,6 +80,7 @@ String PrintHex8(const uint8_t *data, char separator, uint8_t length) // prints 
 //******************************************************************************************
 //     background-color: #01DF3A;
 //
+//  <div class='s'><svg version='1.1' width="75px" height="75px" id='l' x='0' y='0' viewBox='0 0 200 200' xml:space='preserve'><path d='M59.3,2.5c18.1,0.6,31.8,8,40.2,23.5c3.1,5.7,4.3,11.9,4.1,18.3c-0.1,3.6-0.7,7.1-1.9,10.6c-0.2,0.7-0.1,1.1,0.6,1.5c12.8,7.7,25.5,15.4,38.3,23c2.9,1.7,5.8,3.4,8.7,5.3c1,0.6,1.6,0.6,2.5-0.1c4.5-3.6,9.8-5.3,15.7-5.4c12.5-0.1,22.9,7.9,25.2,19c1.9,9.2-2.9,19.2-11.8,23.9c-8.4,4.5-16.9,4.5-25.5,0.2c-0.7-0.3-1-0.2-1.5,0.3c-4.8,4.9-9.7,9.8-14.5,14.6c-5.3,5.3-10.6,10.7-15.9,16c-1.8,1.8-3.6,3.7-5.4,5.4c-0.7,0.6-0.6,1,0,1.6c3.6,3.4,5.8,7.5,6.2,12.2c0.7,7.7-2.2,14-8.8,18.5c-12.3,8.6-30.3,3.5-35-10.4c-2.8-8.4,0.6-17.7,8.6-22.8c0.9-0.6,1.1-1,0.8-2c-2-6.2-4.4-12.4-6.6-18.6c-6.3-17.6-12.7-35.1-19-52.7c-0.2-0.7-0.5-1-1.4-0.9c-12.5,0.7-23.6-2.6-33-10.4c-8-6.6-12.9-15-14.2-25c-1.5-11.5,1.7-21.9,9.6-30.7C32.5,8.9,42.2,4.2,53.7,2.7c0.7-0.1,1.5-0.2,2.2-0.2C57,2.4,58.2,2.5,59.3,2.5z M76.5,81c0,0.1,0.1,0.3,0.1,0.6c1.6,6.3,3.2,12.6,4.7,18.9c4.5,17.7,8.9,35.5,13.3,53.2c0.2,0.9,0.6,1.1,1.6,0.9c5.4-1.2,10.7-0.8,15.7,1.6c0.8,0.4,1.2,0.3,1.7-0.4c11.2-12.9,22.5-25.7,33.4-38.7c0.5-0.6,0.4-1,0-1.6c-5.6-7.9-6.1-16.1-1.3-24.5c0.5-0.8,0.3-1.1-0.5-1.6c-9.1-4.7-18.1-9.3-27.2-14c-6.8-3.5-13.5-7-20.3-10.5c-0.7-0.4-1.1-0.3-1.6,0.4c-1.3,1.8-2.7,3.5-4.3,5.1c-4.2,4.2-9.1,7.4-14.7,9.7C76.9,80.3,76.4,80.3,76.5,81z M89,42.6c0.1-2.5-0.4-5.4-1.5-8.1C83,23.1,74.2,16.9,61.7,15.8c-10-0.9-18.6,2.4-25.3,9.7c-8.4,9-9.3,22.4-2.2,32.4c6.8,9.6,19.1,14.2,31.4,11.9C79.2,67.1,89,55.9,89,42.6z M102.1,188.6c0.6,0.1,1.5-0.1,2.4-0.2c9.5-1.4,15.3-10.9,11.6-19.2c-2.6-5.9-9.4-9.6-16.8-8.6c-8.3,1.2-14.1,8.9-12.4,16.6C88.2,183.9,94.4,188.6,102.1,188.6z M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/></svg>
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
@@ -96,7 +97,8 @@ const char index_html[] PROGMEM = R"rawliteral(
   </style>
 </head>
 <body>
-  <div class='s'><svg version='1.1' width="75px" height="75px" id='l' x='0' y='0' viewBox='0 0 200 200' xml:space='preserve'><path d='M59.3,2.5c18.1,0.6,31.8,8,40.2,23.5c3.1,5.7,4.3,11.9,4.1,18.3c-0.1,3.6-0.7,7.1-1.9,10.6c-0.2,0.7-0.1,1.1,0.6,1.5c12.8,7.7,25.5,15.4,38.3,23c2.9,1.7,5.8,3.4,8.7,5.3c1,0.6,1.6,0.6,2.5-0.1c4.5-3.6,9.8-5.3,15.7-5.4c12.5-0.1,22.9,7.9,25.2,19c1.9,9.2-2.9,19.2-11.8,23.9c-8.4,4.5-16.9,4.5-25.5,0.2c-0.7-0.3-1-0.2-1.5,0.3c-4.8,4.9-9.7,9.8-14.5,14.6c-5.3,5.3-10.6,10.7-15.9,16c-1.8,1.8-3.6,3.7-5.4,5.4c-0.7,0.6-0.6,1,0,1.6c3.6,3.4,5.8,7.5,6.2,12.2c0.7,7.7-2.2,14-8.8,18.5c-12.3,8.6-30.3,3.5-35-10.4c-2.8-8.4,0.6-17.7,8.6-22.8c0.9-0.6,1.1-1,0.8-2c-2-6.2-4.4-12.4-6.6-18.6c-6.3-17.6-12.7-35.1-19-52.7c-0.2-0.7-0.5-1-1.4-0.9c-12.5,0.7-23.6-2.6-33-10.4c-8-6.6-12.9-15-14.2-25c-1.5-11.5,1.7-21.9,9.6-30.7C32.5,8.9,42.2,4.2,53.7,2.7c0.7-0.1,1.5-0.2,2.2-0.2C57,2.4,58.2,2.5,59.3,2.5z M76.5,81c0,0.1,0.1,0.3,0.1,0.6c1.6,6.3,3.2,12.6,4.7,18.9c4.5,17.7,8.9,35.5,13.3,53.2c0.2,0.9,0.6,1.1,1.6,0.9c5.4-1.2,10.7-0.8,15.7,1.6c0.8,0.4,1.2,0.3,1.7-0.4c11.2-12.9,22.5-25.7,33.4-38.7c0.5-0.6,0.4-1,0-1.6c-5.6-7.9-6.1-16.1-1.3-24.5c0.5-0.8,0.3-1.1-0.5-1.6c-9.1-4.7-18.1-9.3-27.2-14c-6.8-3.5-13.5-7-20.3-10.5c-0.7-0.4-1.1-0.3-1.6,0.4c-1.3,1.8-2.7,3.5-4.3,5.1c-4.2,4.2-9.1,7.4-14.7,9.7C76.9,80.3,76.4,80.3,76.5,81z M89,42.6c0.1-2.5-0.4-5.4-1.5-8.1C83,23.1,74.2,16.9,61.7,15.8c-10-0.9-18.6,2.4-25.3,9.7c-8.4,9-9.3,22.4-2.2,32.4c6.8,9.6,19.1,14.2,31.4,11.9C79.2,67.1,89,55.9,89,42.6z M102.1,188.6c0.6,0.1,1.5-0.1,2.4-0.2c9.5-1.4,15.3-10.9,11.6-19.2c-2.6-5.9-9.4-9.6-16.8-8.6c-8.3,1.2-14.1,8.9-12.4,16.6C88.2,183.9,94.4,188.6,102.1,188.6z M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/></svg>
+
+
   <h2>%ver%</h2>
   <p>
   <sup class="units">Uptime <b><span id="%uptime%">%uptimewart%</span></B></sup>
@@ -117,82 +119,55 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 
 
-void handleUpdate(AsyncWebServerRequest *request) {
-  request->send(200, "text/html", htmlup);
-}
+
 
 
 void handleGetTemp() {
-	digitalWrite(BUILTIN_LED, 1);
+	//digitalWrite(BUILTIN_LED, 1);
 	//webserver.send(200, "text/plain", String(123));
-	digitalWrite(BUILTIN_LED, 0);
+	//digitalWrite(BUILTIN_LED, 0);
 }
 
+//#include <Update.h>
+size_t content_len;
 void printProgress(size_t prg, size_t sz) {
-  int content_len = 255;
-  #ifdef debug1
-  Serial.printf("Progress: %d%%\n", (prg * 100) / content_len);
-  #endif
-  WebSerial.print(F("Progress: "));
-  WebSerial.println((prg * 100) / sz);
+  Serial.printf("Progress: %d%%\n", (prg*100)/content_len);
+  WebSerial.println("Progress: "+String((prg*100)/content_len));
 }
 
 void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-  int content_len = 255;
-//#define U_FLASH   0  //copied from ESP8266 library dla ESP32 sprawdzic
-#define U_LittleFS  100
-//#define U_AUTH    200
-  if (!index) {
+  //#define UPDATE_SIZE_UNKNOWN 0XFFFFFFFF
+  //uint32_t free_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+  if (!index){
+    Serial.println(F("Update"));
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
     response->addHeader("Refresh", "15");
     response->addHeader("Location", "/");
     request->send(response);
-    #ifdef debug
-    Serial.println(F("Update"));
-    #endif
     content_len = request->contentLength();
-    // if filename includes LittleFS, update the LittleFS partition
-    int cmd = (filename.indexOf("LittleFS") > -1) ? U_LittleFS : U_FLASH;
-#ifdef ESP8266
+    // if filename includes spiffs, update the spiffs partition
+    int cmd = U_FLASH; //(filename.indexOf("spiffs") > -1) ? U_SPIFFS : U_FLASH;
     Update.runAsync(true);
-    if (!Update.begin(content_len, cmd)) {
-#else
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
-#endif
+    if (!Update.begin(content_len, cmd)){
       Update.printError(Serial);
     }
   }
-
+  Serial.println(F("Write data..."));
   if (Update.write(data, len) != len) {
     Update.printError(Serial);
-//#ifdef ESP8266
-  } else {
-    printProgress(Update.progress(),Update.size());
-   // Serial.printf("Progress: %d%%\n", (Update.progress() * 100) / Update.size());
-
-//      WebSerial.print("Progressxx: ");
- //     WebSerial.println((Update.progress() * 100) / Update.size());
-//#endif
   }
-
   if (final) {
-
-
-    if (!Update.end(true)) {
+    if (!Update.end(true)){
       Update.printError(Serial);
     } else {
-//      SaveEnergy();
-      #ifdef debug
-      Serial.println(F("Update complete"));
-      #endif
-      WebSerial.println(F("Update complete"));
+      Serial.println("Update complete");
       Serial.flush();
-      WiFi.forceSleepBegin();
-      webserver.end();
-      WiFi.disconnect();
-//      wifi.disconnect();
-      delay(5000);
-      WiFi.forceSleepBegin(); wdt_reset(); ESP.restart(); while (1)ESP.restart(); wdt_reset(); ESP.restart();
+      AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
+      response->addHeader("Refresh", "20");
+      response->addHeader("Location", "/");
+      request->send(response);
+      delay(100);
+      ESP.restart();
     }
   }
 }
@@ -203,63 +178,77 @@ void WebServers() {
     Serial.println(F("subWerbServers..."));
   #endif
   webserver.on("/update", HTTP_GET, [](AsyncWebServerRequest * request) {
-//    AsyncWebHandler->setAuthentication("", "");
-    handleUpdate(request);
-  }).setAuthentication("", "");
-  webserver.on("/doUpdate", HTTP_POST, [](AsyncWebServerRequest * request) {},
-  [](AsyncWebServerRequest * request, const String & filename, size_t index, uint8_t *data,
-     size_t len, bool final) {
-    handleDoUpdate(request, filename, index, data, len, final);
-  }).setAuthentication("", "");
+    request->send(200, "text/html", htmlup);
+    }).setAuthentication("", "");
+  webserver.on("/doUpdate", HTTP_POST,
+      [&](AsyncWebServerRequest *request) {
+      // the request handler is triggered after the upload has finished...
+      // create the response, add header, and send response
+      AsyncWebServerResponse *response = request->beginResponse((Update.hasError())?500:200, "text/plain", (Update.hasError())?"FAIL":"OK");
+      response->addHeader("Connection", "close");
+      response->addHeader("Access-Control-Allow-Origin", "*");
+      request->send(response);
+      },
+    [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
+                  size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
+  ).setAuthentication("", "");;
+
+
+  // [](AsyncWebServerRequest * request) {},
+  // [](AsyncWebServerRequest * request, const String & filename, size_t index, uint8_t *data,
+  //    size_t len, bool final) {
+  //   handleDoUpdate(request, filename, index, data, len, final);
+
+  // }).setAuthentication("", "");
   webserver.onNotFound([](AsyncWebServerRequest * request) {
     request->send(404);
   });
-  webserver.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+  webserver.on("/" , HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html; charset=utf-8",  index_html, processor);
   }).setAuthentication("", "");
     // Send a GET request to <IP>/get?message=<message>
-  webserver.on("/"uptimelink , HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" uptimelink , HTTP_GET, [](AsyncWebServerRequest * request) {
   //  request.setAuthentication("", "");
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(started)));
   }).setAuthentication("", "");
-  webserver.on("/"dallThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" dallThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(temp_NEWS));
   }).setAuthentication("", "");
-  webserver.on("/"tempCOThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempCOThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(tempBoiler,1));
   }).setAuthentication("", "");
-  webserver.on("/"tempCOThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempCOThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(tempBoilerSet,1));
   }).setAuthentication("", "");
-  webserver.on("/"tempCORETThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempCORETThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(retTemp,1));
   }).setAuthentication("", "");
-  webserver.on("/"tempHWThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempHWThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(tempCWU,1));
   }).setAuthentication("", "");
-  webserver.on("/"tempHWThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempHWThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(dhwTarget,1));
   }).setAuthentication("", "");
-  webserver.on("/"cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(cutOffTemp,1));
   }).setAuthentication("", "");
-  webserver.on("/"cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet)));
   }).setAuthentication("", "");
-  webserver.on("/"do_stopkawebsiteS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" do_stopkawebsiteS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", do_stopkawebsite());
   }).setAuthentication("", "");
 
 
 
 
-  webserver.on("/"tempROOMThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempROOMThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(roomtemp,1));
   }).setAuthentication("", "");
-  webserver.on("/"tempROOMThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" tempROOMThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(sp,1));
   }).setAuthentication("", "");
-  webserver.on("/"NEWS_lastTimeS, HTTP_GET, [](AsyncWebServerRequest * request) {
+  webserver.on("/" NEWS_lastTimeS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet)));
   }).setAuthentication("", "");
 
@@ -267,141 +256,154 @@ void WebServers() {
 
   webserver.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
     String message;
-      if (request->hasParam(PARAM_MESSAGE_tempCOset)) { //tempCOset
-          message = request->getParam(PARAM_MESSAGE_tempCOset)->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
-            #ifdef debug
-            Serial.println(F("Liczba not a valid number, ignoring..."));
-            #endif
-            WebSerial.println(F("Liczba not a valid number, ignoring..."));
-          }
-          else {
-            if (liczba>opcohi) liczba=opcohi;
-            if (liczba<opcolo) liczba=opcolo;
-            tempBoilerSet = liczba;
-            op_override = liczba;
- //           op = liczba;
-            message = String(liczba);
-            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
-            WebSerial.println(message);
-          }
+      if (request->hasParam(PARAM_MESSAGE_tempCOset)) {
+        message = request->getParam(PARAM_MESSAGE_tempCOset)->value();
+        String ident = String(millis())+": WebReceived change Boiler CO Set ";
+        if (PayloadtoValidFloatCheck(message))  //wrong value are displayed in function
+            {
+              #ifdef debug
+              Serial.print(ident);
+              #endif
+              WebSerial.print(ident);
+              tempBoilerSet = PayloadtoValidFloat(message, true, roomtemplo, roomtemphi);
+              op_override = tempBoilerSet; // when no auto heating then this is temp to heat CO
+              receivedmqttdata = true;
+            } else {
+              #ifdef debug
+              Serial.println(ident + " is not a valid number, ignoring...");
+              #endif
+              WebSerial.println(ident + " is not a valid number, ignoring...");
+            }
       } else {
-        //message = "No message sent tempCOset"; tempHWset
+        //message = "No message sent tempCOset";
       }
-      if (request->hasParam(PARAM_MESSAGE_cutOffTempSet)) { //tempCOset
+      if (request->hasParam(PARAM_MESSAGE_cutOffTempSet)) {
           message = request->getParam(PARAM_MESSAGE_cutOffTempSet)->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
-            #ifdef debug
-            Serial.println(F("Liczba not a valid number, ignoring..."));
-            #endif
-            WebSerial.println(F("Liczba not a valid number, ignoring..."));
-          }
-          else {
-            if (liczba>cutoffhi) liczba=cutoffhi;
-            if (liczba<cutofflo) liczba=cutofflo;
-            cutOffTemp = liczba;
-            message = String(liczba);
-            WebSerial.print(F("WebReceived change TempCutOff Set to: "));
-            WebSerial.println(message);
-          }
+        String ident = String(millis())+": WebReceived change TempCutOff Set ";
+        if (PayloadtoValidFloatCheck(message))  //wrong value are displayed in function
+            {
+              #ifdef debug
+              Serial.print(ident);
+              #endif
+              WebSerial.print(ident);
+              cutOffTemp = PayloadtoValidFloat(message, true, cutofflo, cutoffhi);
+              lastcutOffTempSet = millis();
+              receivedmqttdata = true;
+            } else {
+              #ifdef debug
+              Serial.println(ident + " is not a valid number, ignoring...");
+              #endif
+              WebSerial.println(ident + " is not a valid number, ignoring...");
+            }
       } else {
-        //message = "No message sent tempCOset";
+        //message = "No message sent PARAM_MESSAGE_cutOffTempSet";
       }
-      if (request->hasParam(PARAM_MESSAGE_tempHWset)) { //tempCOset
-          message = request->getParam(PARAM_MESSAGE_tempHWset)->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
-            #ifdef debug
-            Serial.println(F("Liczba not a valid number, ignoring..."));
-            #endif
-            WebSerial.println(F("Liczba not a valid number, ignoring..."));
-          }
-          else {
-            if (liczba>ophi) liczba=ophi;
-            if (liczba<oplo) liczba=oplo;
-            dhwTarget = liczba;
-            message = String(liczba);
-            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
-            WebSerial.println(message);
-          }
+      if (request->hasParam(PARAM_MESSAGE_tempHWset)) {
+        message = request->getParam(PARAM_MESSAGE_tempHWset)->value();
+        String ident = String(millis())+": WebReceived DHW target ";
+        if (PayloadtoValidFloatCheck(message))  //wrong value are displayed in function
+            {
+              #ifdef debug
+              Serial.print(ident);
+              #endif
+              WebSerial.print(ident);
+              dhwTarget = PayloadtoValidFloat(message, true, oplo, ophi);
+              receivedmqttdata = true;
+            } else {
+              #ifdef debug
+              Serial.println(ident + " is not a valid number, ignoring...");
+              #endif
+              WebSerial.println(ident + " is not a valid number, ignoring...");
+            }
       } else {
-        //message = "No message sent tempCOset";
+        //message = "No message sent PARAM_MESSAGE_tempHWset";
       }
-      if (request->hasParam(PARAM_MESSAGE_tempROOMset)) { //tempCOset
+      if (request->hasParam(PARAM_MESSAGE_tempROOMset)) {
           message = request->getParam(PARAM_MESSAGE_tempROOMset)->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
-            #ifdef debug
-            Serial.println(F("Liczba not a valid number, ignoring..."));
-            #endif
-            WebSerial.println(F("Liczba not a valid number, ignoring..."));
-          }
-          else {
-            if (liczba>roomtemphi) liczba=roomtemphi;
-            if (liczba<roomtemplo) liczba=roomtemplo;
-            sp = liczba;
-            message = String(liczba);
-            WebSerial.print(F("WebReceived change Boiler CO Set to: "));
-            WebSerial.println(message);
-          }
+        String ident = String(millis())+": WebReceived Room Target sp ";
+        if (PayloadtoValidFloatCheck(message))  //wrong value are displayed in function
+            {
+              #ifdef debug
+              Serial.print(ident);
+              #endif
+              WebSerial.print(ident);
+              sp = PayloadtoValidFloat(message, true, roomtemplo, roomtemphi);
+              receivedmqttdata = true;
+            } else {
+              #ifdef debug
+              Serial.println(ident + " is not a valid number, ignoring...");
+              #endif
+              WebSerial.println(ident + " is not a valid number, ignoring...");
+            }
       } else {
-        //message = "No message sent tempCOset";
+        //message = "No message sent PARAM_MESSAGE_tempROOMset";
       }
       if (request->hasParam("boilermodewww")) { //tempCOset
-          message = request->getParam("boilermodewww")->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
-            #ifdef debug
-            Serial.println(F("Liczba not a valid number, ignoring..."));
-            #endif
-            WebSerial.println(F("Liczba not a valid number, ignoring..."));
-          }
-          else {
-            if (liczba==2) automodeCO=true;
-            if (liczba==1) automodeCO=false;  //mode heat and off is controlled by outside temp cutoff
-            message = String(liczba);
-            WebSerial.print(F("WebReceived change Boiler Mode CO to: "));
-            WebSerial.print(String(message)+" ");
-            WebSerial.println(automodeCO ? "Auto" : "Heat/Off" );
-          }
+        message = request->getParam("boilermodewww")->value();
+        String ident = String(millis())+": WebReceived Modde Set ";
+        #ifdef debug
+        Serial.print(ident + "Set mode: ");
+        #endif
+        WebSerial.print(ident + "Set mode: ");
+        if (PayloadStatus(message, true))
+        {
+          heatingEnabled = true;
+          automodeCO = false;
+          tempBoilerSet = op_override;
+          receivedmqttdata = true;
+          WebSerial.println("CO mode " + message);
+        }
+        else if (PayloadStatus(message, false))
+        {
+          heatingEnabled = false;
+          automodeCO = false;
+          receivedmqttdata = true;
+          WebSerial.println("CO mode " + message);
+        }
+        else if (message == "AUTO" or message == "2")
+        {
+          automodeCO = true;
+          receivedmqttdata = true;
+          WebSerial.println("CO mode " + message);
+        } else {
+          #ifdef debug
+          Serial.println("Unknown mode " + message);
+          #endif
+          WebSerial.println("Unknown mode " + message);
+        }
+        WebSerial.print(F("WebReceived change Boiler Mode CO to: "));
+        WebSerial.print(String(message)+" ");
+        WebSerial.println(automodeCO ? "Auto" : "Heat/Off" );
       } else {
         //message = "No message sent tempCOset";
       }
       if (request->hasParam("boilerhwwww")) { //tempCOset
           message = request->getParam("boilerhwwww")->value();
-          message.trim();
-          message.replace(",",".");
-          float liczba = message.toFloat();
-          if (isnan(liczba) || !isValidNumber(message)) {
+          String ident = String(millis())+": DHW State enableHotWater ";
+          #ifdef debug
+          Serial.print(ident);
+          #endif
+          WebSerial.print(ident);
+          receivedmqttdata = true;
+          if (PayloadStatus(message, true)) enableHotWater = true;
+          else if (PayloadStatus(message, false)) enableHotWater = false;
+          else
+          {
+            receivedmqttdata = false;
             #ifdef debug
-            Serial.println("Liczba not a valid number, ignoring...");
+            Serial.println("Unknown: "+String(message));
             #endif
-            WebSerial.println("Liczba not a valid number, ignoring...");
+            WebSerial.println("Unknown: "+String(message));
           }
-          else {
-            if (liczba==1) enableHotWater=true;
-            if (liczba==0) enableHotWater=false;
-            message = String(liczba);
-            WebSerial.print("WebReceived change HotWoter Mode: ");
-            WebSerial.print(String(message)+" ");
-            WebSerial.println(enableHotWater?"heat":"off");
+          if (receivedmqttdata) {
+            #ifdef debug
+            Serial.println(enableHotWater ? "heat" : "off" );
+            #endif
+            WebSerial.println(enableHotWater ? "heat" : "off" );
           }
       } else {
         //message = "No message sent tempCOset";
       }
-
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Update value");
     response->addHeader("Refresh", "1");
     response->addHeader("Location", "/");
@@ -428,6 +430,10 @@ void WebServers() {
   #ifdef debug
 	Serial.println("HTTP server started");
   #endif
+  Update.onProgress(printProgress);
+
+  // Add service to MDNS-SD
+  //MDNS.addService("http", "tcp", 80);
 }
 
 
@@ -441,15 +447,19 @@ String processor(const String var) {
   if (var == "ver") {
     String a = "ESP CO Server v. ";
     a += me_version;
-    a += "<br>";
+    a += "<br><font size=\"2\" color=\"DarkGreen\">";
     a += client.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
+    #ifdef ENABLE_INFLUX
+    a += " + INFLUXDB: "+String(INFLUXDB_DB_NAME)+"/"+String(InfluxMeasurments);
+    a += "</font>";
+    #endif
     return a;
   }
 
   if (var == "dane") {
     String a = "Raport dla Hosta: <B>";  //PrintHex8c(GUID,0x0,sizeof(GUID)/sizeof(GUID[0]));
     a += me_lokalizacja;
-    a += "</B>&nbsp;&nbsp;&nbsp;MAC: <B>";
+    a += "</B>&nbsp;&nbsp;MAC: <B>";
     #ifdef debug
       Serial.println(F("Raport Hosta "));
     #endif
@@ -500,7 +510,7 @@ String processor(const String var) {
   }
   if (var == "stopkawebsite0") {
     String ptr;
-      ptr = "<br><span class='units'><a href='/update'>"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial'>"+String(Web_Serial)+"</a>&nbsp;";
+      ptr = "<br><span class='units'><a href='/update' target=\"_blank\">"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">"+String(Web_Serial)+"</a>&nbsp;";
       ptr += "<br>&copy; ";
       ptr += stopka;
       ptr += "<br>";
@@ -511,7 +521,7 @@ String processor(const String var) {
   if (var=="bodywstaw") {
     String ptr;
     const float tempstep=0.5;
-    const String tempicon="<i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;font-size:36px;text-shadow:2px 2px 4px #000000;\"></i>&nbsp;&nbsp;";
+    const String tempicon="<i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;font-size:28px;text-shadow:2px 2px 4px #000000;\"></i>&nbsp;&nbsp;";
     ptr="<form action=\"/get\">";
 
     ptr+="<p>"+tempicon+"<span class=\"dht-labels\">"+String(Temp_NEWS)+"</span><B><span class=\"dht-labels-temp\" id=\""+String(dallThermometerS)+"\">"+String(temp_NEWS)+"</span><sup class=\"units\">&deg;C</sup></B>";
@@ -583,13 +593,18 @@ String processor(const String var) {
     refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime/2)+");\n";
     tmp=String(tempCOThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(dallThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=""+String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(dallThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempCORETThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempHWThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempHWThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=""+String(tempHWThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(NEWS_lastTimeS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempROOMThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=""+String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=String(cutOffTempS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
+    tmp=""+String(cutOffTempS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     tmp=String(do_stopkawebsiteS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
     return String(ptr);
   }
@@ -660,7 +675,7 @@ String uptimedana(unsigned long started_local) {
 
 #include <EEPROM.h>
 
-#define CONFIG_VERSION "V00"sensitive_sizeS
+#define CONFIG_VERSION "V00" sensitive_sizeS
 
 // Where in EEPROM?
 #define CONFIG_START 32
@@ -698,8 +713,10 @@ bool loadConfig() {
   // is it correct?
   if (sizeof(CONFIGURATION)<1024) EEPROM.begin(1024); else EEPROM.begin(sizeof(CONFIGURATION)+128); //Size can be anywhere between 4 and 4096 bytes.
   EEPROM.get(1,runNumber);
+  if (isnan(runNumber)) runNumber=0;
   runNumber++;
   EEPROM.get(1+sizeof(runNumber),flame_used_power_kwh);
+  if (isnan(flame_used_power_kwh)) flame_used_power_kwh = 0;
   if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
       EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
       EEPROM.read(CONFIG_START + 2) == CONFIG_VERSION[2] &&
