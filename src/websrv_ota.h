@@ -524,7 +524,7 @@ String processor(const String var) {
     ptr=F("<form action=\"/get\">");
 
     ptr+=F("<p>")+tempicon+F("<span class=\"dht-labels\">")+String(Temp_NEWS)+F("</span><B><span class=\"dht-labels-temp\" id=\"")+String(dallThermometerS)+F("\">")+String(temp_NEWS)+F("</span><sup class=\"units\">&deg;C</sup></B>");
-    ptr+=F("<font size=\"4\" color=\"blue\">")+String(ActualFrom)+F("<B><span id=\"")+String(NEWS_lastTimeS)+F("\">")+String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet))+F("</span></B> </font></p>");
+    ptr+=F("<font size=\"4\" color=\"blue\">")+String(ActualFrom)+F("<B><span id=\"")+String(NEWS_lastTimeS)+F("\">")+String(uptimedana(millis()-lastNEWSSet))+F("</span></B> </font></p>");
 
     ptr+=F("<p><table><tr>");
     ptr+=F("<td><B><LABEL FOR=\"BOILMOD\">")+String(Boler_mode)+F("</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"2\" ")+String(automodeCO?"Checked":"")+F(">")+String(Automatic_mode)+F("</td>");
