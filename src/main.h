@@ -3,7 +3,7 @@
   #include <ESP8266HTTPClient.h>
   #include <InfluxDbClient.h>
 #endif
-#include <ArduinoJson.h>
+
 
 
 const char version[10+1] =
@@ -107,6 +107,7 @@ double  flame_used_power = 0;             //for count used energy
 bool heatingEnabled = true,
      enableHotWater = true,
      CO_PumpWorking = false, // value from mqtt -if set co heating is disabled -second heating engine is working (in my case Wood/Carbon heater)
+     Water_PumpWorking = false, // value from mqtt -if set water heating engine is working (in my case Wood/Carbon heater)
      automodeCO = false,     // tryb automatyczny zalezny od temp zewnetrznej i pracy pompy CO kotla weglowego
      receivedmqttdata = false,
      tmanual = false,
@@ -132,6 +133,7 @@ String convertPayloadToStr(byte *payload, unsigned int length);
 bool isValidNumber(String str);
 void callback(char *topic, byte *payload, unsigned int length);
 void reconnect();
+String getJsonVal(String json, String tofind);
 
 void setup();
 void loop();

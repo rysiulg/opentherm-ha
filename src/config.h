@@ -15,6 +15,7 @@
 
 //#define debug
 #define debug1
+//#define debugweb
 #define me_lokalizacja "BOILER_GAZ"
 #define ATOMIC_FS_UPDATE
 #define MFG "MARM.pl Sp. z o.o."
@@ -27,7 +28,7 @@
 #define boiler_50_30_ret 31     //boiler technical factory set data at working 50st and return 30st -assume that is that mode if rettemp i under 31degC
 #define boiler_80_60 19.5     //boiler technical factory set data at working 80st and return 60st
 #define  ENABLE_INFLUX        //if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
-
+#define enableWebSerial     //not fully implemented
 //#boiler_gas_conversion_to_m3  1
 
 #include "sensivity-config-data.h" //it have definitions of sensivity data
@@ -140,8 +141,13 @@ const String TEMP_CUTOFF_SET_TOPIC = BASE_TOPIC + "/SET/" + TEMP_CUTOFF + "/set"
 const String STATE_DHW_SET_TOPIC = BASE_TOPIC + "/SET/" + HOT_WATER_SOFTWARE_CH_STATE + "/set";      // enableHotWater
 const String MODE_SET_TOPIC = BASE_TOPIC + "/SET/" + BOILER_SOFTWARE_CH_STATE_MODE + "/set";         // 012 auto, heat, off ch
 const String TEMP_DHW_SET_TOPIC = BASE_TOPIC + "/SET/" + HOT_WATER_TEMPERATURE_SETPOINT + "/set";    // dhwTarget
-String COPUMP_GET_TOPIC = "COWoda_mqqt_MARM/switch/bcddc2b2c08e/pump2CO/state";                      // temperatura outside avg NEWS
-String NEWS_GET_TOPIC = "COWoda_mqqt_MARM/sensor/bcddc2b2c08e/WENS_Outside_Temp_AVG/state";          // pompa CO status
+String COPUMP_GET_TOPIC = "COWoda0/switch/boilerroom/attributes";                      // temperatura outside avg NEWS
+#define COPumpStatus_json "CO0_boilerroom_pump2CO"
+#define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
+
+String NEWS_GET_TOPIC = "COWoda0/sensor/boilerroom/attributes";          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
+#define NEWStemp_json "CO0_outside_temperature_Averange"
+
 
 String ROOMS_F1_GET_TOPIC = "FLOORH1/sensor/room/attributes";          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
 #define roomF1temp_json "FL1_room_temperature_0"

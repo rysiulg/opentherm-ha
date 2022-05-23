@@ -30,7 +30,7 @@ const char* PARAM_MESSAGE_tempHWset = tempHWset;
 const char* PARAM_MESSAGE_cutOffTempSet = cutOffTempVAL;
 const char* PARAM_MESSAGE_tempROOMset = tempROOMset;
 
-uint8_t mac[6] = {strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), strtol(WiFi.macAddress().substring(3,5).c_str(),0,16),strtol(WiFi.macAddress().substring(6,8).c_str(),0,16),strtol(WiFi.macAddress().substring(9,11).c_str(),0,16),strtol(WiFi.macAddress().substring(12,14).c_str(),0,16),strtol(WiFi.macAddress().substring(15,17).c_str(),0,16)};
+uint8_t mac[6] = {(uint8_t)strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), (uint8_t)strtol(WiFi.macAddress().substring(3,5).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(6,8).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(9,11).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(12,14).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(15,17).c_str(),0,16)};
 unsigned long  started = 0; //do mierzenia czasu uptime bez resetu
 
 const char htmlup[] PROGMEM = R"rawliteral(
@@ -445,38 +445,36 @@ String processor(const String var) {
 //    Serial.println(var);
   #endif
   if (var == "ver") {
-    String a = "ESP CO Server v. ";
-    a += me_version;
-    a += "<br><font size=\"2\" color=\"DarkGreen\">";
+    String a = F("ESP CO Server dla: ")+String(me_lokalizacja);
+    a += F("<br>v. ") + String(me_version);
+    a += F("<br><font size=\"2\" color=\"DarkGreen\">");
     a += client.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
     #ifdef ENABLE_INFLUX
-    a += " + INFLUXDB: "+String(INFLUXDB_DB_NAME)+"/"+String(InfluxMeasurments);
-    a += "</font>";
+    a += F(" + INFLUXDB: ")+String(INFLUXDB_DB_NAME)+F("/")+String(InfluxMeasurments);
+    a += F("</font>");
     #endif
     return a;
   }
 
   if (var == "dane") {
-    String a = "Raport dla Hosta: <B>";  //PrintHex8c(GUID,0x0,sizeof(GUID)/sizeof(GUID[0]));
-    a += me_lokalizacja;
-    a += "</B>&nbsp;&nbsp;MAC: <B>";
+    String a = F("MAC: <B>");
     #ifdef debug
       Serial.println(F("Raport Hosta "));
     #endif
     a += PrintHex8(mac, ':', sizeof(mac) / sizeof(mac[0]));
-    a += "</b>&nbsp;&nbsp;<B>";
-    a += "</B>WiFi (RSSI): <B>";
+    a += F("</b>&nbsp;&nbsp;<B>");
+    a += F("</B>WiFi (RSSI): <B>");
     a += WiFi.RSSI();
-    a += "dBm</b> CRT:";
+    a += F("dBm</b> CRT:");
     a += String(runNumber);
-    a += "<br>";
+    a += F("<br>");
     a += LastboilerResponseError;
-    a += "<br></B>";
+    a += F("<br></B>");
 
     #ifdef debug
       Serial.println(F("Raport Hosta po read_eprom: "));
     #endif
-    return String(a);
+    return String(a).c_str();
   }
 
   if (var == "uptimewart") {
@@ -493,16 +491,17 @@ String processor(const String var) {
 
   if (var=="stylesectionadd") {
     String ptr;
-    ptr="html{font-family:Arial;display:inline-block;margin:0 auto;text-align:center}\
+    ptr=F("html{font-family:Arial;display:inline-block;margin:0 auto;text-align:center}\
     h2{font-size:2.1rem}\
     p{font-size:2.2rem}\
     .units{font-size:1.1rem}\
     .dht-labels{font-size:1.3rem;vertical-align:middle;padding-bottom:8px}\
     .dht-labels-temp{font-size:3.3rem;font-weight:700;vertical-align:middle;padding-bottom:8px}\
-    table,td,th{border-color:green;border-collapse:collapse;border-style:outset;margin-left:auto;margin-right:auto;border:0;text-align:center;padding-left: 40px;padding-right: 50px;padding-top: 5px;padding-bottom: 10px;}\
+    table,td,th{border-color:green;border-collapse:collapse;border-style:outset;margin-left:auto;margin-right:auto;border:0;text-align:center;padding-left: 5px;padding-right: 10px;padding-top: 5px;padding-bottom: 10px;}\
     input{margin:.4rem}\
-    td{height:auto;width:auto}";
-    return String(ptr);
+    td{height:auto;width:auto}");
+    ptr+=F("body{background-color:lightcyan;}");
+    return String(ptr).c_str();
   }
 
   if (var == "stopkawebsite") {
@@ -510,76 +509,76 @@ String processor(const String var) {
   }
   if (var == "stopkawebsite0") {
     String ptr;
-      ptr = "<br><span class='units'><a href='/update' target=\"_blank\">"+String(Update_web_link)+"</a> &nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">"+String(Web_Serial)+"</a>&nbsp;";
-      ptr += "<br>&copy; ";
+      ptr = F("<br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a> &nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>&nbsp;");
+      ptr += F("<br>&copy; ");
       ptr += stopka;
-      ptr += "<br>";
-    return String(ptr);
+      ptr += F("<br>");
+    return String(ptr).c_str();
   }
 
 
   if (var=="bodywstaw") {
     String ptr;
     const float tempstep=0.5;
-    const String tempicon="<i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;font-size:28px;text-shadow:2px 2px 4px #000000;\"></i>&nbsp;&nbsp;";
-    ptr="<form action=\"/get\">";
+    const String tempicon=F("<i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;font-size:28px;text-shadow:2px 2px 4px #000000;\"></i>&nbsp;&nbsp;");
+    ptr=F("<form action=\"/get\">");
 
-    ptr+="<p>"+tempicon+"<span class=\"dht-labels\">"+String(Temp_NEWS)+"</span><B><span class=\"dht-labels-temp\" id=\""+String(dallThermometerS)+"\">"+String(temp_NEWS)+"</span><sup class=\"units\">&deg;C</sup></B>";
-    ptr+="<font size=\"4\" color=\"blue\">"+String(ActualFrom)+"<B><span id=\""+String(NEWS_lastTimeS)+"\">"+String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet))+"</span></B> </font></p>";
+    ptr+=F("<p>")+tempicon+F("<span class=\"dht-labels\">")+String(Temp_NEWS)+F("</span><B><span class=\"dht-labels-temp\" id=\"")+String(dallThermometerS)+F("\">")+String(temp_NEWS)+F("</span><sup class=\"units\">&deg;C</sup></B>");
+    ptr+=F("<font size=\"4\" color=\"blue\">")+String(ActualFrom)+F("<B><span id=\"")+String(NEWS_lastTimeS)+F("\">")+String(uptimedana(temp_NEWS_count*temp_NEWS_interval_reduction_time_ms+lastNEWSSet))+F("</span></B> </font></p>");
 
-    ptr+="<p><table><tr>";
-    ptr+="<td><B><LABEL FOR=\"BOILMOD\">"+String(Boler_mode)+"</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"2\" "+String(automodeCO?"Checked":"")+">"+String(Automatic_mode)+"</td>";
-    ptr+="<td><B><LABEL FOR=\"HWMOD\">"+String(DHW_Mode)+"</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"1\" "+String(enableHotWater?"Checked":"")+">"+String(Heating)+"</td>";
-    ptr+="</tr><tr><td><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"1\" "+String(automodeCO?"":"Checked")+">"+String(Heating)+"/"+String(Off)+"</td>";
-    ptr+="<td><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"0\" "+String(enableHotWater?"":"Checked")+">"+String(Off)+"</td></tr>";
+    ptr+=F("<p><table><tr>");
+    ptr+=F("<td><B><LABEL FOR=\"BOILMOD\">")+String(Boler_mode)+F("</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"2\" ")+String(automodeCO?"Checked":"")+F(">")+String(Automatic_mode)+F("</td>");
+    ptr+=F("<td><B><LABEL FOR=\"HWMOD\">")+String(DHW_Mode)+F("</LABEL></B><br><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"1\" ")+String(enableHotWater?"Checked":"")+F(">")+String(Heating)+F("</td>");
+    ptr+=F("</tr><tr><td><INPUT TYPE=\"Radio\" ID=\"BOILMOD\" Name=\"boilermodewww\" Value=\"1\" ")+String(automodeCO?"":"Checked")+F(">")+String(Heating)+F("/")+String(Off)+F("</td>");
+    ptr+=F("<td><INPUT TYPE=\"Radio\" ID=\"HWMOD\" Name=\"boilerhwwww\" Value=\"0\" ")+String(enableHotWater?"":"Checked")+F(">")+String(Off)+F("</td></tr>");
 
-    ptr+="<tr><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(DHW_Temp)+"</span>";
-    ptr+="<br><B>";
-    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempHWThermometerS)+"\">"+String(tempCWU,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
-    ptr+="<br></td><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(DHW_Temp_Set)+"</span>";
-    ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempHWThermometerSetS)+"\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempHWThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempHWThermometerSetS)+"\" type=\"range\" min=\""+String(oplo,1)+"\" max=\""+String(ophi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempHWset)+"\" value=\""+String(dhwTarget,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempHWThermometerSetS)+"');\">";
-    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
-    ptr+="</td></tr>";
+    ptr+=F("<tr><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(DHW_Temp)+F("</span>");
+    ptr+=F("<br><B>");
+    ptr+=F("<span class=\"dht-labels-temp\" id=\"")+String(tempHWThermometerS)+F("\">")+String(tempCWU,1)+F("</span><sup class=\"units\">&deg;C</sup></B>");
+    ptr+=F("<br></td><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(DHW_Temp_Set)+F("</span>");
+    ptr+=F("<br>");
+    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(tempHWThermometerSetS)+F("\" min=\"")+String(oplo,1)+F("\" max=\"")+String(ophi,1)+F("\" step=\"")+String(tempstep,1)+F("\" value=\"")+String(dhwTarget,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(tempHWThermometerSetS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(tempHWThermometerSetS)+F("\" type=\"range\" min=\"")+String(oplo,1)+F("\" max=\"")+String(ophi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_tempHWset)+F("\" value=\"")+String(dhwTarget,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(tempHWThermometerSetS)+F("');\">");
+    ptr+=F("<input type=\"submit\" style=\"width:45px\"></font>");
+    ptr+=F("</td></tr>");
 
-    ptr+="<tr><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Boiler_And_CO_Temperature)+"</span>";
-    ptr+="<br><B>";
-    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCOThermometerS)+"\">"+String(tempBoiler,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
-    ptr+="<br></td><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Set_Temperature_for_CO_heat)+"</span>";
-    ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempCOThermometerSetS)+"\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempCOThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempCOThermometerSetS)+"\" type=\"range\" min=\""+String(opcolo,1)+"\" max=\""+String(opcohi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempCOset)+"\" value=\""+String(tempBoilerSet,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempCOThermometerSetS)+"');\">";
-    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
-    ptr+="</td></tr>";
+    ptr+=F("<tr><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Boiler_And_CO_Temperature)+F("</span>");
+    ptr+=F("<br><B>");
+    ptr+=F("<span class=\"dht-labels-temp\" id=\"")+String(tempCOThermometerS)+F("\">")+String(tempBoiler,1)+F("</span><sup class=\"units\">&deg;C</sup></B>");
+    ptr+=F("<br></td><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Set_Temperature_for_CO_heat)+F("</span>");
+    ptr+=F("<br>");
+    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(tempCOThermometerSetS)+F("\" min=\"")+String(opcolo,1)+F("\" max=\"")+String(opcohi,1)+F("\" step=\"")+String(tempstep,1)+F("\" value=\"")+String(tempBoilerSet,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(tempCOThermometerSetS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(tempCOThermometerSetS)+F("\" type=\"range\" min=\"")+String(opcolo,1)+F("\" max=\"")+String(opcohi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_tempCOset)+F("\" value=\"")+String(tempBoilerSet,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(tempCOThermometerSetS)+F("');\">");
+    ptr+=F("<input type=\"submit\" style=\"width:45px\"></font>");
+    ptr+=F("</td></tr>");
 
-   ptr+="<tr><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Room_Temp)+"</span>";
-    ptr+="<br><B>";
-    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempROOMThermometerS)+"\">"+String(roomtemp,1)+"</span><sup class=\"units\">&deg;C</sup></B>";
-    ptr+="<br></td><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Room_Temp_Set)+"</span>";
-    ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(tempROOMThermometerSetS)+"\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(sp,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(tempROOMThermometerSetS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(tempROOMThermometerSetS)+"\" type=\"range\" min=\""+String(roomtemplo,1)+"\" max=\""+String(roomtemphi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_tempROOMset)+"\" value=\""+String(sp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(tempROOMThermometerSetS)+"');\">";
-    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
-    ptr+="</td></tr>";
+   ptr+=F("<tr><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Room_Temp)+F("</span>");
+    ptr+=F("<br><B>");
+    ptr+=F("<span class=\"dht-labels-temp\" id=\"")+String(tempROOMThermometerS)+F("\">")+String(roomtemp,1)+F("</span><sup class=\"units\">&deg;C</sup></B>");
+    ptr+=F("<br></td><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Room_Temp_Set)+F("</span>");
+    ptr+=F("<br>");
+    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(tempROOMThermometerSetS)+F("\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" value=\"")+String(sp,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(tempROOMThermometerSetS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(tempROOMThermometerSetS)+F("\" type=\"range\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_tempROOMset)+F("\" value=\"")+String(sp,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(tempROOMThermometerSetS)+F("');\">");
+    ptr+=F("<input type=\"submit\" style=\"width:45px\"></font>");
+    ptr+=F("</td></tr>");
 
-   ptr+="<tr><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\"><font color=\""+String((retTemp<boiler_50_30_ret)? "darkgreen" : "black")+"\">"+String(Return_temp)+"</span>";
-    ptr+="<br><B>";
-    ptr+="<span class=\"dht-labels-temp\" id=\""+String(tempCORETThermometerS)+"\">"+String(retTemp,1)+"</span><sup class=\"units\">&deg;C</sup></B></font>";
-    ptr+="<br></td><td>";
-    ptr+=tempicon+"<span class=\"dht-labels\">"+String(Outside_Cutoff_Below)+"</span>";
-    ptr+="<br>";
-    ptr+="<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T"+String(cutOffTempS)+"\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:auto\" onchange=\"uTI(this.value, '"+String(cutOffTempS)+"');\"><sup class=\"units\">&deg;C</sup></B><input id=\""+String(cutOffTempS)+"\" type=\"range\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+"\" name=\""+String(PARAM_MESSAGE_cutOffTempSet)+"\" value=\""+String(cutOffTemp,1)+"\" style=\"width:50px\" onchange=\"uTI(this.value, 'T"+String(cutOffTempS)+"');\">";
-    ptr+="<input type=\"submit\" style=\"width:45px\"></font>";
-    ptr+="</td></tr>";
+    ptr+=F("<tr><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\"><font color=\"")+String((retTemp<boiler_50_30_ret)? "darkgreen" : "black")+F("\">")+String(Return_temp)+F("</span>");
+    ptr+=F("<br><B>");
+    ptr+=F("<span class=\"dht-labels-temp\" id=\"")+String(tempCORETThermometerS)+F("\">")+String(retTemp,1)+F("</span><sup class=\"units\">&deg;C</sup></B></font>");
+    ptr+=F("<br></td><td>");
+    ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Outside_Cutoff_Below)+F("</span>");
+    ptr+=F("<br>");
+    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(cutOffTempS)+"\" min=\""+String(cutofflo,1)+"\" max=\""+String(cutoffhi,1)+"\" step=\""+String(tempstep,1)+F("\" value=\"")+String(cutOffTemp,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(cutOffTempS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(cutOffTempS)+F("\" type=\"range\" min=\"")+String(cutofflo,1)+F("\" max=\"")+String(cutoffhi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_cutOffTempSet)+F("\" value=\"")+String(cutOffTemp,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(cutOffTempS)+F("');\">");
+    ptr+=F("<input type=\"submit\" style=\"width:45px\"></font>");
+    ptr+=F("</td></tr>");
 
-    ptr+="</table></form><br>";
+    ptr+=F("</table></form><br>");
 
-    return ptr;
+    return ptr.c_str();
   }
 
 
@@ -588,25 +587,30 @@ String processor(const String var) {
     String tmp;
     unsigned long int step=125;
     unsigned long int refreshtime = 9100;
-    ptr="function uTI(e,n){document.getElementById(n).value=e};\n";
+    const String function0 = "setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"";
+    const String function1 = "\").innerHTML=this.responseText)},e.open(\"GET\",\"/";
+    const String function2 = "\",!0),e.send()},";
+    const String function3 = ");\n";
+
+    ptr=F("function uTI(e,n){document.getElementById(n).value=e};\n");
     tmp=String(uptimelink);  //spanid
-    refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime/2)+");\n";
-    tmp=String(tempCOThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=""+String(tempCOThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(dallThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempCORETThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempHWThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempHWThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=""+String(tempHWThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(NEWS_lastTimeS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempROOMThermometerS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=""+String(tempROOMThermometerSetS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(cutOffTempS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=""+String(cutOffTempS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\"T"+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    tmp=String(do_stopkawebsiteS); refreshtime+=step; ptr+="setInterval(function(){var e=new XMLHttpRequest;e.onreadystatechange=function(){4==this.readyState&&200==this.status&&(document.getElementById(\""+tmp+"\").innerHTML=this.responseText)},e.open(\"GET\",\"/"+tmp+"\",!0),e.send()},"+String(refreshtime)+");\n";
-    return String(ptr);
+    refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime/2)+");\n";
+    tmp=String(tempCOThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=""+String(tempCOThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(dallThermometerS); refreshtime+=step; ptr+=function0+F("T")+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempCORETThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempHWThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempHWThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=""+String(tempHWThermometerSetS); refreshtime+=step; ptr+=function0+F("T")+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(NEWS_lastTimeS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempROOMThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(tempROOMThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=""+String(tempROOMThermometerSetS); refreshtime+=step; ptr+=function0+F("T")+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(cutOffTempS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=""+String(cutOffTempS); refreshtime+=step; ptr+=function0+F("T")+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(do_stopkawebsiteS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    return String(ptr).c_str();
   }
   #ifdef debug
 //    Serial.print(F("End processor "));
@@ -631,6 +635,7 @@ String do_stopkawebsite() {
       if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
       if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
       if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
+      if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
       if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
       ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
     return String(ptr);
@@ -638,11 +643,11 @@ String do_stopkawebsite() {
 //******************************************************************************************
 String uptimedana(unsigned long started_local) {
   String wynik = " ";
-  if (started_local<1000) return "< 1 "+String(t_sek)+" ";
+  unsigned long  partia = millis() - started_local;
+  if (partia<1000) return "< 1 "+String(t_sek)+" ";
   #ifdef debug
     Serial.print(F("Uptimedana: "));
   #endif
-  unsigned long  partia = millis() - started_local;
   if (partia >= 24 * 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
     partia -= podsuma * 24 * 60 * 60 * 1000;
@@ -675,7 +680,7 @@ String uptimedana(unsigned long started_local) {
 
 #include <EEPROM.h>
 
-#define CONFIG_VERSION "V00" sensitive_sizeS
+#define CONFIG_VERSION "V01" sensitive_sizeS
 
 // Where in EEPROM?
 #define CONFIG_START 32
@@ -798,4 +803,73 @@ void restart()
 //      wifi.disconnect();
   delay(5000);
   WiFi.forceSleepBegin(); wdt_reset(); ESP.restart(); while (1)ESP.restart(); wdt_reset(); ESP.restart();
+}
+
+String getJsonVal(String json, String tofind)
+{ //function to get value from json payload
+  json.trim();
+  tofind.trim();
+  #ifdef debugweb
+  WebSerial.println("json0: "+json);
+  #endif
+  if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
+  {
+    json=json.substring(1,json.length()-1);                             //cut start and end brackets json
+    #ifdef debugweb
+    WebSerial.println("json1: "+json);
+    #endif
+    int tee=0; //for safety ;)
+    #define maxtee 500
+    while (tee!=maxtee)
+    {         //parse all nodes
+      int pos = json.indexOf(",",1);                //position to end of node:value
+      if (pos==-1) {tee=maxtee;}
+      String part;
+      if (pos>-1) {part = json.substring(0,pos);} else {part=json; }       //extract parameter node:value
+      part.replace("\"","");                      //clean from text indent
+      part.replace("'","");
+      json=json.substring(pos+1);                      //cut input for extracted node:value
+      if (part.indexOf(":",1)==-1) {
+        #ifdef debugweb
+        WebSerial.println("Return no : data");
+        #endif
+        break;
+      }
+      String node=part.substring(0,part.indexOf(":",1));    //get node name
+      node.trim();
+      String nvalue=part.substring(part.indexOf(":",1)+1); //get node value
+      nvalue.trim();
+      #ifdef debugweb
+      WebSerial.println("jsonx: "+json);
+      WebSerial.println("tee: "+String(tee)+" tofind: "+tofind+" part: "+part+" node: "+node +" nvalue: "+nvalue + " indexof , :"+String(json.indexOf(",",1)));
+      #endif
+      if (tofind==node)
+      {
+         #ifdef debugweb
+         WebSerial.println("Found node return val");
+         #endif
+        return nvalue;
+        break;
+      }
+      tee++;
+      #ifdef debugweb
+      delay(1000);
+      #endif
+      if (tee>maxtee) {
+        #ifdef debugweb
+         WebSerial.println("tee exit: "+String(tee));
+        #endif
+        break;  //safety bufor
+      }
+    }
+    #ifdef enableWebSerial
+    WebSerial.println(String(millis())+": Json "+json+"  No mqttident contain searched value of "+tofind);
+    #endif
+  } else
+  {
+    #ifdef enableWebSerial
+    WebSerial.println(String(millis())+": Inproper Json format or null: "+json+" to find: "+tofind);
+    #endif
+  }
+  return "\0";
 }

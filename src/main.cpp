@@ -406,7 +406,7 @@ void updateData()
 
   // Print what are we exactly writing
   WebSerial.print("Writing to InfluxDB: ");
-  WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
+  //WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
   // Write point
   if (!InfluxClient.writePoint(InfluxSensor))
   {
@@ -550,10 +550,10 @@ bool PayloadStatus(String payloadStr, bool state)
   payloadStr.toUpperCase();
   payloadStr.trim();
   payloadStr.replace(",", ".");      //for localization correction
-  if (state and (payloadStr == "ON" or payloadStr == "TRUE" or payloadStr == "START" or payloadStr == "1"  or payloadStr == "ENABLE")) return true;
+  if (state and (payloadStr == "ON" or payloadStr == "TRUE" or payloadStr == "START" or payloadStr == "1"  or payloadStr == "ENABLE")) {return true;}
   else
-  if (!state and (payloadStr == "OFF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) return true;
-  else return false;
+  if (!state and (payloadStr == "OFF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) {return true;}
+  return false;
 }
 
 bool isValidNumber(String str)
@@ -611,17 +611,15 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   if (topicStr == ROOMS_F1_GET_TOPIC) //topic min temp and max setpoint from floor 1
   {
-    DynamicJsonDocument root(1024);
-    deserializeJson(root, payloadStr);
     String ident = String(millis())+": Floor1temp ";
  //   WebSerial.println("Payload: " + String(payloadStr));
-    if (PayloadtoValidFloatCheck(root[roomF1temp_json]))  //wrong value are displayed in function
+    if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF1temp_json)))  //wrong value are displayed in function
     {
       #ifdef debug
       Serial.print(ident);
       #endif
       WebSerial.print(ident);
-      floor1_temp = PayloadtoValidFloat(root[roomF1temp_json], true, roomtemplo, roomtemphi);
+      floor1_temp = PayloadtoValidFloat(getJsonVal(payloadStr,roomF1temp_json), true, roomtemplo, roomtemphi);
       receivedmqttdata = true;
     } else {
       #ifdef debug
@@ -629,13 +627,13 @@ void callback(char *topic, byte *payload, unsigned int length)
       #endif
       WebSerial.println(ident + " is not a valid number, ignoring...");
     }
-    if (PayloadtoValidFloatCheck(root[roomF1tempset_json]))  //wrong value are displayed in function
+    if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF1tempset_json)))  //wrong value are displayed in function
     {
        #ifdef debug
       Serial.print(ident+"Setpoint ");
       #endif
       WebSerial.print(ident+"Setpoint ");
-      floor1_tempset = PayloadtoValidFloat(root[roomF1tempset_json],true, roomtemplo, roomtemphi);
+      floor1_tempset = PayloadtoValidFloat(getJsonVal(payloadStr,roomF1tempset_json),true, roomtemplo, roomtemphi);
       receivedmqttdata = true;
     } else {
       #ifdef debug
@@ -646,17 +644,15 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
   else if (topicStr == ROOMS_F2_GET_TOPIC) //topic min temp and max setpoint from floor 1
   {
-    DynamicJsonDocument root(1024);
-    deserializeJson(root, payloadStr);
     String ident = String(millis())+": Floor2temp ";
  //   WebSerial.println("Payload: " + String(payloadStr));
-    if (PayloadtoValidFloatCheck(root[roomF2temp_json]))  //wrong value are displayed in function
+    if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF2temp_json)))  //wrong value are displayed in function
     {
       #ifdef debug
       Serial.print(ident);
       #endif
       WebSerial.print(ident);
-      floor2_temp = PayloadtoValidFloat(root[roomF2temp_json], true, roomtemplo, roomtemphi);
+      floor2_temp = PayloadtoValidFloat(getJsonVal(payloadStr,roomF2temp_json), true, roomtemplo, roomtemphi);
       receivedmqttdata = true;
     } else {
       #ifdef debug
@@ -664,38 +660,40 @@ void callback(char *topic, byte *payload, unsigned int length)
       #endif
       WebSerial.println(ident + " is not a valid number, ignoring...");
     }
-    if (PayloadtoValidFloatCheck(root[roomF2tempset_json]))  //wrong value are displayed in function
+    if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF2tempset_json)))  //wrong value are displayed in function
     {
        #ifdef debug
       Serial.print(ident+"Setpoint ");
       #endif
-      WebSerial.print(ident+"Setpoint ");
-      floor2_tempset = PayloadtoValidFloat(root[roomF2tempset_json],true, roomtemplo, roomtemphi);
+      WebSerial.print(ident+F("Setpoint "));
+      floor2_tempset = PayloadtoValidFloat(getJsonVal(payloadStr,roomF2tempset_json),true, roomtemplo, roomtemphi);
       receivedmqttdata = true;
     } else {
       #ifdef debug
       Serial.println(ident+"Setpoint is not a valid number, ignoring...");
       #endif
-      WebSerial.println(ident+"Setpoint is not a valid number, ignoring...");
+      WebSerial.println(ident+F("Setpoint is not a valid number, ignoring..."));
     }
-  }
-  else if (topicStr == NEWS_GET_TOPIC)               //NEWS averange temp -outside temp
+  } else
+  if (topicStr == NEWS_GET_TOPIC)               //NEWS averange temp -outside temp
   {
     String ident = String(millis())+": NEWS temp ";
     #ifdef debug
     Serial.print(ident);
     #endif
     WebSerial.print(ident);
-    if (PayloadtoValidFloatCheck(payloadStr))           //invalid val is displayed in funct
+    if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,NEWStemp_json)))           //invalid val is displayed in funct
     {
-      temp_NEWS = PayloadtoValidFloat(payloadStr,true);     //true to get output to serial and webserial
+      temp_NEWS = PayloadtoValidFloat(getJsonVal(payloadStr,NEWStemp_json),true);     //true to get output to serial and webserial
       lastNEWSSet = millis();
       temp_NEWS_count = 0;
 //      receivedmqttdata = true;    //makes every second run mqtt send and influx
-      WebSerial.print(F("NEWS updated from MQTT"));
+      #ifdef debugweb
+      WebSerial.print(F("NEWS updated from MQTT to ")+String(temp_NEWS)+" Payl: "+payloadStr);
+      #endif
     }
   }
-  else if (topicStr == ROOM_TEMP_SET_TOPIC)           // Rooms autosetp.roomtemp
+  else if (topicStr == ROOM_TEMP_SET_TOPIC)           // Rooms autosetp.roomtemp for auto mode
   {
     String ident = String(millis())+": Rooms Current roomtemp ";
     if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
@@ -710,10 +708,10 @@ void callback(char *topic, byte *payload, unsigned int length)
       #ifdef debug
       Serial.println(ident + " is not a valid number, ignoring...");
       #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      WebSerial.println(ident + F(" is not a valid number, ignoring..."));
     }
   }
-  else if (topicStr == TEMP_SETPOINT_SET_TOPIC)      //Room Target sp
+  else if (topicStr == TEMP_SETPOINT_SET_TOPIC)      //Room Target sp for automode
   {
     String ident = String(millis())+": Room Target sp ";
    if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
@@ -727,9 +725,9 @@ void callback(char *topic, byte *payload, unsigned int length)
       receivedmqttdata = true;
     } else {
       #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
+      Serial.println(ident + F(" is not a valid number, ignoring..."));
       #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      WebSerial.println(ident + F(" is not a valid number, ignoring..."));
     }
   }
   else if (topicStr == MODE_SET_TOPIC)              //mode set topic
@@ -737,34 +735,34 @@ void callback(char *topic, byte *payload, unsigned int length)
     String ident = String(millis())+": Mode Set ";
     payloadStr.toUpperCase();
     #ifdef debug
-    Serial.print(ident + "Set mode: ");
+    Serial.print(ident + F("Set mode: "));
     #endif
-    WebSerial.print(ident + "Set mode: ");
+    WebSerial.print(ident + F("Set mode: "));
     if (PayloadStatus(payloadStr, true))
     {
       heatingEnabled = true;
       automodeCO = false;
       tempBoilerSet = op_override;
       receivedmqttdata = true;
-      WebSerial.println("CO mode " + payloadStr);
+      WebSerial.println(F("CO mode ") + payloadStr);
     }
     else if (PayloadStatus(payloadStr, false))
     {
       heatingEnabled = false;
       automodeCO = false;
       receivedmqttdata = true;
-      WebSerial.println("CO mode " + payloadStr);
+      WebSerial.println(F("CO mode ") + payloadStr);
     }
     else if (payloadStr == "AUTO" or payloadStr == "2")
     {
       automodeCO = true;
       receivedmqttdata = true;
-      WebSerial.println("CO mode " + payloadStr);
+      WebSerial.println(F("CO mode ") + payloadStr);
     } else {
       #ifdef debug
-      Serial.println("Unknown mode " + payloadStr);
+      Serial.println(F("Unknown mode ") + payloadStr);
       #endif
-      WebSerial.println("Unknown mode " + payloadStr);
+      WebSerial.println(F("Unknown mode ") + payloadStr);
     }
   }
   else if (topicStr == TEMP_DHW_SET_TOPIC)    // dhwTarget
@@ -793,8 +791,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     #endif
     WebSerial.print(ident);
     receivedmqttdata = true;
-    if (PayloadStatus(payloadStr, true)) enableHotWater = true;
-    else if (PayloadStatus(payloadStr, false)) enableHotWater = false;
+    if (PayloadStatus(payloadStr, true)) {enableHotWater = true;}
+    else if (PayloadStatus(payloadStr, false)) {enableHotWater = false;}
     else
     {
       receivedmqttdata = false;
@@ -830,7 +828,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
   }
  else
-//CO Pump Status
+//CO Pump Status #define COPumpStatus_json "CO0_boilerroom_pump2CO"
+//#define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
   if (topicStr == COPUMP_GET_TOPIC)                                                                   //external CO Pump Status
   {
     String ident = String(millis())+": Wood/coax CO Pump Status ";
@@ -839,8 +838,35 @@ void callback(char *topic, byte *payload, unsigned int length)
     #endif
     WebSerial.print(ident);
     receivedmqttdata = true;
-    if (PayloadStatus(payloadStr, true)) CO_PumpWorking = true;
-    else if (PayloadStatus(payloadStr, false)) CO_PumpWorking = false;
+    if (PayloadStatus(getJsonVal(payloadStr,COPumpStatus_json), true)) {CO_PumpWorking = true;}
+    else if (PayloadStatus(getJsonVal(payloadStr,COPumpStatus_json), false)) {CO_PumpWorking = false;}
+    else
+    {
+      receivedmqttdata = false;
+#ifdef debug
+      Serial.println("Unknown: "+String(payloadStr));
+#endif
+      WebSerial.println("Unknown: "+String(payloadStr));
+    }
+    if (receivedmqttdata) {
+      #ifdef debug
+      Serial.println(CO_PumpWorking ? "Active" : "Disabled" );
+      #endif
+      WebSerial.println(CO_PumpWorking ? "Active" : "Disabled" );
+    }
+  }  else
+//CO Pump Status #define COPumpStatus_json "CO0_boilerroom_pump2CO"
+//#define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
+  if (topicStr == COPUMP_GET_TOPIC)                                                                   //external CO Pump Status
+  {
+    String ident = String(millis())+": Wood/coax Water Pump Status ";
+    #ifdef debug
+    Serial.print(ident);
+    #endif
+    WebSerial.print(ident);
+    receivedmqttdata = true;
+    if (PayloadStatus(getJsonVal(payloadStr,WaterPumpStatus_json), true)) {Water_PumpWorking = true;}
+    else if (PayloadStatus(getJsonVal(payloadStr,WaterPumpStatus_json), false)) {Water_PumpWorking = false;}
     else
     {
       receivedmqttdata = false;
@@ -922,6 +948,10 @@ void reconnect()
       client.subscribe(NEWS_GET_TOPIC.c_str());
       client.subscribe(COPUMP_GET_TOPIC.c_str());
       client.subscribe(TEMP_CUTOFF_SET_TOPIC.c_str());
+
+
+
+
 
       client.subscribe(ROOMS_F1_GET_TOPIC.c_str());
       client.subscribe(ROOMS_F2_GET_TOPIC.c_str());
@@ -1064,7 +1094,11 @@ void loop()
   {
     if (!client.connected())
     {
+      #ifdef debug
+      Serial.println(String(millis())+": "+F("MQTT connection problem -try to connect again..."));
+      #endif
       WebSerial.println(F("MQTT connection problem -try to connect again..."));
+      delay(500);
       reconnect();
     }
     else
