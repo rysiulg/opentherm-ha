@@ -3,7 +3,7 @@
 .pio/build/*
 !.pio/build/esp12e
 .pio/build/esp12e/*
-!.pio/build/esp12e/*.bin
+#!.pio/build/esp12e/*.bin
 
 !.pio/build/esp32doit-devkit-v1
 .pio/build/esp32doit-devkit-v1/*
