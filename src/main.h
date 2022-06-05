@@ -116,7 +116,8 @@ bool heatingEnabled = true,
      status_WaterActive,
      status_FlameOn,
      status_Cooling,
-     status_Diagnostic;
+     status_Diagnostic,
+     starting = true;
 
 
 

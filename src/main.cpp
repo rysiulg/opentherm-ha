@@ -66,7 +66,7 @@ void recvMsg(uint8_t *data, size_t len)
   if (d == "ROOMTEMP+")
   {
     WebSerial.print("Change t from: " + String(roomtemp));
-    roomtemp = roomtemp + 1;
+    if (roomtemp < roomtemphi) {roomtemp = roomtemp + 0.5;}
     tmanual = true;
     lastTempSet = millis();
     WebSerial.print(" to: " + String(roomtemp));
@@ -74,7 +74,7 @@ void recvMsg(uint8_t *data, size_t len)
   if (d == "ROOMTEMP-")
   {
     WebSerial.print("Change t from: " + String(roomtemp));
-    roomtemp = roomtemp - 1;
+    if (roomtemp > roomtemplo) {roomtemp = roomtemp - 0.5;}
     lastTempSet = millis();
     tmanual = true;
     WebSerial.print(" to: " + String(roomtemp));
@@ -148,7 +148,17 @@ void recvMsg(uint8_t *data, size_t len)
   }
   if (d == "HELP")
   {
-    WebSerial.println(F("KOMENDY: RESTART, RECONNECT, ROOMTEMP+/-, ROOMTEMP0, SAVE, RESET_CONFIG, RESET_FLAMETOTAL"));
+    WebSerial.print(String(millis())+": ");
+    WebSerial.println(F("KOMENDY:\n \
+      ROOMTEMP0        -Przelacza temperature z pokoju na automat,\n \
+      ROOMTEMP+        -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,\n \
+      ROOMTEMP-        -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,\n \
+      CO               -Testowo -rozlacza Client i prubuje pobrac z www?,\n \
+      RESTART          -Uruchamia ponownie układ,\n \
+      RECONNECT        -Dokonuje ponownej próby połączenia z bazami,\n \
+      SAVE             -Wymusza zapis konfiguracji,\n \
+      RESET_CONFIG     -UWAGA!!!! Resetuje konfigurację do wartości domyślnych\n \
+      RESET_FLAMETOTAL -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"));
   }
 }
 
@@ -979,7 +989,7 @@ void reconnect()
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(74880);
 
   Serial.println(F("Starting... Delay3000..."));
   delay(3000);
@@ -1065,7 +1075,7 @@ void setup()
     WebSerial.println(InfluxClient.getLastErrorMessage());
   }
   #endif
-
+  starting = false;
 }
 
 void loop()

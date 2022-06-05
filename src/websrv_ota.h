@@ -767,7 +767,7 @@ void saveConfig() {
   Serial.println("Saving config...........................prepare ");
   #endif
   #ifdef enableWebSerial
-  WebSerial.println("Saving config...........................prepare ");
+  if (!starting) {WebSerial.println("Saving config...........................prepare ");}
   #endif
   double runtmp = 0;
   EEPROM.get(1,runtmp);
@@ -815,7 +815,7 @@ void saveConfig() {
         Serial.println(String(millis())+": Saving config........................... to EEPROM some data changed");
         #endif
         #ifdef enableWebSerial
-        WebSerial.println(String(millis())+": Saving config........................... to EEPROM some data changed");
+        if (!starting) {WebSerial.println(String(millis())+": Saving config........................... to EEPROM some data changed");}
         #endif
         strcpy(CONFIGURATION.version,CONFIG_VERSION);
         CONFIGURATION.heatingEnabled = heatingEnabled;
