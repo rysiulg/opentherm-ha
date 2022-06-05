@@ -712,6 +712,7 @@ typedef struct
 
 // with DEFAULT values!
 configuration_type CONFIGURATION;
+configuration_type CONFTMP;
 
 // load whats in EEPROM in to the local CONFIGURATION if it is a valid setting
 bool loadConfig() {
@@ -762,36 +763,86 @@ bool loadConfig() {
 
 // save the CONFIGURATION in to EEPROM
 void saveConfig() {
+  #ifdef debug1
+  Serial.println("Saving config...........................prepare ");
+  #endif
+  #ifdef enableWebSerial
+  WebSerial.println("Saving config...........................prepare ");
+  #endif
+  double runtmp = 0;
+  EEPROM.get(1,runtmp);
+  if (runtmp != flame_used_power_kwh) {EEPROM.put(1+sizeof(runNumber), flame_used_power_kwh);}
+  unsigned int temp =0;
+  //firs read content of eeprom
+  EEPROM.get(1,temp);
+  //firs read content of eeprom
+  EEPROM.get(1,temp);
+  if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
+      EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
+      EEPROM.read(CONFIG_START + 2) == CONFIG_VERSION[2] &&
+      EEPROM.read(CONFIG_START + 3) == CONFIG_VERSION[3] &&
+      EEPROM.read(CONFIG_START + 4) == CONFIG_VERSION[4]){
 
-  EEPROM.put(1, runNumber);
-  EEPROM.put(1+sizeof(runNumber), flame_used_power_kwh);
+  // load (overwrite) the local configuration struct
+    for (unsigned int i=0; i<sizeof(configuration_type); i++){
+      *((char*)&CONFTMP + i) = EEPROM.read(CONFIG_START + i);
+    }
+  }
+//now compare and if changed than save
+  if (temp != runNumber ||
+      CONFTMP.heatingEnabled != heatingEnabled ||
+      CONFTMP.enableHotWater != enableHotWater ||
+      CONFTMP.automodeCO != automodeCO ||
+      CONFTMP.tempBoilerSet != tempBoilerSet ||
+      CONFTMP.sp != sp ||
+      CONFTMP.cutOffTemp != cutOffTemp ||
+      CONFTMP.op_override != op_override ||
+      CONFTMP.dhwTarget != dhwTarget ||
+      CONFTMP.roomtemp != roomtemp ||
+      CONFTMP.temp_NEWS != temp_NEWS ||
+      strcmp(CONFTMP.ssid,ssid) != 0 ||
+      strcmp(CONFTMP.pass,pass) != 0 ||
+      strcmp(CONFTMP.mqtt_server,mqtt_server) != 0 ||
+      strcmp(CONFTMP.mqtt_user,mqtt_user) != 0 ||
+      strcmp(CONFTMP.mqtt_password,mqtt_password) != 0 ||
+      CONFTMP.mqtt_port != mqtt_port ||
+      strcmp(CONFTMP.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str()) != 0 ) {
+        EEPROM.put(1, runNumber);
+        #ifdef debug1
+        Serial.println(String(millis())+": Saving config........................... to EEPROM some data changed");
+        #endif
+        #ifdef enableWebSerial
+        WebSerial.println(String(millis())+": Saving config........................... to EEPROM some data changed");
+        #endif
+        strcpy(CONFIGURATION.version,CONFIG_VERSION);
+        CONFIGURATION.heatingEnabled = heatingEnabled;
+        CONFIGURATION.enableHotWater = enableHotWater;
+        CONFIGURATION.automodeCO = automodeCO;
+        CONFIGURATION.tempBoilerSet = tempBoilerSet;
+        CONFIGURATION.sp = sp;
+        CONFIGURATION.cutOffTemp = cutOffTemp;
+        CONFIGURATION.op_override = op_override;
+        CONFIGURATION.dhwTarget = dhwTarget;
+        CONFIGURATION.roomtemp = roomtemp;
+        CONFIGURATION.temp_NEWS = temp_NEWS;
+        strcpy(CONFIGURATION.ssid,ssid);
+        strcpy(CONFIGURATION.pass,pass);
+        strcpy(CONFIGURATION.mqtt_server,mqtt_server);
+        strcpy(CONFIGURATION.mqtt_user,mqtt_user);
+        strcpy(CONFIGURATION.mqtt_password,mqtt_password);
+        CONFIGURATION.mqtt_port = mqtt_port;
+        strcpy(CONFIGURATION.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str());
 
-  strcpy(CONFIGURATION.version,CONFIG_VERSION);
-  CONFIGURATION.heatingEnabled = heatingEnabled;
-  CONFIGURATION.enableHotWater = enableHotWater;
-  CONFIGURATION.automodeCO = automodeCO;
-  CONFIGURATION.tempBoilerSet = tempBoilerSet;
-  CONFIGURATION.sp = sp;
-  CONFIGURATION.cutOffTemp = cutOffTemp;
-  CONFIGURATION.op_override = op_override;
-  CONFIGURATION.dhwTarget = dhwTarget;
-  CONFIGURATION.roomtemp = roomtemp;
-  CONFIGURATION.temp_NEWS = temp_NEWS;
-  strcpy(CONFIGURATION.ssid,ssid);
-  strcpy(CONFIGURATION.pass,pass);
-  strcpy(CONFIGURATION.mqtt_server,mqtt_server);
-  strcpy(CONFIGURATION.mqtt_user,mqtt_user);
-  strcpy(CONFIGURATION.mqtt_password,mqtt_password);
-  CONFIGURATION.mqtt_port = mqtt_port;
-  strcpy(CONFIGURATION.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str());
-  strcpy(CONFIGURATION.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str());
-  strcpy(CONFIGURATION.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str());
-  strcpy(CONFIGURATION.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str());
-
-
-  for (unsigned int i=0; i<sizeof(configuration_type); i++)
-    EEPROM.write(CONFIG_START + i, *((char*)&CONFIGURATION + i));
-  EEPROM.commit();
+        for (unsigned int i=0; i<sizeof(configuration_type); i++)
+            {EEPROM.write(CONFIG_START + i, *((char*)&CONFIGURATION + i));}
+        EEPROM.commit();
+      }
 }
 
 void restart()
