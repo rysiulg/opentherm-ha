@@ -598,7 +598,7 @@ String processor(const String var) {
     tmp=String(tempCOThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
     tmp=String(tempCOThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
     tmp=""+String(tempCOThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
-    tmp=String(dallThermometerS); refreshtime+=step; ptr+=function0+F("T")+tmp+function1+tmp+function2+String(refreshtime)+");\n";
+    tmp=String(dallThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
     tmp=String(tempCORETThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
     tmp=String(tempHWThermometerS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
     tmp=String(tempHWThermometerSetS); refreshtime+=step; ptr+=function0+tmp+function1+tmp+function2+String(refreshtime)+");\n";
