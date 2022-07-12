@@ -1,49 +1,32 @@
+#include <Arduino.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+#include <OpenTherm.h>
+
+
+#include <WiFiClient.h>
+
+// for ota
+
+
+
+
+
 #include "config.h"
-#ifdef ENABLE_INFLUX
-  #include <ESP8266HTTPClient.h>
-  #include <InfluxDbClient.h>
-#endif
+#include "configmqtttopics.h"
+
+int slide1 =0, slide2 = 0, slide3=0;
+
+OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
+DallasTemperature sensors(&oneWire);
+OpenTherm ot(OT_IN_PIN, OT_OUT_PIN);
 
 
-
-const char version[10+1] =
-{
-   // YY year
-   //__DATE__[7], __DATE__[8],
-   __DATE__[9], __DATE__[10],
-
-   // First month letter, Oct Nov Dec = '1' otherwise '0'
-   (__DATE__[0] == 'O' || __DATE__[0] == 'N' || __DATE__[0] == 'D') ? '1' : '0',
-
-   // Second month letter
-   (__DATE__[0] == 'J') ? ( (__DATE__[1] == 'a') ? '1' :       // Jan, Jun or Jul
-                            ((__DATE__[2] == 'n') ? '6' : '7') ) :
-   (__DATE__[0] == 'F') ? '2' :                                // Feb
-   (__DATE__[0] == 'M') ? (__DATE__[2] == 'r') ? '3' : '5' :   // Mar or May
-   (__DATE__[0] == 'A') ? (__DATE__[1] == 'p') ? '4' : '8' :   // Apr or Aug
-   (__DATE__[0] == 'S') ? '9' :                                // Sep
-   (__DATE__[0] == 'O') ? '0' :                                // Oct
-   (__DATE__[0] == 'N') ? '1' :                                // Nov
-   (__DATE__[0] == 'D') ? '2' :                                // Dec
-   0,
-
-   // First day letter, replace space with digit
-   __DATE__[4]==' ' ? '0' : __DATE__[4],
-
-   // Second day letter
-   __DATE__[5],
-   __TIME__[0],__TIME__[1],
-   __TIME__[3],__TIME__[4],
-  '\0'
-};
-const String me_version = String(version);
-const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
-const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
 
 const unsigned long extTempTimeout_ms = 180 * 1000,
                     statusUpdateInterval_ms = 0.9 * 1000,
                     spOverrideTimeout_ms = 180 * 1000,
-                    mqttUpdateInterval_ms = 60 * 1000,
                     temp_NEWS_interval_reduction_time_ms = 30 * 60 * 1000, // time to laps between temp_NEWS reduction by 5%
                     mqtt_offline_reconnect_after_ms = 15 * 60 * 1000,      // time when mqtt is offline to wait for next reconnect (15minutes)
                     save_config_every = 15 * 60 * 1000,                    // time saveing config values in eeprom (15minutes)
@@ -90,7 +73,6 @@ int temp_NEWS_count = 0,
 
 unsigned long ts = 0, new_ts = 0, // timestamp
               lastUpdate = 0,
-              lastUpdatemqtt = 0,
               lastTempSet = 0,
               lastcutOffTempSet = 0,
               lastNEWSSet = 0,
@@ -109,32 +91,36 @@ bool heatingEnabled = true,
      CO_PumpWorking = false, // value from mqtt -if set co heating is disabled -second heating engine is working (in my case Wood/Carbon heater)
      Water_PumpWorking = false, // value from mqtt -if set water heating engine is working (in my case Wood/Carbon heater)
      automodeCO = false,     // tryb automatyczny zalezny od temp zewnetrznej i pracy pompy CO kotla weglowego
-     receivedmqttdata = false,
      tmanual = false,
      status_Fault,
      status_CHActive,
      status_WaterActive,
      status_FlameOn,
      status_Cooling,
-     status_Diagnostic,
-     starting = true;
+     status_Diagnostic;
 
 
 
-bool PayloadStatus(String payloadStr, bool state);
-bool PayloadtoValidFloatCheck(String payloadStr);
-float PayloadtoValidFloat(String payloadStr,bool withtemps_minmax=false, float mintemp=InitTemp,float maxtemp=InitTemp);
+
+
+
 void recvMsg(uint8_t *data, size_t len);
 void IRAM_ATTR handleInterrupt();
 float getTemp();
 float pid(float sp, float pv, float pv_last, float &ierr, float dt);
 void opentherm_update_data(unsigned long mqttdallas);
-void updateData();
-String convertPayloadToStr(byte *payload, unsigned int length);
-bool isValidNumber(String str);
-void callback(char *topic, byte *payload, unsigned int length);
-void reconnect();
-String getJsonVal(String json, String tofind);
+String Boiler_Mode();
+void updateInfluxDB();
+void updateMQTTData();
+void mqtt_callback(char *topic, byte *payload, unsigned int length);
+
 
 void setup();
 void loop();
+
+//websrv_ota
+void starthttpserver();
+String processor(const String var);
+String do_stopkawebsite();
+bool loadConfig();
+void SaveConfig();

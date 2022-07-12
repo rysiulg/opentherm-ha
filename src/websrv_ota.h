@@ -1,7 +1,5 @@
-String uptimedana(unsigned long started_local);
-String processor(const String var);
-bool isValidNumber(String str);
 
+#ifndef enableWebSocket
 #define uptimelink "uptimelink"
 #define dallThermometerS "dallThermometerS"
 #define tempCOThermometerS "tempCOThermometerS"
@@ -29,51 +27,14 @@ const char* PARAM_MESSAGE_tempCOset = tempCOset;
 const char* PARAM_MESSAGE_tempHWset = tempHWset;
 const char* PARAM_MESSAGE_cutOffTempSet = cutOffTempVAL;
 const char* PARAM_MESSAGE_tempROOMset = tempROOMset;
+#endif
 
-uint8_t mac[6] = {(uint8_t)strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), (uint8_t)strtol(WiFi.macAddress().substring(3,5).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(6,8).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(9,11).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(12,14).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(15,17).c_str(),0,16)};
-unsigned long  started = 0; //do mierzenia czasu uptime bez resetu
 
-const char htmlup[] PROGMEM = R"rawliteral(
-  <form method='POST' action='/doUpdate' enctype='multipart/form-data'><input type='file' name='update' accept=".bin,.bin.gz"><input type='submit' value='Update'></form>)rawliteral";
-//static const char successResponse[] PROGMEM =  "<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...";
 
 String do_stopkawebsite();
 //******************************************************************************************
 
-String PrintHex8(const uint8_t *data, char separator, uint8_t length) // prints 8-bit data in hex , uint8_t length
-{
-  uint8_t lensep = sizeof(separator);
-  int dod = 0;
-  if (separator == 0x0) {
-    lensep = 0;
-    dod = 1;
-  }
-  wdt_reset();
-  if (lensep > 1) dod = 1 - lensep;
-  char tmp[length * (2 + lensep) + dod - lensep];
-  byte first;
-  byte second;
-  for (int i = 0; (i + 0) < length; i++) {
-    first = (data[i] >> 4) & 0x0f;
-    second = data[i] & 0x0f;
-    // base for converting single digit numbers to ASCII is 48
-    // base for 10-16 to become lower-case characters a-f is 87
-    // note: difference is 39
-    tmp[i * (2 + lensep)] = first + 48;
-    tmp[i * (2 + lensep) + 1] = second + 48;
-    if ((i) < length and (i) + 1 != length) tmp[i * (2 + lensep) + 2] = separator;
-    if (first > 9) tmp[i * (2 + lensep)] += 39;
-    if (second > 9) tmp[i * (2 + lensep) + 1] += 39;
 
-  }
-  tmp[length * (2 + lensep) + 0 - lensep] = 0;
-#ifdef debug
-  Serial.print(F("MAC Addr: "));
-  Serial.println(tmp);
-#endif
-  //     debugA("%s",tmp);
-  return tmp;
-}
 
 //*********************************************************************************************
 
@@ -81,6 +42,8 @@ String PrintHex8(const uint8_t *data, char separator, uint8_t length) // prints 
 //     background-color: #01DF3A;
 //
 //  <div class='s'><svg version='1.1' width="75px" height="75px" id='l' x='0' y='0' viewBox='0 0 200 200' xml:space='preserve'><path d='M59.3,2.5c18.1,0.6,31.8,8,40.2,23.5c3.1,5.7,4.3,11.9,4.1,18.3c-0.1,3.6-0.7,7.1-1.9,10.6c-0.2,0.7-0.1,1.1,0.6,1.5c12.8,7.7,25.5,15.4,38.3,23c2.9,1.7,5.8,3.4,8.7,5.3c1,0.6,1.6,0.6,2.5-0.1c4.5-3.6,9.8-5.3,15.7-5.4c12.5-0.1,22.9,7.9,25.2,19c1.9,9.2-2.9,19.2-11.8,23.9c-8.4,4.5-16.9,4.5-25.5,0.2c-0.7-0.3-1-0.2-1.5,0.3c-4.8,4.9-9.7,9.8-14.5,14.6c-5.3,5.3-10.6,10.7-15.9,16c-1.8,1.8-3.6,3.7-5.4,5.4c-0.7,0.6-0.6,1,0,1.6c3.6,3.4,5.8,7.5,6.2,12.2c0.7,7.7-2.2,14-8.8,18.5c-12.3,8.6-30.3,3.5-35-10.4c-2.8-8.4,0.6-17.7,8.6-22.8c0.9-0.6,1.1-1,0.8-2c-2-6.2-4.4-12.4-6.6-18.6c-6.3-17.6-12.7-35.1-19-52.7c-0.2-0.7-0.5-1-1.4-0.9c-12.5,0.7-23.6-2.6-33-10.4c-8-6.6-12.9-15-14.2-25c-1.5-11.5,1.7-21.9,9.6-30.7C32.5,8.9,42.2,4.2,53.7,2.7c0.7-0.1,1.5-0.2,2.2-0.2C57,2.4,58.2,2.5,59.3,2.5z M76.5,81c0,0.1,0.1,0.3,0.1,0.6c1.6,6.3,3.2,12.6,4.7,18.9c4.5,17.7,8.9,35.5,13.3,53.2c0.2,0.9,0.6,1.1,1.6,0.9c5.4-1.2,10.7-0.8,15.7,1.6c0.8,0.4,1.2,0.3,1.7-0.4c11.2-12.9,22.5-25.7,33.4-38.7c0.5-0.6,0.4-1,0-1.6c-5.6-7.9-6.1-16.1-1.3-24.5c0.5-0.8,0.3-1.1-0.5-1.6c-9.1-4.7-18.1-9.3-27.2-14c-6.8-3.5-13.5-7-20.3-10.5c-0.7-0.4-1.1-0.3-1.6,0.4c-1.3,1.8-2.7,3.5-4.3,5.1c-4.2,4.2-9.1,7.4-14.7,9.7C76.9,80.3,76.4,80.3,76.5,81z M89,42.6c0.1-2.5-0.4-5.4-1.5-8.1C83,23.1,74.2,16.9,61.7,15.8c-10-0.9-18.6,2.4-25.3,9.7c-8.4,9-9.3,22.4-2.2,32.4c6.8,9.6,19.1,14.2,31.4,11.9C79.2,67.1,89,55.9,89,42.6z M102.1,188.6c0.6,0.1,1.5-0.1,2.4-0.2c9.5-1.4,15.3-10.9,11.6-19.2c-2.6-5.9-9.4-9.6-16.8-8.6c-8.3,1.2-14.1,8.9-12.4,16.6C88.2,183.9,94.4,188.6,102.1,188.6z M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/></svg>
+
+#ifndef enableWebSocket
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
@@ -117,63 +80,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>)rawliteral";
 //******************************************************************************************
 
-
-
-
-
-
-void handleGetTemp() {
-	//digitalWrite(BUILTIN_LED, 1);
-	//webserver.send(200, "text/plain", String(123));
-	//digitalWrite(BUILTIN_LED, 0);
-}
-
-//#include <Update.h>
-size_t content_len;
-void printProgress(size_t prg, size_t sz) {
-  Serial.printf("Progress: %d%%\n", (prg*100)/content_len);
-  WebSerial.println("Progress: "+String((prg*100)/content_len));
-}
-
-void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-  //#define UPDATE_SIZE_UNKNOWN 0XFFFFFFFF
-  //uint32_t free_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-  if (!index){
-    Serial.println(F("Update"));
-    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
-    response->addHeader("Refresh", "15");
-    response->addHeader("Location", "/");
-    request->send(response);
-    content_len = request->contentLength();
-    // if filename includes spiffs, update the spiffs partition
-    int cmd = U_FLASH; //(filename.indexOf("spiffs") > -1) ? U_SPIFFS : U_FLASH;
-    Update.runAsync(true);
-    if (!Update.begin(content_len, cmd)){
-      Update.printError(Serial);
-    }
-  }
-  Serial.println(F("Write data..."));
-  if (Update.write(data, len) != len) {
-    Update.printError(Serial);
-  }
-  if (final) {
-    if (!Update.end(true)){
-      Update.printError(Serial);
-    } else {
-      Serial.println("Update complete");
-      Serial.flush();
-      AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Please wait while the device reboots");
-      response->addHeader("Refresh", "20");
-      response->addHeader("Location", "/");
-      request->send(response);
-      delay(100);
-      ESP.restart();
-    }
-  }
-}
-
-
-void WebServers() {
+void starthttpserver() {
   #ifdef debug
     Serial.println(F("subWerbServers..."));
   #endif
@@ -191,7 +98,7 @@ void WebServers() {
       },
     [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
                   size_t len, bool final) {handleDoUpdate(request, filename, index, data, len, final);}
-  ).setAuthentication("", "");;
+  ).setAuthentication("", "");
 
 
   // [](AsyncWebServerRequest * request) {},
@@ -209,7 +116,7 @@ void WebServers() {
     // Send a GET request to <IP>/get?message=<message>
   webserver.on("/" uptimelink , HTTP_GET, [](AsyncWebServerRequest * request) {
   //  request.setAuthentication("", "");
-    request->send(200, "text/plain; charset=utf-8", String(uptimedana(started)));
+    request->send(200, "text/plain; charset=utf-8", String(uptimedana(0)));
   }).setAuthentication("", "");
   webserver.on("/" dallThermometerS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(temp_NEWS));
@@ -231,9 +138,6 @@ void WebServers() {
   }).setAuthentication("", "");
   webserver.on("/" cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(cutOffTemp,1));
-  }).setAuthentication("", "");
-  webserver.on("/" cutOffTempS, HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain; charset=utf-8", String(uptimedana(lastNEWSSet)));
   }).setAuthentication("", "");
   webserver.on("/" do_stopkawebsiteS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", do_stopkawebsite());
@@ -430,7 +334,6 @@ void WebServers() {
   #ifdef debug
 	Serial.println("HTTP server started");
   #endif
-  Update.onProgress(printProgress);
 
   // Add service to MDNS-SD
   //MDNS.addService("http", "tcp", 80);
@@ -448,7 +351,7 @@ String processor(const String var) {
     String a = F("ESP CO Server dla: ")+String(me_lokalizacja);
     a += F("<br>v. ") + String(me_version);
     a += F("<br><font size=\"2\" color=\"DarkGreen\">");
-    a += client.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
+    a += mqttclient.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
     #ifdef ENABLE_INFLUX
     a += F(" + INFLUXDB: ")+String(INFLUXDB_DB_NAME)+F("/")+String(InfluxMeasurments);
     a += F("</font>");
@@ -478,7 +381,7 @@ String processor(const String var) {
   }
 
   if (var == "uptimewart") {
-    return String(uptimedana(started));
+    return String(uptimedana(0));
   }
   if (var == "me_lokalizacja") {
     return String(me_lokalizacja);
@@ -640,43 +543,8 @@ String do_stopkawebsite() {
       ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
     return String(ptr);
 }
-//******************************************************************************************
-String uptimedana(unsigned long started_local) {
-  String wynik = " ";
-  unsigned long  partia = millis() - started_local;
-  if (partia<1000) return "< 1 "+String(t_sek)+" ";
-  #ifdef debug
-    Serial.print(F("Uptimedana: "));
-  #endif
-  if (partia >= 24 * 60 * 60 * 1000 ) {
-    unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
-    partia -= podsuma * 24 * 60 * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_day)+" ";
 
-  }
-  if (partia >= 60 * 60 * 1000 ) {
-    unsigned long  podsuma = partia / (60 * 60 * 1000);
-    partia -= podsuma * 60 * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_hour)+" ";
-  }
-  if (partia >= 60 * 1000 ) {
-    unsigned long  podsuma = partia / (60 * 1000);
-    partia -= podsuma * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_min)+" ";
-    //Serial.println(podsuma);
-  }
-  if (partia >= 1 * 1000 ) {
-    unsigned long  podsuma = partia / 1000;
-    partia -= podsuma * 1000;
-    wynik += (String)podsuma + " "+String(t_sek)+" ";
-    //Serial.println(podsuma);
-  }
-  #ifdef debug
-    Serial.println(wynik);
-  #endif
-  //wynik += (String)partia + "/1000";  //pomijam to wartosci <1sek
-  return wynik;
-}
+#endif
 
 #include <EEPROM.h>
 
@@ -762,13 +630,8 @@ bool loadConfig() {
 }
 
 // save the CONFIGURATION in to EEPROM
-void saveConfig() {
-  #ifdef debug1
-  Serial.println("Saving config...........................prepare ");
-  #endif
-  #ifdef enableWebSerial
-  if (!starting) {WebSerial.println("Saving config...........................prepare ");}
-  #endif
+void SaveConfig() {
+  log_message((char*)F("Saving config...........................prepare "),0);
   double runtmp = 0;
   EEPROM.get(1,runtmp);
   if (runtmp != flame_used_power_kwh) {EEPROM.put(1+sizeof(runNumber), flame_used_power_kwh);}
@@ -811,12 +674,7 @@ void saveConfig() {
       strcmp(CONFTMP.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str()) != 0 ||
       strcmp(CONFTMP.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str()) != 0 ) {
         EEPROM.put(1, runNumber);
-        #ifdef debug1
-        Serial.println(String(millis())+": Saving config........................... to EEPROM some data changed");
-        #endif
-        #ifdef enableWebSerial
-        if (!starting) {WebSerial.println(String(millis())+": Saving config........................... to EEPROM some data changed");}
-        #endif
+        log_message((char*)F("Saving config........................... to EEPROM some data changed"),0);
         strcpy(CONFIGURATION.version,CONFIG_VERSION);
         CONFIGURATION.heatingEnabled = heatingEnabled;
         CONFIGURATION.enableHotWater = enableHotWater;
@@ -843,84 +701,4 @@ void saveConfig() {
             {EEPROM.write(CONFIG_START + i, *((char*)&CONFIGURATION + i));}
         EEPROM.commit();
       }
-}
-
-void restart()
-{
-  delay(1500);
-  WiFi.forceSleepBegin();
-  webserver.end();
-  WiFi.disconnect();
-//      wifi.disconnect();
-  delay(5000);
-  WiFi.forceSleepBegin(); wdt_reset(); ESP.restart(); while (1)ESP.restart(); wdt_reset(); ESP.restart();
-}
-
-String getJsonVal(String json, String tofind)
-{ //function to get value from json payload
-  json.trim();
-  tofind.trim();
-  #ifdef debugweb
-  WebSerial.println("json0: "+json);
-  #endif
-  if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
-  {
-    json=json.substring(1,json.length()-1);                             //cut start and end brackets json
-    #ifdef debugweb
-    WebSerial.println("json1: "+json);
-    #endif
-    int tee=0; //for safety ;)
-    #define maxtee 500
-    while (tee!=maxtee)
-    {         //parse all nodes
-      int pos = json.indexOf(",",1);                //position to end of node:value
-      if (pos==-1) {tee=maxtee;}
-      String part;
-      if (pos>-1) {part = json.substring(0,pos);} else {part=json; }       //extract parameter node:value
-      part.replace("\"","");                      //clean from text indent
-      part.replace("'","");
-      json=json.substring(pos+1);                      //cut input for extracted node:value
-      if (part.indexOf(":",1)==-1) {
-        #ifdef debugweb
-        WebSerial.println("Return no : data");
-        #endif
-        break;
-      }
-      String node=part.substring(0,part.indexOf(":",1));    //get node name
-      node.trim();
-      String nvalue=part.substring(part.indexOf(":",1)+1); //get node value
-      nvalue.trim();
-      #ifdef debugweb
-      WebSerial.println("jsonx: "+json);
-      WebSerial.println("tee: "+String(tee)+" tofind: "+tofind+" part: "+part+" node: "+node +" nvalue: "+nvalue + " indexof , :"+String(json.indexOf(",",1)));
-      #endif
-      if (tofind==node)
-      {
-         #ifdef debugweb
-         WebSerial.println("Found node return val");
-         #endif
-        return nvalue;
-        break;
-      }
-      tee++;
-      #ifdef debugweb
-      delay(1000);
-      #endif
-      if (tee>maxtee) {
-        #ifdef debugweb
-         WebSerial.println("tee exit: "+String(tee));
-        #endif
-        break;  //safety bufor
-      }
-    }
-    #ifdef enableWebSerial
-    WebSerial.println(String(millis())+": Json "+json+"  No mqttident contain searched value of "+tofind);
-    #endif
-  } else
-  {
-    #ifdef enableWebSerial
-    WebSerial.println(String(millis())+": Inproper Json format or null: "+json+" to find: "+tofind);
-    #endif
-  }
-  return "\0";
 }

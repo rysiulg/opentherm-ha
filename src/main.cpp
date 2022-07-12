@@ -8,113 +8,88 @@
  *************************************************************/
 
 //#include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <PubSubClient.h>
-#include <OpenTherm.h>
-#include "main.h"
-//#include <ArduinoHA.h>  //HomeAssistant
-#include <WebSerial.h>
 
-#include <WiFiClient.h>
-
-// for ota
-#include <ESPAsyncWebServer.h>
-#include <ESPAsyncTCP.h>
-//#include <ESPAsyncUDP.h>
-//#include <ESPAsyncDNSServer.h>
-
-AsyncWebServer webserver(wwwport);
-// for ota webs
-
-
-OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
-DallasTemperature sensors(&oneWire);
-OpenTherm ot(OT_IN_PIN, OT_OUT_PIN);
-WiFiClient espClient;
-PubSubClient client(espClient);
-
-#ifdef ENABLE_INFLUX
-InfluxDBClient InfluxClient(INFLUXDB_URL, INFLUXDB_DB_NAME);
-Point InfluxSensor(InfluxMeasurments);
-#endif
 
 // ESP8266WebServer server(80);
-
+#include "main.h"
+#include "common_functions.h"
 #include "websrv_ota.h"
 
 void recvMsg(uint8_t *data, size_t len)
 { // for WebSerial
-  WebSerial.println("Received Data...");
+  log_message((char*)F("Received Data..."));
   String d = "";
   for (size_t i = 0; i < len; i++)
   {
     d += char(data[i]);
   }
   d.toUpperCase();
-  WebSerial.println("Received: " + String(d));
+  sprintf(log_chars, "Received: %s", String(d).c_str());
+  log_message(log_chars);
+
   if (d == "RESTART")
   {
-    WebSerial.println(F("OK. Restarting... by command..."));
+    log_message((char*)F("OK. Restarting... by command..."));
     restart();
   }
   if (d == "RECONNECT")
   {
-    reconnect();
+    mqtt_reconnect();
   }
   if (d == "ROOMTEMP+")
   {
-    WebSerial.print("Change t from: " + String(roomtemp));
+    float startroomtemp = roomtemp;
     if (roomtemp < roomtemphi) {roomtemp = roomtemp + 0.5;}
     tmanual = true;
     lastTempSet = millis();
-    WebSerial.print(" to: " + String(roomtemp));
+    sprintf(log_chars, "Change ROOMTEMP+ from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
+    log_message(log_chars);
   }
   if (d == "ROOMTEMP-")
   {
-    WebSerial.print("Change t from: " + String(roomtemp));
+    float startroomtemp = roomtemp;
     if (roomtemp > roomtemplo) {roomtemp = roomtemp - 0.5;}
     lastTempSet = millis();
     tmanual = true;
-    WebSerial.print(" to: " + String(roomtemp));
+    sprintf(log_chars, "Change ROOMTEMP- from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
+    log_message(log_chars);
   }
   if (d == "ROOMTEMP0")
   {
-    WebSerial.print("Change t from: " + String(roomtemp));
-    tmanual = false;
+    tmanual = !tmanual;
     lastTempSet = millis();
-    WebSerial.print(" to: " + String(roomtemp));
+    sprintf(log_chars, "Toggle ROOMTEMP0 from: %s to: %s", String(!tmanual?"MANUAL":"AUTO").c_str(), String(tmanual?"MANUAL":"AUTO").c_str());
+    log_message(log_chars);
   }
   if (d == "SAVE")
   {
-    WebSerial.println(F("Saving config to EEPROM memory by command..."));
-    WebSerial.println("Size CONFIG: " + String(sizeof(CONFIGURATION)));
-    saveConfig();
+    sprintf(log_chars,"Saving config to EEPROM memory by command...  CONFIG Size: %s",String(sizeof(CONFIGURATION)).c_str());
+    log_message(log_chars,0);
+    SaveConfig();
   }
   if (d == "RESET_CONFIG")
   {
-    WebSerial.println(F("RESET config to DEFAULT VALUES and restart..."));
-    WebSerial.println("Size CONFIG: " + String(sizeof(CONFIGURATION)));
+    sprintf(log_chars,"RESET config to DEFAULT VALUES and restart...  CONFIG Size: %s",String(sizeof(CONFIGURATION)).c_str());
+    log_message(log_chars,0);
     CONFIGURATION.version[0] = 'R';
     CONFIGURATION.version[1] = 'E';
     CONFIGURATION.version[2] = 'S';
     CONFIGURATION.version[3] = 'E';
     CONFIGURATION.version[4] = 'T';
-    saveConfig();
+    SaveConfig();
     restart();
   }
   if (d == "RESET_FLAMETOTAL")
   {
-    WebSerial.println(F("RESET flame Total var to 0..."));
+    log_message((char*)F("RESET flame Total var to 0..."),0);
     flame_used_power_kwh=0;
-    saveConfig();
+    SaveConfig();
   }
 
   if (d == "CO")
   {
     // espClient.connect("esp-b2c08e/dallThermometerS");
-    client.disconnect();
+    mqttclient.disconnect();
 
     espClient.stop();
     String host = "esp-b2c08e";
@@ -148,8 +123,7 @@ void recvMsg(uint8_t *data, size_t len)
   }
   if (d == "HELP")
   {
-    WebSerial.print(String(millis())+": ");
-    WebSerial.println(F("KOMENDY:\n \
+    log_message((char*)F("KOMENDY:\n \
       ROOMTEMP0        -Przelacza temperature z pokoju na automat,\n \
       ROOMTEMP+        -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,\n \
       ROOMTEMP-        -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,\n \
@@ -158,9 +132,145 @@ void recvMsg(uint8_t *data, size_t len)
       RECONNECT        -Dokonuje ponownej próby połączenia z bazami,\n \
       SAVE             -Wymusza zapis konfiguracji,\n \
       RESET_CONFIG     -UWAGA!!!! Resetuje konfigurację do wartości domyślnych\n \
-      RESET_FLAMETOTAL -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"));
+      RESET_FLAMETOTAL -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"),0);
   }
 }
+
+void updateDatatoWWW()
+{
+  //String dana = {"DHWTemp",DHW_Temp}
+
+  u_int i = 0;
+  AllSensorsStruct[i].placeholder = "uptimedana";
+  AllSensorsStruct[i].Value = String(uptimedana(0));
+  i++;
+  AllSensorsStruct[i].placeholder = "temp_NEWS";
+  AllSensorsStruct[i].Value = String(temp_NEWS);
+  i++;
+  AllSensorsStruct[i].placeholder = "tempBoiler";
+  AllSensorsStruct[i].Value = String(tempBoiler,1);
+  i++; //tempBoilerSet
+  AllSensorsStruct[i].placeholder = "sliderValue1";
+  if (receivedwebsocketdata or receivedmqttdata) {
+  tempBoilerSet = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
+  op_override = tempBoilerSet; // when no auto heating then this is temp to heat CO
+  sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","tempBoilerSet", AllSensorsStruct[i].Value.c_str(), String(tempBoilerSet).c_str());
+  log_message(log_chars);
+  }
+  AllSensorsStruct[i].Value = String(tempBoilerSet,1);
+  i++;
+  AllSensorsStruct[i].placeholder = "retTemp";
+  AllSensorsStruct[i].Value = String(retTemp,1);
+  i++;
+  AllSensorsStruct[i].placeholder = "tempCWU";
+  AllSensorsStruct[i].Value = String(tempCWU,1);
+  i++;      //dhwTarget
+  AllSensorsStruct[i].placeholder = "sliderValue2";
+ if (receivedwebsocketdata or receivedmqttdata) {
+  dhwTarget = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
+  sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","dhwTarget", AllSensorsStruct[i].Value.c_str(), String(dhwTarget).c_str());
+  log_message(log_chars);
+ }
+  AllSensorsStruct[i].Value = String(dhwTarget,1);
+  i++;      //cutOffTemp
+  AllSensorsStruct[i].placeholder = "sliderValue3";
+  if (receivedwebsocketdata or receivedmqttdata) {
+    cutOffTemp = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, cutofflo, cutoffhi);
+    lastcutOffTempSet = millis();
+    sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","cutOffTemp", AllSensorsStruct[i].Value.c_str(), String(cutOffTemp).c_str());
+    log_message(log_chars);
+  }
+  AllSensorsStruct[i].Value = String(cutOffTemp,1);
+  i++;
+  AllSensorsStruct[i].placeholder = "roomtemp";
+  AllSensorsStruct[i].Value = String(roomtemp,1);
+  i++;      //sp
+  AllSensorsStruct[i].placeholder = "sliderValue4";  //Room Target sp
+  if (receivedwebsocketdata or receivedmqttdata) {
+    sp = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, roomtemplo, roomtemphi);
+    sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","sp", AllSensorsStruct[i].Value.c_str(), String(sp).c_str());
+    log_message(log_chars);
+  }
+  AllSensorsStruct[i].Value = String(sp,1);
+  i++;
+  AllSensorsStruct[i].placeholder = "lastNEWSSet";
+  AllSensorsStruct[i].Value = String(uptimedana(lastNEWSSet));
+  i++;
+  AllSensorsStruct[i].placeholder = "boilermodewww";
+  if (receivedwebsocketdata or receivedmqttdata) {
+    if (PayloadStatus(AllSensorsStruct[i].Value, true))
+            {
+              heatingEnabled = true;
+              automodeCO = false;
+              tempBoilerSet = op_override;
+              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
+              log_message(log_chars);
+            }
+            else if (PayloadStatus(AllSensorsStruct[i].Value, false))
+            {
+              heatingEnabled = false;
+              automodeCO = false;
+              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
+              log_message(log_chars);
+            }
+            else if (AllSensorsStruct[i].Value == "AUTO" or AllSensorsStruct[i].Value == "2")
+            {
+              automodeCO = true;
+              receivedmqttdata = true;
+              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
+              log_message(log_chars);
+            } else {
+              sprintf(log_chars,"Unknown mode: %s", AllSensorsStruct[i].Value.c_str());
+              log_message(log_chars);
+            }
+  }
+  AllSensorsStruct[i].Value = String(automodeCO?"ON":"OFF");
+  i++;
+  AllSensorsStruct[i].placeholder = "boilerhwwww";
+    if (receivedwebsocketdata or receivedmqttdata) {
+      if (PayloadStatus(AllSensorsStruct[i].Value, true)) {
+        enableHotWater = true;
+      } else
+      if (PayloadStatus(AllSensorsStruct[i].Value, false)) {
+        enableHotWater = false;
+      } else
+      {
+        sprintf(log_chars,"Unknown mode: %s", AllSensorsStruct[i].Value.c_str());
+        log_message(log_chars);
+      }
+      sprintf(log_chars,"DHW State enableHotWater: %s", enableHotWater ? "heat" : "off");
+      log_message(log_chars);
+    }
+  AllSensorsStruct[i].Value = String(enableHotWater ? "heat" : "off");
+  i++;
+  AllSensorsStruct[i].placeholder = "naglowekdane";
+  AllSensorsStruct[i].Value = String("naglowekdane");
+
+      String ptr = "&nbsp;";
+      if (status_FlameOn) {
+        ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
+        ptr += "<br>";
+      }
+      if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
+      if (heatingEnabled) ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON)+"<br></B></span>";
+      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
+      if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
+      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
+      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
+      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
+      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
+      if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
+      if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
+      ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
+  i++;
+  AllSensorsStruct[i].placeholder = "StopkaStatusy";
+  AllSensorsStruct[i].Value = String(ptr);
+receivedwebsocketdata = false;
+  notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));  //moze nie potrzebne
+}
+
+
+
 
 void IRAM_ATTR handleInterrupt()
 {
@@ -211,12 +321,8 @@ float pid(float sp, float pv, float pv_last, float &ierr, float dt)
     op = max(opcolo, min(opcohi, op));
   }
   ierr = I;
-#ifdef debug
-  Serial.println("sp=" + String(sp) + " pv=" + String(pv) + " dt=" + String(dt) + " op=" + String(op) + " P=" + String(P) + " I=" + String(I));
-#endif
-  if (publishhomeassistantconfig % publishhomeassistantconfigdivider == 0)
-    WebSerial.println("sp=" + String(sp) + " pv=" + String(pv) + " dt=" + String(dt) + " op=" + String(op) + " P=" + String(P) + " I=" + String(I) + " tNEWS=" + String(temp_NEWS));
-
+  sprintf(log_chars,"sp=%s, pv=%s, dt=%s, op=%s, P=%s, I=%s, tNEWS=%s", String(sp).c_str(), String(pv).c_str(), String(dt).c_str(), String(op).c_str(), String(P).c_str(), String(I).c_str(), String(temp_NEWS).c_str());
+  log_message(log_chars);
   return op;
 }
 
@@ -234,29 +340,25 @@ void opentherm_update_data(unsigned long mqttdallas)
   if (temp_NEWS > (cutOffTemp + 0.9))
     heatingEnabled = false;
 
-  unsigned long response = ot.setBoilerStatus(heatingEnabled, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
-  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
-  if (responseStatus != OpenThermResponseStatus::SUCCESS)
-  {
-    String msg = "Error: Invalid boiler response " + String(response, HEX);
-#ifdef debug
-    Serial.println(msg);
-#endif
-    WebSerial.println(msg);
-    LastboilerResponseError = msg;
-  }
-  ot.setDHWSetpoint(dhwTarget);
-
   //if (tmanual == false)
   roomtemp =  getTemp();
-
   if (roomtemp == -127)
     roomtemp = sp;
   if (roomtemp_last == -127)
     roomtemp_last = sp;
-  float op = 0;
-  if (responseStatus == OpenThermResponseStatus::SUCCESS)
+
+  unsigned long response = ot.setBoilerStatus(heatingEnabled, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
+  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
+  if (responseStatus != OpenThermResponseStatus::SUCCESS)
   {
+
+    LastboilerResponseError = String(response, HEX);
+    sprintf(log_chars,"!!!!!!!!!!!Error: Invalid boiler response %s", LastboilerResponseError.c_str());
+    log_message(log_chars);
+  } else
+  {
+    ot.setDHWSetpoint(dhwTarget);
+    float op = 0;
     unsigned long now = millis();
     new_ts = millis();
     dt = (new_ts - ts) / 1000.0;
@@ -276,112 +378,46 @@ void opentherm_update_data(unsigned long mqttdallas)
       tempBoilerSet = op_override;
     }
     ot.setBoilerTemperature(tempBoilerSet);
-  }
 
-  roomtemp_last = roomtemp;
+    roomtemp_last = roomtemp;
+    status_CHActive = ot.isCentralHeatingActive(response);
+    status_WaterActive = ot.isHotWaterActive(response);
+    bool status_flame_tmp = status_FlameOn;
+    status_FlameOn = ot.isFlameOn(response);
+    if (status_flame_tmp != status_FlameOn) {
+      if (status_FlameOn) {start_flame_time=millis();} else start_flame_time=0;  //After change flame status If flame is on get timer, else reset timer
+      flame_time=start_flame_time;
+    }
+    status_Cooling = ot.isCoolingActive(response);
+    status_Diagnostic = ot.isDiagnostic(response);
+    flame_level = ot.getModulation();
+    tempBoiler = ot.getBoilerTemperature();
+    tempCWU = ot.getDHWTemperature();
+    retTemp = ot.getReturnTemperature();
+    pressure = ot.getPressure();
+  }
 
   status_Fault = ot.isFault(response);
-  status_CHActive = ot.isCentralHeatingActive(response);
-  status_WaterActive = ot.isHotWaterActive(response);
-  bool status_flame_tmp = status_FlameOn;
-  status_FlameOn = ot.isFlameOn(response);
-  if (status_flame_tmp != status_FlameOn) {
-    if (status_FlameOn) {start_flame_time=millis();} else start_flame_time=0;  //After change flame status If flame is on get timer, else reset timer
-    flame_time=start_flame_time;
-  }
-  status_Cooling = ot.isCoolingActive(response);
-  status_Diagnostic = ot.isDiagnostic(response);
-  flame_level = ot.getModulation();
-  tempBoiler = ot.getBoilerTemperature();
-  tempCWU = ot.getDHWTemperature();
-  retTemp = ot.getReturnTemperature();
-  pressure = ot.getPressure();
-
 
 }
 
-// This function  sends data to MQTT .
-void updateData()
+String Boiler_Mode()
 {
-  const String payloadvalue_startend_val = ""; // value added before and after value send to mqtt queue
-  const String payloadON = "1";
-  const String payloadOFF = "0";
-  String boilermode;
-
-  client.publish(LOG_GET_TOPIC.c_str(), LastboilerResponseError.c_str());
-
   if (automodeCO)
-    boilermode = "auto";
+    return "auto";
   else
   {
     if (heatingEnabled)
-      boilermode = "heat";
+      return "heat";
     else
-      boilermode = "off";
+      return "off";
   }
+}
 
-    //unsigned long flame_elapsed_time = (millis()-flame_time);
-    //String flame_used_energy=String(((flame_used_power))/1,4);  //unit kWh
-    // WebSerial.print(String(millis())+": flame_used_power kWh: "); WebSerial.println(String(flame_used_power_kwh));
-    // WebSerial.print(String(millis())+": flame_elapsed_time: "); WebSerial.println(String(flame_elapsed_time));
-    // WebSerial.print(String(millis())+": flame_W used: "); WebSerial.println(String(flame_used_energy));
-    // WebSerial.println("Flame level: "+String(flame_level));
-    flame_used_power=0;
-    start_flame_time=0;
-    //flame_time=0;
-
-
-  client.setBufferSize(512);
-  if (status_Fault)
-    WebSerial.println("Błąd: " + String(status_Fault ? "on" : "off"));
-  if (status_CHActive)
-    WebSerial.println("Status_CHActive: " + String(status_CHActive ? "on" : "off"));
-  if (status_WaterActive)
-    WebSerial.println("Status_WaterActive: " + String(status_WaterActive ? "on" : "off"));
-  if (enableHotWater)
-    WebSerial.println("EnableHW: " + String(enableHotWater ? "on" : "off"));
-  if (status_FlameOn)
-    WebSerial.println("Status_FlameOn: " + String(status_FlameOn ? "on" : "off"));
-  if (status_Cooling)
-    WebSerial.println("Status_Cooling: " + String(status_Cooling ? "on" : "off"));
-  if (status_Diagnostic)
-    WebSerial.println("Status_Diagnostic: " + String(status_Diagnostic ? "on" : "off"));
-
-  client.publish(ROOM_OTHERS_TOPIC.c_str(),
-                 ("{\"rssi\":"+ String(WiFi.RSSI()) + \
-                  ",\"CRT\":"+ String(runNumber) + \
-                  ",\"" + OT + ROOM_OTHERS_TEMPERATURE + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
-                  ",\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(sp) + payloadvalue_startend_val +
-                  ",\"" + OT + ROOM_OTHERS_PRESSURE + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
-                  "}").c_str(), mqtt_Retain); //"heat" : "off")
-
-  client.publish(HOT_WATER_TOPIC.c_str(),
-                 ("{\"" + OT + HOT_WATER_TEMPERATURE + "\": " + payloadvalue_startend_val + String(tempCWU) + payloadvalue_startend_val +
-                  ",\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(dhwTarget, 1) + payloadvalue_startend_val +
-                  ",\"" + OT + HOT_WATER_CH_STATE + "\": " + payloadvalue_startend_val + String(status_WaterActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\": \"" + String(enableHotWater ? "heat" : "off") + "\"" +
-                  "}").c_str(), mqtt_Retain); //"heat" : "off")
-
-  client.publish(BOILER_TOPIC.c_str(),
-                 ("{\"" + OT + BOILER_TEMPERATURE + "\": " + payloadvalue_startend_val + String(tempBoiler) + payloadvalue_startend_val +
-                  ",\"" + OT + BOILER_TEMPERATURE_RET + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +
-                  ",\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(tempBoilerSet, 1) + payloadvalue_startend_val +
-                  ",\"" + OT + BOILER_CH_STATE + "\": " + payloadvalue_startend_val + String(status_CHActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) +
-                  "\",\"" + OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + FLAME_LEVEL + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
-                  ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_power,4) + payloadvalue_startend_val +
-                  ",\"" + OT + FLAME_W_TOTAL + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh,4) + payloadvalue_startend_val +
-                  ",\"" + OT + TEMP_CUTOFF + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
-                  "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
-
-  client.publish(DIAG_TOPIC.c_str(),
-                 ("{\"" + OT + DIAGS_OTHERS_FAULT + "\": " + payloadvalue_startend_val + String(status_Fault ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + DIAGS_OTHERS_DIAG + "\": " + payloadvalue_startend_val + String(status_Diagnostic ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                  ",\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\": " + payloadvalue_startend_val + String(ierr) + payloadvalue_startend_val +
-                  "}").c_str(), mqtt_Retain); //"heat" : "off")
-
+void updateInfluxDB()
+{
 #ifdef ENABLE_INFLUX
+  String boilermode = Boiler_Mode();
   InfluxSensor.clearFields();
   // Report RSSI of currently connected network
   InfluxSensor.addField("rssi_BCO", (WiFi.RSSI()));
@@ -415,50 +451,132 @@ void updateData()
   InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponseError);
 
   // Print what are we exactly writing
-  WebSerial.print("Writing to InfluxDB: ");
+    sprintf(log_chars,"Writing to InfluxDB:  %s", String(InfluxClient.getLastErrorMessage()).c_str());
+    log_message(log_chars);
   //WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
   // Write point
   if (!InfluxClient.writePoint(InfluxSensor))
   {
-    WebSerial.print("InfluxDB write failed: ");
-    WebSerial.println(InfluxClient.getLastErrorMessage());
+    sprintf(log_chars,"InfluxDB write failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
+    log_message(log_chars);
   }
 #endif
+}
+
+// This function  sends data to MQTT .
+void updateMQTTData()
+{
+  const String payloadvalue_startend_val = ""; // value added before and after value send to mqtt queue
+  const String payloadON = "1";
+  const String payloadOFF = "0";
+
+  mqttclient.publish(LOG_GET_TOPIC.c_str(), LastboilerResponseError.c_str());
+
+  String boilermode = Boiler_Mode();
+
+    //unsigned long flame_elapsed_time = (millis()-flame_time);
+    //String flame_used_energy=String(((flame_used_power))/1,4);  //unit kWh
+    // WebSerial.print(String(millis())+": flame_used_power kWh: "); WebSerial.println(String(flame_used_power_kwh));
+    // WebSerial.print(String(millis())+": flame_elapsed_time: "); WebSerial.println(String(flame_elapsed_time));
+    // WebSerial.print(String(millis())+": flame_W used: "); WebSerial.println(String(flame_used_energy));
+    // WebSerial.println("Flame level: "+String(flame_level));
+    flame_used_power=0;
+    start_flame_time=0;
+    //flame_time=0;
+
+
+  if (status_Fault)
+   { sprintf(log_chars,"Błąd: %s", String(status_Fault ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (status_CHActive)
+    {sprintf(log_chars,"Status_CHActive: %s", String(status_CHActive ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (status_WaterActive)
+    {sprintf(log_chars,"Status_WaterActive: %s", String(status_WaterActive ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (enableHotWater)
+    {sprintf(log_chars,"EnableHW: %s", String(enableHotWater ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (status_FlameOn)
+    {sprintf(log_chars,"Status_FlameOn: %s", String(status_FlameOn ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (status_Cooling)
+    {sprintf(log_chars,"Status_Cooling: %s", String(status_Cooling ? "on" : "off").c_str());
+    log_message(log_chars);}
+  if (status_Diagnostic)
+    {sprintf(log_chars,"Status_Diagnostic: %s", String(status_Diagnostic ? "on" : "off").c_str());
+    log_message(log_chars);}
+
+  mqttclient.publish(ROOM_OTHERS_TOPIC.c_str(),
+                 ("{\"rssi\":"+ String(WiFi.RSSI()) + \
+                  ",\"CRT\":"+ String(runNumber) + \
+                  ",\"" + OT + ROOM_OTHERS_TEMPERATURE + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
+                  ",\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(sp) + payloadvalue_startend_val +
+                  ",\"" + OT + ROOM_OTHERS_PRESSURE + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
+                  "}").c_str(), mqtt_Retain); //"heat" : "off")
+
+  mqttclient.publish(HOT_WATER_TOPIC.c_str(),
+                 ("{\"" + OT + HOT_WATER_TEMPERATURE + "\": " + payloadvalue_startend_val + String(tempCWU) + payloadvalue_startend_val +
+                  ",\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(dhwTarget, 1) + payloadvalue_startend_val +
+                  ",\"" + OT + HOT_WATER_CH_STATE + "\": " + payloadvalue_startend_val + String(status_WaterActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\": \"" + String(enableHotWater ? "heat" : "off") + "\"" +
+                  "}").c_str(), mqtt_Retain); //"heat" : "off")
+
+  mqttclient.publish(BOILER_TOPIC.c_str(),
+                 ("{\"" + OT + BOILER_TEMPERATURE + "\": " + payloadvalue_startend_val + String(tempBoiler) + payloadvalue_startend_val +
+                  ",\"" + OT + BOILER_TEMPERATURE_RET + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +
+                  ",\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\": " + payloadvalue_startend_val + String(tempBoilerSet, 1) + payloadvalue_startend_val +
+                  ",\"" + OT + BOILER_CH_STATE + "\": " + payloadvalue_startend_val + String(status_CHActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\": \"" + String(boilermode) +
+                  "\",\"" + OT + FLAME_STATE + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_LEVEL + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_W + "\": " + payloadvalue_startend_val + String(flame_used_power,4) + payloadvalue_startend_val +
+                  ",\"" + OT + FLAME_W_TOTAL + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh,4) + payloadvalue_startend_val +
+                  ",\"" + OT + TEMP_CUTOFF + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
+                  "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
+
+  mqttclient.publish(DIAG_TOPIC.c_str(),
+                 ("{\"" + OT + DIAGS_OTHERS_FAULT + "\": " + payloadvalue_startend_val + String(status_Fault ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + DIAGS_OTHERS_DIAG + "\": " + payloadvalue_startend_val + String(status_Diagnostic ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                  ",\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\": " + payloadvalue_startend_val + String(ierr) + payloadvalue_startend_val +
+                  "}").c_str(), mqtt_Retain); //"heat" : "off")
+
+
 
   publishhomeassistantconfig++; // zwiekszamy licznik wykonan wyslania mqtt by co publishhomeassistantconfigdivider wysłań wysłać autoconfig discovery dla homeassisatnt
   if (publishhomeassistantconfig % publishhomeassistantconfigdivider == 0)
   {
-    client.setBufferSize(2048);
+    mqttclient.setBufferSize(2048);
 
     // homeassistant/sensor/BB050B_OPENTHERM_OT10_lo/config = {"name":"Opentherm OPENTHERM OT10 lo","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_lo","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['lo']}}"} (retained) problem
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
-    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_FAULT + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_FAULT + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_FAULT + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_FAULT + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_DIAG + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_DIAG + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_DIAG + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_DIAG + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HA_TOPIC + "_" + INTEGRAL_ERROR_GET_TOPIC + "/config").c_str(), ("{\"name\":\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"uniq_id\": \"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + INTEGRAL_ERROR_GET_TOPIC + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((DIAG_HA_TOPIC + "_" + LOGS + "/config").c_str(), ("{\"name\":\"" + OT + LOGS + "\",\"uniq_id\": \"" + OT + LOGS + "\",\"stat_t\":\"" + LOG_GET_TOPIC + "\",\"val_tpl\":\"{{ value }}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_FAULT + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_FAULT + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_FAULT + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_FAULT + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((DIAG_HABS_TOPIC + "_" + DIAGS_OTHERS_DIAG + "/config").c_str(), ("{\"name\":\"" + OT + DIAGS_OTHERS_DIAG + "\",\"uniq_id\": \"" + OT + DIAGS_OTHERS_DIAG + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + DIAGS_OTHERS_DIAG + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((DIAG_HA_TOPIC + "_" + INTEGRAL_ERROR_GET_TOPIC + "/config").c_str(), ("{\"name\":\"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"uniq_id\": \"" + OT + INTEGRAL_ERROR_GET_TOPIC + "\",\"stat_t\":\"" + DIAG_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + INTEGRAL_ERROR_GET_TOPIC + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((DIAG_HA_TOPIC + "_" + LOGS + "/config").c_str(), ("{\"name\":\"" + OT + LOGS + "\",\"uniq_id\": \"" + OT + LOGS + "\",\"stat_t\":\"" + LOG_GET_TOPIC + "\",\"val_tpl\":\"{{ value }}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_PRESSURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_PRESSURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_PRESSURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_PRESSURE + "}}\",\"dev_cla\":\"pressure\",\"unit_of_meas\": \"hPa\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((ROOM_OTHERS_HA_TOPIC + "_" + ROOM_OTHERS_PRESSURE + "/config").c_str(), ("{\"name\":\"" + OT + ROOM_OTHERS_PRESSURE + "\",\"uniq_id\": \"" + OT + ROOM_OTHERS_PRESSURE + "\",\"stat_t\":\"" + ROOM_OTHERS_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + ROOM_OTHERS_PRESSURE + "}}\",\"dev_cla\":\"pressure\",\"unit_of_meas\": \"hPa\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_SOFTWARE_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_SOFTWARE_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((HOT_WATER_HA_TOPIC + "_" + HOT_WATER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + HOT_WATER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\": \"°C\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((HOT_WATER_HABS_TOPIC + "_" + HOT_WATER_SOFTWARE_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"uniq_id\": \"" + OT + HOT_WATER_SOFTWARE_CH_STATE + "\",\"stat_t\":\"" + HOT_WATER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + HOT_WATER_SOFTWARE_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_RET + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_RET + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_RET + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_RET + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HABS_TOPIC + "_" + BOILER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_CH_STATE + "\",\"uniq_id\": \"" + OT + BOILER_CH_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + BOILER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + BOILER_SOFTWARE_CH_STATE_MODE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"uniq_id\": \"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HABS_TOPIC + "_" + FLAME_STATE + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_STATE + "\",\"uniq_id\": \"" + OT + FLAME_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + FLAME_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + FLAME_LEVEL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_LEVEL + "\",\"uniq_id\": \"" + OT + FLAME_LEVEL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_LEVEL + "}}\",\"dev_cla\":\"power\",\"unit_of_meas\":\"%\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W + "\",\"uniq_id\": \"" + OT + FLAME_W + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"measurement\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HA_TOPIC + "_" + FLAME_W_TOTAL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W_TOTAL + "\",\"uniq_id\": \"" + OT + FLAME_W_TOTAL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W_TOTAL + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"total_increasing\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_RET + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_RET + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_RET + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_RET + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + BOILER_TEMPERATURE_SETPOINT + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"uniq_id\": \"" + OT + BOILER_TEMPERATURE_SETPOINT + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_TEMPERATURE_SETPOINT + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HABS_TOPIC + "_" + BOILER_CH_STATE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_CH_STATE + "\",\"uniq_id\": \"" + OT + BOILER_CH_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + BOILER_CH_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + BOILER_SOFTWARE_CH_STATE_MODE + "/config").c_str(), ("{\"name\":\"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"uniq_id\": \"" + OT + BOILER_SOFTWARE_CH_STATE_MODE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + BOILER_SOFTWARE_CH_STATE_MODE + "}}\",\"unit_of_meas\": \" \",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HABS_TOPIC + "_" + FLAME_STATE + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_STATE + "\",\"uniq_id\": \"" + OT + FLAME_STATE + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + OT + FLAME_STATE + "}}\",\"dev_cla\":\"heat\",\"unit_of_meas\":\" \",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + FLAME_LEVEL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_LEVEL + "\",\"uniq_id\": \"" + OT + FLAME_LEVEL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_LEVEL + "}}\",\"dev_cla\":\"power\",\"unit_of_meas\":\"%\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + FLAME_W + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W + "\",\"uniq_id\": \"" + OT + FLAME_W + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"measurement\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + FLAME_W_TOTAL + "/config").c_str(), ("{\"name\":\"" + OT + FLAME_W_TOTAL + "\",\"uniq_id\": \"" + OT + FLAME_W_TOTAL + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + FLAME_W_TOTAL + "}}\",\"dev_cla\":\"energy\",\"unit_of_meas\":\"kWh\",\"state_class\":\"total_increasing\",\"ic\": \"mdi:fire\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((BOILER_HA_TOPIC + "_" + TEMP_CUTOFF + "/config").c_str(), ("{\"name\":\"" + OT + TEMP_CUTOFF + "\",\"uniq_id\": \"" + OT + TEMP_CUTOFF + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
+    mqttclient.publish((BOILER_HA_TOPIC + "_" + TEMP_CUTOFF + "/config").c_str(), ("{\"name\":\"" + OT + TEMP_CUTOFF + "\",\"uniq_id\": \"" + OT + TEMP_CUTOFF + "\",\"stat_t\":\"" + BOILER_TOPIC + "\",\"val_tpl\":\"{{value_json." + OT + TEMP_CUTOFF + "}}\",\"dev_cla\":\"temperature\",\"unit_of_meas\":\"°C\",\"ic\": \"mdi:thermometer\",\"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
 
-    client.publish((HOT_WATER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Hot Water\",\"uniq_id\": \"" + OT + "Hot_Water\", \
+    mqttclient.publish((HOT_WATER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Hot Water\",\"uniq_id\": \"" + OT + "Hot_Water\", \
 \"modes\":[\"off\",\"heat\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + HOT_WATER_TOPIC + "\", \
@@ -477,7 +595,7 @@ void updateData()
 \"min_temp\": " + oplo + ", \
 \"max_temp\": " + ophi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((BOILER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler CO\",\"uniq_id\": \"" + OT + "Boiler_CO\", \
+    mqttclient.publish((BOILER_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler CO\",\"uniq_id\": \"" + OT + "Boiler_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + BOILER_TOPIC + "\", \
@@ -496,7 +614,7 @@ void updateData()
 \"min_temp\": " + opcolo + ", \
 \"max_temp\": " + opcohi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + OT + "Boiler_RoomTemp_Control_CO\", \
+    mqttclient.publish((ROOM_OTHERS_HACLI_TOPIC + "_climate/config").c_str(), ("{\"name\":\"" + OT + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + OT + "Boiler_RoomTemp_Control_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + ROOM_OTHERS_TOPIC + "\", \
@@ -515,7 +633,7 @@ void updateData()
 \"min_temp\": " + roomtemplo + ", \
 \"max_temp\": " + roomtemphi + ", \
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
-    client.publish((ROOM_OTHERS_HACLI_TOPIC + "cutoff_climate/config").c_str(), ("{\"name\":\"" + OT + "CutoffTemp\",\"uniq_id\": \"" + OT + "CutoffTemp\", \
+    mqttclient.publish((ROOM_OTHERS_HACLI_TOPIC + "cutoff_climate/config").c_str(), ("{\"name\":\"" + OT + "CutoffTemp\",\"uniq_id\": \"" + OT + "CutoffTemp\", \
 \"modes\":\"\", \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + NEWS_GET_TOPIC + "\", \
@@ -532,88 +650,16 @@ void updateData()
 \"qos\":" + QOS + "," + deviceid + "}").c_str(), mqtt_Retain);
   }
 
-#ifdef debug
-  Serial.print("Current temperature: " + String(roomtemp) + " °C ");
-#endif
-  WebSerial.print("Current temperature 18B20: " + String(roomtemp) + " °C ");
   String tempSource = (millis() - lastTempSet > extTempTimeout_ms)
                           ? "(internal sensor)"
                           : "(external sensor)";
-#ifdef debug
-  Serial.println(tempSource);
-#endif
-  WebSerial.println(tempSource);
+  sprintf(log_chars,"Current temperature 18B20: %s °C %s", String(roomtemp).c_str(), tempSource.c_str());
+  log_message(log_chars);
 }
 
-String convertPayloadToStr(byte *payload, unsigned int length)
+void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
-  char s[length + 1];
-  s[length] = 0;
-  for (unsigned int i = 0; i < length; ++i)
-    s[i] = payload[i];
-  String tempRequestStr(s);
-  return tempRequestStr;
-}
-
-bool PayloadStatus(String payloadStr, bool state)
-{
-  payloadStr.toUpperCase();
-  payloadStr.trim();
-  payloadStr.replace(",", ".");      //for localization correction
-  if (state and (payloadStr == "ON" or payloadStr == "TRUE" or payloadStr == "START" or payloadStr == "1"  or payloadStr == "ENABLE")) {return true;}
-  else
-  if (!state and (payloadStr == "OFF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) {return true;}
-  return false;
-}
-
-bool isValidNumber(String str)
-{
-  bool valid = true;
-  for (byte i = 0; i < str.length(); i++)
-  {
-    char ch = str.charAt(i);
-    valid &= isDigit(ch) ||
-             ch == '+' || ch == '-' || ch == ',' || ch == '.' ||
-             ch == '\r' || ch == '\n';
-  }
-  return valid;
-}
-
-bool PayloadtoValidFloatCheck(String payloadStr)
-{
-  if (PayloadtoValidFloat(payloadStr)==InitTemp) return false; else return true;
-}
-float PayloadtoValidFloat(String payloadStr, bool withtemps_minmax, float mintemp, float maxtemp)  //bool withtemps_minmax=false, float mintemp=InitTemp,float
-{
-  payloadStr.trim();
-  payloadStr.replace(",", ".");
-  float valuefromStr = payloadStr.toFloat();
-  if (isnan(valuefromStr) || !isValidNumber(payloadStr))
-  {
-    #ifdef debug
-    Serial.println(F("Value is not a valid number, ignoring..."));
-    #endif
-    WebSerial.println(F("Value is not a valid number, ignoring..."));
-    return InitTemp;
-  } else
-  {
-    if (!withtemps_minmax)
-    {
-      return valuefromStr;
-    } else {
-      #ifdef debug
-      Serial.println("Value is valid number: "+String(valuefromStr,2));
-      #endif
-      WebSerial.println("Value is valid number: "+String(valuefromStr,2));
-      if (valuefromStr>maxtemp and maxtemp!=InitTemp) valuefromStr = maxtemp;
-      if (valuefromStr<mintemp and mintemp!=InitTemp) valuefromStr = mintemp;
-      return valuefromStr;
-    }
-  }
-}
-
-void callback(char *topic, byte *payload, unsigned int length)
-{
+  #ifdef enableMQTT
   const String topicStr(topic);
 
   String payloadStr = convertPayloadToStr(payload, length);
@@ -621,220 +667,172 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   if (topicStr == ROOMS_F1_GET_TOPIC) //topic min temp and max setpoint from floor 1
   {
-    String ident = String(millis())+": Floor1temp ";
+    String ident = "Floor1temp ";
  //   WebSerial.println("Payload: " + String(payloadStr));
     if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF1temp_json)))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       floor1_temp = PayloadtoValidFloat(getJsonVal(payloadStr,roomF1temp_json), true, roomtemplo, roomtemphi);
+      sprintf(log_chars, "%s set to: %s", ident.c_str(), String(floor1_temp).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
     if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF1tempset_json)))  //wrong value are displayed in function
     {
-       #ifdef debug
-      Serial.print(ident+"Setpoint ");
-      #endif
-      WebSerial.print(ident+"Setpoint ");
       floor1_tempset = PayloadtoValidFloat(getJsonVal(payloadStr,roomF1tempset_json),true, roomtemplo, roomtemphi);
+      sprintf(log_chars, "%s Setpoint set to: %s", ident.c_str(), String(floor1_tempset).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident+"Setpoint is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident+"Setpoint is not a valid number, ignoring...");
+      sprintf(log_chars, "%s Setpoint is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == ROOMS_F2_GET_TOPIC) //topic min temp and max setpoint from floor 1
   {
-    String ident = String(millis())+": Floor2temp ";
+    String ident = "Floor2temp ";
  //   WebSerial.println("Payload: " + String(payloadStr));
     if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF2temp_json)))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       floor2_temp = PayloadtoValidFloat(getJsonVal(payloadStr,roomF2temp_json), true, roomtemplo, roomtemphi);
+      sprintf(log_chars, "%s set to: %s", ident.c_str(), String(floor2_temp).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      sprintf(log_chars, "%s Setpoint is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
     if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,roomF2tempset_json)))  //wrong value are displayed in function
     {
-       #ifdef debug
-      Serial.print(ident+"Setpoint ");
-      #endif
-      WebSerial.print(ident+F("Setpoint "));
       floor2_tempset = PayloadtoValidFloat(getJsonVal(payloadStr,roomF2tempset_json),true, roomtemplo, roomtemphi);
+      sprintf(log_chars, "%s Setpoint set to: %s", ident.c_str(), String(floor2_tempset).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident+"Setpoint is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident+F("Setpoint is not a valid number, ignoring..."));
+      sprintf(log_chars, "%s Setpoint is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   } else
   if (topicStr == NEWS_GET_TOPIC)               //NEWS averange temp -outside temp
   {
-    String ident = String(millis())+": NEWS temp ";
-    #ifdef debug
-    Serial.print(ident);
-    #endif
-    WebSerial.print(ident);
+    String ident = "NEWS temp ";
     if (PayloadtoValidFloatCheck(getJsonVal(payloadStr,NEWStemp_json)))           //invalid val is displayed in funct
     {
       temp_NEWS = PayloadtoValidFloat(getJsonVal(payloadStr,NEWStemp_json),true);     //true to get output to serial and webserial
+      sprintf(log_chars, "%s updated from MQTT to: %s", ident.c_str(), String(temp_NEWS).c_str());
+      log_message(log_chars);
       lastNEWSSet = millis();
       temp_NEWS_count = 0;
 //      receivedmqttdata = true;    //makes every second run mqtt send and influx
-      #ifdef debugweb
-      WebSerial.print(F("NEWS updated from MQTT to ")+String(temp_NEWS)+" Payl: "+payloadStr);
-      #endif
     }
   }
   else if (topicStr == ROOM_TEMP_SET_TOPIC)           // Rooms autosetp.roomtemp for auto mode
   {
-    String ident = String(millis())+": Rooms Current roomtemp ";
+    String ident = "Rooms Current roomtemp ";
     if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       sp = PayloadtoValidFloat(payloadStr, true, roomtemplo, roomtemphi);
+      sprintf(log_chars, "%s set to: %s", ident.c_str(), String(sp).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + F(" is not a valid number, ignoring..."));
+      sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == TEMP_SETPOINT_SET_TOPIC)      //Room Target sp for automode
   {
-    String ident = String(millis())+": Room Target sp ";
+    String ident = "Room Target sp ";
    if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       tempBoilerSet = PayloadtoValidFloat(payloadStr, true, roomtemplo, roomtemphi);
       op_override = tempBoilerSet; // when no auto heating then this is temp to heat CO
+      sprintf(log_chars, "%s set to: %s", ident.c_str(), String(tempBoilerSet).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + F(" is not a valid number, ignoring..."));
-      #endif
-      WebSerial.println(ident + F(" is not a valid number, ignoring..."));
+      sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == MODE_SET_TOPIC)              //mode set topic
   {
-    String ident = String(millis())+": Mode Set ";
+    String ident = "Mode Set ";
     payloadStr.toUpperCase();
-    #ifdef debug
-    Serial.print(ident + F("Set mode: "));
-    #endif
-    WebSerial.print(ident + F("Set mode: "));
     if (PayloadStatus(payloadStr, true))
     {
       heatingEnabled = true;
       automodeCO = false;
       tempBoilerSet = op_override;
       receivedmqttdata = true;
-      WebSerial.println(F("CO mode ") + payloadStr);
+      sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
     else if (PayloadStatus(payloadStr, false))
     {
       heatingEnabled = false;
       automodeCO = false;
       receivedmqttdata = true;
-      WebSerial.println(F("CO mode ") + payloadStr);
+      sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
     else if (payloadStr == "AUTO" or payloadStr == "2")
     {
       automodeCO = true;
       receivedmqttdata = true;
-      WebSerial.println(F("CO mode ") + payloadStr);
+      sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     } else {
-      #ifdef debug
-      Serial.println(F("Unknown mode ") + payloadStr);
-      #endif
-      WebSerial.println(F("Unknown mode ") + payloadStr);
+      sprintf(log_chars, "%s to: Unknown mode  %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == TEMP_DHW_SET_TOPIC)    // dhwTarget
   {
-    String ident = String(millis())+": DHW target  ";
+    String ident = "DHW target ";
     if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       dhwTarget = PayloadtoValidFloat(payloadStr, true, oplo, ophi);
+      sprintf(log_chars, "%s to: %s", ident.c_str(), String(dhwTarget).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == STATE_DHW_SET_TOPIC)   // enableHotWater
   {
-    String ident = String(millis())+": DHW State enableHotWater ";
-    #ifdef debug
-    Serial.print(ident);
-    #endif
-    WebSerial.print(ident);
+    String ident ="DHW State enableHotWater ";
     receivedmqttdata = true;
     if (PayloadStatus(payloadStr, true)) {enableHotWater = true;}
     else if (PayloadStatus(payloadStr, false)) {enableHotWater = false;}
     else
     {
       receivedmqttdata = false;
-#ifdef debug
-      Serial.println("Unknown: "+String(payloadStr));
-#endif
-      WebSerial.println("Unknown: "+String(payloadStr));
+      sprintf(log_chars, "%s to: Unknown %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
     if (receivedmqttdata) {
-      #ifdef debug
-      Serial.println(enableHotWater ? "heat" : "off" );
-      #endif
-      WebSerial.println(enableHotWater ? "heat" : "off" );
+      sprintf(log_chars, "%s to:  %s", ident.c_str(), String(enableHotWater ? "heat" : "off").c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == TEMP_CUTOFF_SET_TOPIC)         //cutOffTemp
   {
-    String ident = String(millis())+": cutOffTemp ";
+    String ident = "cutOffTemp ";
    if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       cutOffTemp = PayloadtoValidFloat(payloadStr, true, cutofflo, cutoffhi);
+      sprintf(log_chars, "%s to: %s", ident.c_str(), String(cutOffTemp).c_str());
+      log_message(log_chars);
       lastcutOffTempSet = millis();
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStr: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
  else
@@ -842,157 +840,96 @@ void callback(char *topic, byte *payload, unsigned int length)
 //#define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
   if (topicStr == COPUMP_GET_TOPIC)                                                                   //external CO Pump Status
   {
-    String ident = String(millis())+": Wood/coax CO Pump Status ";
-    #ifdef debug
-    Serial.print(ident);
-    #endif
-    WebSerial.print(ident);
+    String ident = "Wood/coax CO Pump Status ";
     receivedmqttdata = true;
     if (PayloadStatus(getJsonVal(payloadStr,COPumpStatus_json), true)) {CO_PumpWorking = true;}
     else if (PayloadStatus(getJsonVal(payloadStr,COPumpStatus_json), false)) {CO_PumpWorking = false;}
     else
     {
       receivedmqttdata = false;
-#ifdef debug
-      Serial.println("Unknown: "+String(payloadStr));
-#endif
-      WebSerial.println("Unknown: "+String(payloadStr));
+      sprintf(log_chars, "%s to: Unknown %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
     if (receivedmqttdata) {
-      #ifdef debug
-      Serial.println(CO_PumpWorking ? "Active" : "Disabled" );
-      #endif
-      WebSerial.println(CO_PumpWorking ? "Active" : "Disabled" );
+      sprintf(log_chars, "%s to:  %s", ident.c_str(), String(CO_PumpWorking ? "Active" : "Disabled").c_str());
+      log_message(log_chars);
     }
   }  else
 //CO Pump Status #define COPumpStatus_json "CO0_boilerroom_pump2CO"
 //#define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
   if (topicStr == COPUMP_GET_TOPIC)                                                                   //external CO Pump Status
   {
-    String ident = String(millis())+": Wood/coax Water Pump Status ";
-    #ifdef debug
-    Serial.print(ident);
-    #endif
-    WebSerial.print(ident);
+    String ident = "Wood/coax Water Pump Status ";
     receivedmqttdata = true;
     if (PayloadStatus(getJsonVal(payloadStr,WaterPumpStatus_json), true)) {Water_PumpWorking = true;}
     else if (PayloadStatus(getJsonVal(payloadStr,WaterPumpStatus_json), false)) {Water_PumpWorking = false;}
     else
     {
       receivedmqttdata = false;
-#ifdef debug
-      Serial.println("Unknown: "+String(payloadStr));
-#endif
-      WebSerial.println("Unknown: "+String(payloadStr));
+      sprintf(log_chars, "%s to: Unknown %s", ident.c_str(), String(payloadStr).c_str());
+      log_message(log_chars);
     }
     if (receivedmqttdata) {
-      #ifdef debug
-      Serial.println(CO_PumpWorking ? "Active" : "Disabled" );
-      #endif
-      WebSerial.println(CO_PumpWorking ? "Active" : "Disabled" );
+      sprintf(log_chars, "%s to:  %s", ident.c_str(), String(Water_PumpWorking ? "Active" : "Disabled").c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == SETPOINT_OVERRIDE_SET_TOPIC)  //op_override -think unused
   {
-    String ident = String(millis())+": Setpoint override op_override ";
+    String ident = "Setpoint override op_override ";
     if (PayloadtoValidFloatCheck(payloadStr))  //wrong value are displayed in function
     {
-      #ifdef debug
-      Serial.print(ident);
-      #endif
-      WebSerial.print(ident);
       op_override = PayloadtoValidFloat(payloadStr, true); //true to avoid duplicated messages to serial and webserial
+      sprintf(log_chars, "%s to: %s", ident.c_str(), String(op_override).c_str());
+      log_message(log_chars);
       receivedmqttdata = true;
     } else {
-      #ifdef debug
-      Serial.println(ident + " is not a valid number, ignoring...");
-      #endif
-      WebSerial.println(ident + " is not a valid number, ignoring...");
+      sprintf(log_chars, "%s is not a valid number, ignoring... paload: %s", ident.c_str(), payloadStr.c_str());
+      log_message(log_chars);
     }
   }
   else if (topicStr == SETPOINT_OVERRIDE_RESET_TOPIC)         //think not used
   {
+    String ident = "Setpoint override reset ";
     lastSpSet = 0;
-#ifdef debug
-    Serial.println(F("Setpoint override reset"));
-#endif
-    WebSerial.println(F("Setpoint override reset"));
+    sprintf(log_chars, "%s , paloadStr: %s", ident.c_str(), String(payloadStr).c_str());
+    log_message(log_chars);
   }
   else
   {
-#ifdef debug
-    Serial.printf("Unknown topic: %s\r\n", topic);
-#endif
-    WebSerial.println("Unknown topic: " + String(topic));
+    sprintf(log_chars, "Unknown topic: %s", String(topic).c_str());
+    log_message(log_chars);
     return;
   }
+  #endif
 }
 
-void reconnect()
+void mqtt_reconnect_subscribe_list()
 {
-  // Loop until we're reconnected
-  while (!client.connected() and mqtt_offline_retrycount < mqtt_offline_retries)
-  {
-#ifdef debug
-    Serial.print(F("Attempting MQTT connection..."));
-#endif
-    WebSerial.print(F("Attempting MQTT connection..."));
-    const char *clientId = "opentherm-thermostat-test";
-
-    if (client.connect(clientId, mqtt_user, mqtt_password))
-    {
-#ifdef debug
-      Serial.println(F("ok"));
-#endif
-      WebSerial.println(F("ok"));
-      mqtt_offline_retrycount = 0;
-
-      client.subscribe(TEMP_SETPOINT_SET_TOPIC.c_str());
-      client.subscribe(MODE_SET_TOPIC.c_str());
-      client.subscribe(ROOM_TEMP_SET_TOPIC.c_str());
-      client.subscribe(TEMP_DHW_SET_TOPIC.c_str());
-      client.subscribe(STATE_DHW_SET_TOPIC.c_str());
-      client.subscribe(SETPOINT_OVERRIDE_SET_TOPIC.c_str());
-      client.subscribe(SETPOINT_OVERRIDE_RESET_TOPIC.c_str());
-
-      client.subscribe(NEWS_GET_TOPIC.c_str());
-      client.subscribe(COPUMP_GET_TOPIC.c_str());
-      client.subscribe(TEMP_CUTOFF_SET_TOPIC.c_str());
-
-
-
-
-
-      client.subscribe(ROOMS_F1_GET_TOPIC.c_str());
-      client.subscribe(ROOMS_F2_GET_TOPIC.c_str());
-    }
-    else
-    {
-#ifdef debug
-      Serial.print(F(" failed, rc="));
-#endif
-      WebSerial.print(F(" failed, rc="));
-#ifdef debug
-      Serial.print(client.state());
-#endif
-      WebSerial.print(client.state());
-#ifdef debug
-      Serial.println(F(" try again in 5 seconds"));
-#endif
-      WebSerial.println(F(" try again in 5 seconds"));
-      mqtt_offline_retrycount++;
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
+      mqttclient.subscribe(TEMP_SETPOINT_SET_TOPIC.c_str());
+      mqttclient.subscribe(MODE_SET_TOPIC.c_str());
+      mqttclient.subscribe(ROOM_TEMP_SET_TOPIC.c_str());
+      mqttclient.subscribe(TEMP_DHW_SET_TOPIC.c_str());
+      mqttclient.subscribe(STATE_DHW_SET_TOPIC.c_str());
+      mqttclient.subscribe(SETPOINT_OVERRIDE_SET_TOPIC.c_str());
+      mqttclient.subscribe(SETPOINT_OVERRIDE_RESET_TOPIC.c_str());
+      mqttclient.subscribe(NEWS_GET_TOPIC.c_str());
+      mqttclient.subscribe(COPUMP_GET_TOPIC.c_str());
+      mqttclient.subscribe(TEMP_CUTOFF_SET_TOPIC.c_str());
+      mqttclient.subscribe(ROOMS_F1_GET_TOPIC.c_str());
+      mqttclient.subscribe(ROOMS_F2_GET_TOPIC.c_str());
 }
 
 void setup()
 {
   Serial.begin(74880);
 
-  Serial.println(F("Starting... Delay3000..."));
-  delay(3000);
+  Serial.println(F("Starting... ..."));
+  getFreeMemory();
+  #ifdef doubleResDet
+  // double reset detect from start
+  doubleResetDetect();
+  #endif
   if (loadConfig())
   {
     Serial.println(F("Config loaded:"));
@@ -1006,42 +943,11 @@ void setup()
   else
   {
     Serial.println(F("Config not loaded!"));
-    saveConfig(); // overwrite with the default settings
+    SaveConfig(); // overwrite with the default settings
   }
 
-  Serial.println(("Connecting to " + String(ssid)));
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname(String(me_lokalizacja).c_str());
-  WiFi.setAutoReconnect(true);
-  WiFi.setAutoConnect(true);
-  WiFi.persistent(true);
-  WiFi.begin(ssid, pass);
-
-  int deadCounter = 20;
-  while (WiFi.status() != WL_CONNECTED && deadCounter-- > 0)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.println(("Failed to connect to " + String(ssid)));
-    while (true)
-      ;
-  }
-  else
-  {
-    Serial.println(F("ok"));
-  }
-
-
-  client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(callback);
-
+  MainCommonSetup();
   ot.begin(handleInterrupt);
-
-
 
   // Init DS18B20 sensor
   sensors.begin();
@@ -1053,74 +959,29 @@ void setup()
   ts = millis();
   lastTempSet = -extTempTimeout_ms;
 
-  started = millis();
 
-  WebSerial.begin(&webserver);
-  WebSerial.msgCallback(recvMsg);
-  WebServers();
+  #ifdef debug
+  Serial.println("end setup....");
+  //    SaveConfig();
+#endif
 
-  #ifdef ENABLE_INFLUX
-  //InfluxDB
-  InfluxClient.setConnectionParamsV1(INFLUXDB_URL, INFLUXDB_DB_NAME, INFLUXDB_USER, INFLUXDB_PASSWORD);
-  // Alternatively, set insecure connection to skip server certificate validation
-  InfluxClient.setInsecure();
-  // Add tags
-  InfluxSensor.addTag("device", me_lokalizacja);
-    // Check server connection
-  if (InfluxClient.validateConnection()) {
-    WebSerial.print("Connected to InfluxDB: ");
-    WebSerial.println(InfluxClient.getServerUrl());
-  } else {
-    WebSerial.print("InfluxDB connection failed: ");
-    WebSerial.println(InfluxClient.getLastErrorMessage());
-  }
-  #endif
-  starting = false;
 }
+
+
+
 
 void loop()
 {
+  MainCommonLoop();
   unsigned long now = millis() + 100; // TO AVOID compare -2>10000 which is true ??? why?
   // check mqtt is available and connected in other case check values in api.
 
-
-  if (mqtt_offline_retrycount == mqtt_offline_retries)
-  {
-    if ((now - lastmqtt_reconnect) > mqtt_offline_reconnect_after_ms)
-    {
-      lastmqtt_reconnect = now;
-      mqtt_offline_retrycount = 0;
-      WebSerial.println(F("MQTT connection problem -now reset retry counter and try again..."));
-    }
-    else
-    {
-      WebSerial.println(F("MQTT connection problem -now try get temp data alternative way (room temp and NEWS temp and Carbon CO Water pump status"));
-      // best place to function get values from http when mqtt is unavailable
-      //lastNEWSSet = now; // reset counter news temp with alternative parse value way
-      //temp_NEWS_count = 0;
-    }
-  }
-  else
-  {
-    if (!client.connected())
-    {
-      #ifdef debug
-      Serial.println(String(millis())+": "+F("MQTT connection problem -try to connect again..."));
-      #endif
-      WebSerial.println(F("MQTT connection problem -try to connect again..."));
-      delay(500);
-      reconnect();
-    }
-    else
-    {
-      client.loop();
-    }
-  }
 
   if ((now - lastUpdate) > statusUpdateInterval_ms)
   {
     lastUpdate = now;
     opentherm_update_data(lastUpdatemqtt); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
+  updateDatatoWWW();
   }
   if (status_FlameOn) {
     unsigned long nowtime = millis();
@@ -1131,10 +992,8 @@ void loop()
     double time_to_hour = (nowtime-start_flame_time)/(double(hour_s)*1000);
     flame_used_power += boilerpower*time_to_hour/1000;
     flame_used_power_kwh += boilerpower*time_to_hour/1000;
-    WebSerial.println("nowtime: "+String(nowtime));
-    WebSerial.println("BoilerPower: "+String(boilerpower,6));
-    WebSerial.println("time_to_hour: "+String(time_to_hour));
-    WebSerial.println("flame_used_power bp*time/1k/1k: "+String(flame_used_power,6));
+    sprintf(log_chars,"nowtime: %s, BoilerPower: %s, time_to_hour: %s, flame_used_power bp*time/1k/1k: %s", String(nowtime).c_str(), String(boilerpower,6).c_str(), String(time_to_hour).c_str(), String(flame_used_power,6).c_str());
+    log_message(log_chars);
 
     // WebSerial.print(String(start_flame_time));
     // WebSerial.print(": millis()-start_flame_time "+String((millis()-start_flame_time),10));
@@ -1151,25 +1010,19 @@ void loop()
   {
     lastUpdatemqtt = now;
     roomtemp=getTemp();
-
-
-    updateData();    //update to mqtt
   }
   //#define abs(x) ((x)>0?(x):-(x))
-  if ((now - lastNEWSSet) > temp_NEWS_interval_reduction_time_ms)
+  if (((now - lastNEWSSet) > (temp_NEWS_interval_reduction_time_ms*2)) and 1==0) //disable for now
   { // at every 0,5hour lower temp NEWS when no communication why -2>1800000 is true ???
-    WebSerial.print("now: ");
-    WebSerial.println(String(now));
-    WebSerial.print("lastNEWSSet: ");
-    WebSerial.println(String(lastNEWSSet));
-    WebSerial.print("temp_NEWS_interval_reduction_time_ms: ");
-    WebSerial.println(String(temp_NEWS_interval_reduction_time_ms));
+    sprintf(log_chars,"nowtime: %s, lastNEWSSet: %s, temp_NEWS_interval_reduction_time_ms: %s", String(now).c_str(), String(lastNEWSSet,6).c_str(), String(temp_NEWS_interval_reduction_time_ms).c_str());
+    log_message(log_chars);
     lastNEWSSet = now;
     temp_NEWS_count++;
     if (temp_NEWS > cutOffTemp)
     {
       temp_NEWS = temp_NEWS - temp_NEWS * 0.05;
-      WebSerial.println(F("Lowering by 5% temp_NEWS (no communication) -after 10times execute every 30minutes lowered temp NEWS"));
+      sprintf(log_chars,"Lowering by 5%% temp_NEWS (no communication) -after 10times execute every 30minutes lowered temp NEWS from: %s, to: %s", String(temp_NEWS).c_str(), String(temp_NEWS - temp_NEWS * 0.05).c_str());
+      log_message(log_chars);
     }
     else
     {
@@ -1178,28 +1031,18 @@ void loop()
     if (temp_NEWS_count > 10)
     {
       CO_PumpWorking = false; // assume that we loose mqtt connection to other system where is co pump controlled -so after 10 times lowered NEWS temp by 5% we also disable CO_Pump_Working to allow heat by this heater -default it counts 5hours no communication
-      WebSerial.println(F("Force disable CO_PumpWorking flag -after 10times execute every 30minutes lowered temp NEWS"));
+      log_message((char*)F("Force disable CO_PumpWorking flag -after 10times execute every 30minutes lowered temp NEWS"));
       temp_NEWS_count = 0;
     }
     // dobre miejsce do try get data by http api
-    WebSerial.println(F("Korekta temperatury NEWS z braku połaczenia -pomniejszona o 5%"));
-  }
-
-  // if WiFi is down, try reconnecting
-  if ((WiFi.status() != WL_CONNECTED) && (now - WiFipreviousMillis >= WiFiinterval))
-  {
-    Serial.print(now);
-    Serial.println("Reconnecting to WiFi...");
-    WiFi.disconnect();
-    WiFi.begin(ssid, pass);
-    WiFipreviousMillis = now;
+    log_message((char*)F("Korekta temperatury NEWS z braku połaczenia -pomniejszona o 5%"));
   }
 
   if ((now - lastSaveConfig) > save_config_every)
   {
     lastSaveConfig = now;
-    WebSerial.println(F("Saving config to EEPROM memory..."));
-    saveConfig(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
+    log_message((char*)F("Saving config to EEPROM memory..."));
+    SaveConfig(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
   }
 
   static bool failFlag = false;
@@ -1209,10 +1052,8 @@ void loop()
     if (!failFlag)
     {
       failFlag = true;
-#ifdef debug
-      Serial.printf("Neither temperature nor setpoint provided, setting heating water to %.1f\r\n", noCommandSpOverride);
-#endif
-      WebSerial.println("Neither temperature nor setpoint provided, setting heating water to " + String(noCommandSpOverride));
+      sprintf(log_chars, "Neither temperature nor setpoint provided, setting heating water to: %s", String(noCommandSpOverride).c_str());
+      log_message(log_chars);
     }
 
     lastSpSet = millis();
