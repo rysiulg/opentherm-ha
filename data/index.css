@@ -28,7 +28,7 @@ body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-i
 
 .card {background-color: white;   border-radius: 5%; padding-left: 3%; padding-right: 3%; box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);}
 
-.card-title {font-size: 2.4rem;   font-weight: bold;   color: #4208f2; padding-bottom: 7px;}
+.card-title {font-size: 2.0rem;   font-weight: bold;   color: #4208f2; padding-bottom: 7px;}
 
 .state {font-size: 1.6rem;   font-weight: bold;   color:#092f39;}
 
@@ -53,14 +53,14 @@ input[type=range]::-webkit-slider-runnable-track {
   border-radius: 25px;
 }
 input[type=range]::-webkit-slider-thumb {
-  height: 30px;
-  width: 30px;
+  height: 40px;
+  width: 40px;
   border-radius: 50%;
   background: #e0bf07;
   box-shadow: 0 1px 10px 1px rgba(0,0,0, 1);
   cursor: pointer;
   -webkit-appearance: none;
-  margin-top: -5px;
+  margin-top: -10px;
 }
 input[type=range]:focus::-webkit-slider-runnable-track {
   background: #03a9f4;
@@ -70,8 +70,8 @@ input[type=range]:focus::-webkit-slider-runnable-track {
   position: relative;
 }
 .range-value{
-  position: relative;
-  top: -10%;
+  position: absolute;
+  top: 2%;
   left: auto;
 }
 .range-value span{
@@ -105,7 +105,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 .temperatureVal {
   text-align: center;
   color: rgb(0, 23, 198);
-  font-size: 60px;
+  font-size: 40px;
   font-weight: 700;
   vertical-align:middle;
   padding-bottom:8px;
@@ -114,7 +114,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 }
 .units{font-size:1.1rem; font-weight: bold;}
 .fas {
-  color:#059e8a;font-size:72px; text-shadow: 1px 1px 2px #000000; padding: 15px;
+  color:#059e8a;font-size:52px; text-shadow: 1px 1px 2px #000000; padding: 15px;
 }
 .dht-labels{
   font-size:1.3rem;vertical-align:middle;padding-bottom:8px;

@@ -5,6 +5,8 @@
 <head>
     <title>%ME_TITLE%</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="3600">
     <link rel="icon" type="image/png" href="favicon.ico">
     <link rel="stylesheet" type="text/css" href="index.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
@@ -34,13 +36,21 @@
 
 
             <div class="card">
+                <p class="card-title">Tryb Pracy</p>
+                <lable for="BoilMOD">Boiler Mode</lable><input type="Radio" id="BOILMOD" Name="boilermodewww" value="2" checked>
+                <lable for="HWMOD">Boiler Mode</lable><input type="Radio" id="HWMOD" Name="boilerhwwww" value="1" checked>
+                <lable for="OFFMOD">Boiler Mode</lable><input type="Radio" id="OFFMOD" Name="boilermodewww" value="0" checked>
+            </div>
+
+
+            <div class="card">
                 <p class="card-title">Temperatura Grzania CO</p>
                 <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
                 <sup class="units">&deg;C</sup>
                 <div class="range-wrap">
                     <div class="range-value" id="RangeV1"></div>
                     <input type="range" class="range" onchange="updateSliderPWM(this)" id="slider1" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%></div>
-                    <hr><p class="state">Temperatura set: <span id="sliderValue1">%sliderValue1%</span> <sup class="units">&deg;C</sup></p>
+                    <hr><p class="state">Docelowa: <span id="sliderValue1">%sliderValue1%</span> <sup class="units">&deg;C</sup></p>
             </div>
 
 
@@ -49,10 +59,10 @@
                 <i class="fas fa-thermometer-half"></i>
                 <div class="temperatureVal" id="tempCWU">%tempCWU%</div><sup class="units">&deg;C</sup>
                 <div class="range-wrap">
-                    <div class="range-value">%sliderValue2%</div>
-                    <input type="range" class="range" id="sliderValue2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%"></div>
-                    <hr><p class="state">Temperatura: <span id="slider2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
-            </div>
+                    <div class="range-value"><span class="span-val">%sliderValue2%</span></div>
+                    <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%"></div>
+                    <hr><p class="state">Docelowa: <span id="sliderValue2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
+                </div>
 
             <div class="card">
                 <p class="card-title">Średnia temp pokoi</p>
@@ -62,7 +72,7 @@
                 <div class="range-wrap">
                     <div class="range-value"></div>
                     <input type="range" class="range" onchange="updateSliderPWM(this)" id="slider4" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4%></div>
-                <hr><p class="state">Temperatura: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
+                <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
             </div>
 
             <div class="card">
@@ -86,7 +96,7 @@
         </div>
     </div>
 
-    <br /> <span id="StopkaStatusy">%StopkaStatusy%</span> <br /><br /> <span
+    <br /> <p id="StopkaStatusy">%StopkaStatusy%</p> <br /><br /> <span
         id="stopkawebsite"></span>%stopkawebsite%</span>
     <!-- <script src=""jquery-3.6.0.slim.js"/>
     <script src="jquery-ui-slider-pips.js"/> -->

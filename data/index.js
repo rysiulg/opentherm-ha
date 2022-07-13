@@ -58,11 +58,11 @@ function onMessage(event) {
         // document.getElementById(key).innerHTML = myObj[key];
         // if (document.getElementById(key)!=null) {
             document.getElementById(key).value = myObj[key];
-            document.getElementById(key).innerText = myObj[key];
-            // if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
-            //     console.log("slider"+ key.charAt(key.length-1) + "  "+myObj[key]);
-            //     document.getElementById("slider"+ key.charAt(key.length-1)).value = myObj[key];
-            // }
+            //document.getElementById(key).outerHTML= myObj[key];
+             if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
+                 console.log("slider"+ key.charAt(key.length-1) + "  "+myObj[key]);
+                 document.getElementById("slider"+ key.charAt(key.length-1)).value = myObj[key];
+             }
         //}
         }
     }
@@ -82,21 +82,24 @@ allRanges.forEach(wrap => {
   });
   setBubble(range, bubble);
 });
+
 function setBubble(range, bubble) {
     const val = parseFloat(range.value).toFixed(1);
     const min = range.min ? range.min : 0;
     const max = range.max ? range.max : 100;
     const newVal = Number(((val - min) * 100) / (max - min));
-    console.log("SetBubble");
-    console.log(document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value);
-  //  document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value = `<span>${parseFloat(range.value).toFixed(1)}</span>`;
 
    /* if (bubble != null) {*/
-        bubble.innerHTML = `<span>${parseFloat(range.value).toFixed(1)}</span>`;
+        bubble.innerHTML = `<span>${parseFloat(val).toFixed(1)}</span>`;
 
     // Sorta magic numbers based on size of the native UI thumb
     bubble.style.left = `calc(${newVal}% + (${15 - newVal * 0.30}px))`;
-   /* } */
+    console.log(bubble.style.left);
+    console.log("SetBubble "+document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value+" <- "+val.toString());
+   document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value = `${parseFloat(range.value).toFixed(1)}`;
+
+
+    /* } */
   }
 
   document.addEventListener("DOMContentLoaded", setBubble);
