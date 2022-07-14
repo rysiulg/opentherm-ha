@@ -1,5 +1,5 @@
 //String BASE_TOPIC = me_lokalizacja; //jest niepelna -brakuje kondygnacji
-const String BASE_TOPIC = me_lokalizacja;
+const String BASE_TOPIC = "opentherm-thermostat"; // zostawie stara nazwe        me_lokalizacja;
 
 const String LOG_TOPIC = BASE_TOPIC + "/log";
 const String WILL_TOPIC = BASE_TOPIC + "/Will";
@@ -45,11 +45,13 @@ const String TEMP_CUTOFF_SET_TOPIC = BASE_TOPIC + "/SET/" + TEMP_CUTOFF + "/set"
 const String STATE_DHW_SET_TOPIC = BASE_TOPIC + "/SET/" + HOT_WATER_SOFTWARE_CH_STATE + "/set";      // enableHotWater
 const String MODE_SET_TOPIC = BASE_TOPIC + "/SET/" + BOILER_SOFTWARE_CH_STATE_MODE + "/set";         // 012 auto, heat, off ch
 const String TEMP_DHW_SET_TOPIC = BASE_TOPIC + "/SET/" + HOT_WATER_TEMPERATURE_SETPOINT + "/set";    // dhwTarget
-String COPUMP_GET_TOPIC = "COWoda0/switch/boilerroom/attributes";                      // temperatura outside avg NEWS
+
+#define COWODA0_SENSORS_TOPIC "COWoda0/sensor/boilerroom/attributes"
+String COPUMP_GET_TOPIC = COWODA0_SENSORS_TOPIC;                     // temperatura outside avg NEWS
 #define COPumpStatus_json "CO0_boilerroom_pump2CO"
 #define WaterPumpStatus_json "CO0_boilerroom_pump1Water"
 
-String NEWS_GET_TOPIC = "COWoda0/sensor/boilerroom/attributes";          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
+String NEWS_GET_TOPIC = COWODA0_SENSORS_TOPIC;          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
 #define NEWStemp_json "CO0_outside_temperature_Averange"
 
 

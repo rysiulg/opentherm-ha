@@ -16,7 +16,7 @@
 #define debug
 //#define debug1
 //#define debugweb
-#define me_lokalizacja "BOILER_GAZ_"
+#define me_lokalizacja "BOILER_GAZ"
 
 #define MFG "MARM.pl Sp. z o.o."
 

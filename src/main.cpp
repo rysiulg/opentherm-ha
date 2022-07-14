@@ -72,6 +72,7 @@ void recvMsg(uint8_t *data, size_t len)
   {
     sprintf(log_chars,"RESET config to DEFAULT VALUES and restart...  CONFIG Size: %s",String(sizeof(CONFIGURATION)).c_str());
     log_message(log_chars,0);
+    SPIFFS.format();
     CONFIGURATION.version[0] = 'R';
     CONFIGURATION.version[1] = 'E';
     CONFIGURATION.version[2] = 'S';
@@ -138,8 +139,10 @@ void recvMsg(uint8_t *data, size_t len)
   #endif
 }
 
-void updateDatatoWWW()
+void updateDatatoWWW(bool dont_send_after_sync) //default false so if true than update
 {
+  #ifdef enableWebSocket
+  if (receivedwebsocketdata and dont_send_after_sync) return;
   //String dana = {"DHWTemp",DHW_Temp}
   String ptr = "\0";
   u_int i = 0;
@@ -153,72 +156,74 @@ void updateDatatoWWW()
   AllSensorsStruct[i].Value = String(tempBoiler,1);
   i++; //tempBoilerSet
   AllSensorsStruct[i].placeholder = "sliderValue1";
-  if (receivedwebsocketdata or receivedmqttdata) {
-  tempBoilerSet = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
-  op_override = tempBoilerSet; // when no auto heating then this is temp to heat CO
-  sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","tempBoilerSet", AllSensorsStruct[i].Value.c_str(), String(tempBoilerSet).c_str());
-  log_message(log_chars);
+  if (!dont_send_after_sync) {
+    tempBoilerSet = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
+    op_override = tempBoilerSet; // when no auto heating then this is temp to heat CO
+    sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","tempBoilerSet", AllSensorsStruct[i].Value.c_str(), String(tempBoilerSet).c_str());
+    log_message(log_chars);
   }
   AllSensorsStruct[i].Value = String(tempBoilerSet,1);
+
   i++;
   AllSensorsStruct[i].placeholder = "retTemp";
   AllSensorsStruct[i].Value = String(retTemp,1);
+
   i++;
   AllSensorsStruct[i].placeholder = "tempCWU";
   AllSensorsStruct[i].Value = String(tempCWU,1);
+
   i++;      //dhwTarget
   AllSensorsStruct[i].placeholder = "sliderValue2";
- if (receivedwebsocketdata or receivedmqttdata) {
-  dhwTarget = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
-  sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","dhwTarget", AllSensorsStruct[i].Value.c_str(), String(dhwTarget).c_str());
-  log_message(log_chars);
- }
+  if (!dont_send_after_sync) {
+    dhwTarget = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, oplo, ophi);
+    sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","dhwTarget", AllSensorsStruct[i].Value.c_str(), String(dhwTarget).c_str());
+    log_message(log_chars);
+  }
   AllSensorsStruct[i].Value = String(dhwTarget,1);
+
   i++;      //cutOffTemp
   AllSensorsStruct[i].placeholder = "sliderValue3";
-  if (receivedwebsocketdata or receivedmqttdata) {
+  if (!dont_send_after_sync) {
     cutOffTemp = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, cutofflo, cutoffhi);
     lastcutOffTempSet = millis();
     sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","cutOffTemp", AllSensorsStruct[i].Value.c_str(), String(cutOffTemp).c_str());
     log_message(log_chars);
   }
   AllSensorsStruct[i].Value = String(cutOffTemp,1);
+
   i++;
   AllSensorsStruct[i].placeholder = "roomtemp";
   AllSensorsStruct[i].Value = String(roomtemp,1);
+
   i++;      //sp
   AllSensorsStruct[i].placeholder = "sliderValue4";  //Room Target sp
-  if (receivedwebsocketdata or receivedmqttdata) {
+  if (!dont_send_after_sync) {
     sp = PayloadtoValidFloat(AllSensorsStruct[i].Value, true, roomtemplo, roomtemphi);
     sprintf(log_chars,"Allsensors for %s, val: %s konw.: %s","sp", AllSensorsStruct[i].Value.c_str(), String(sp).c_str());
     log_message(log_chars);
   }
   AllSensorsStruct[i].Value = String(sp,1);
+
   i++;
   AllSensorsStruct[i].placeholder = "lastNEWSSet";
   AllSensorsStruct[i].Value = String(uptimedana(lastNEWSSet));
+
   i++;
   AllSensorsStruct[i].placeholder = "boilermodewww";
-  if (receivedwebsocketdata or receivedmqttdata) {
-    if (PayloadStatus(AllSensorsStruct[i].Value, true))
+  if (!dont_send_after_sync) {
+    if (PayloadStatus(AllSensorsStruct[i].Value, false))
             {
-              heatingEnabled = true;
               automodeCO = false;
-              tempBoilerSet = op_override;
-              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
-              log_message(log_chars);
-            }
-            else if (PayloadStatus(AllSensorsStruct[i].Value, false))
-            {
-              heatingEnabled = false;
-              automodeCO = false;
-              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
-              log_message(log_chars);
-            }
-            else if (AllSensorsStruct[i].Value == "AUTO" or AllSensorsStruct[i].Value == "2")
-            {
-              automodeCO = true;
               receivedmqttdata = true;
+              sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
+              log_message(log_chars);
+            }
+            else if (PayloadStatus(AllSensorsStruct[i].Value, true))
+            {
+              if (heatingEnabled) {
+                automodeCO = true;
+                receivedmqttdata = true;
+              }
               sprintf(log_chars,"CO mode: %s", AllSensorsStruct[i].Value.c_str());
               log_message(log_chars);
             } else {
@@ -226,10 +231,29 @@ void updateDatatoWWW()
               log_message(log_chars);
             }
   }
-  AllSensorsStruct[i].Value = String(automodeCO?"ON":"OFF");
+  AllSensorsStruct[i].Value = String(automodeCO?"on":"off");
+
+  i++;
+  AllSensorsStruct[i].placeholder = "boilerwww";
+    if (!dont_send_after_sync) {
+      if (PayloadStatus(AllSensorsStruct[i].Value, true)) {
+        heatingEnabled = true;
+      } else
+      if (PayloadStatus(AllSensorsStruct[i].Value, false)) {
+        heatingEnabled = false;
+      } else
+      {
+        sprintf(log_chars,"Unknown mode: %s", AllSensorsStruct[i].Value.c_str());
+        log_message(log_chars);
+      }
+      sprintf(log_chars,"DHW State enableHotWater: %s", heatingEnabled ? "on" : "off");
+      log_message(log_chars);
+    }
+  AllSensorsStruct[i].Value = String(heatingEnabled ? "on" : "off");
+
   i++;
   AllSensorsStruct[i].placeholder = "boilerhwwww";
-    if (receivedwebsocketdata or receivedmqttdata) {
+    if (!dont_send_after_sync) {
       if (PayloadStatus(AllSensorsStruct[i].Value, true)) {
         enableHotWater = true;
       } else
@@ -240,39 +264,62 @@ void updateDatatoWWW()
         sprintf(log_chars,"Unknown mode: %s", AllSensorsStruct[i].Value.c_str());
         log_message(log_chars);
       }
-      sprintf(log_chars,"DHW State enableHotWater: %s", enableHotWater ? "heat" : "off");
+      sprintf(log_chars,"DHW State enableHotWater: %s", enableHotWater ? "on" : "off");
       log_message(log_chars);
     }
-  AllSensorsStruct[i].Value = String(enableHotWater ? "heat" : "off");
-  i++;
-  AllSensorsStruct[i].placeholder = "naglowekdane";
-  AllSensorsStruct[i].Value = String("naglowekdane");
+  AllSensorsStruct[i].Value = String(enableHotWater ? "on" : "off");
 
-      ptr = "\0";
-      if (status_FlameOn) {
-        ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
-        ptr += "<br>";
-      }
-      if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
-      if (heatingEnabled) ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON)+"<br></B></span>";
-      if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
-      if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
-      if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
-      if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
-      if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
-      if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
-      if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
-      if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
+  i++;
+  AllSensorsStruct[i].placeholder = "statusWaterActive";  //pump for water cwu active
+  AllSensorsStruct[i].Value = String(status_WaterActive ? "on" : "off");
+
+  i++;
+  AllSensorsStruct[i].placeholder = "statusCHActive";
+  AllSensorsStruct[i].Value = String(status_CHActive ? "on" : "off");
+
+
+  i++;
+  AllSensorsStruct[i].placeholder = "statusFlameOn";
+  AllSensorsStruct[i].Value = String(status_FlameOn ? "on" : "off");
+
+  i++;
+  AllSensorsStruct[i].placeholder = "statusFault";
+  AllSensorsStruct[i].Value = String(status_Fault ? "on" : "off");
+
   i++;
   AllSensorsStruct[i].placeholder = "Statusy";
+  ptr = "\0";
+  if (status_FlameOn) {
+    ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
+    ptr += "<br>";
+  }
+  if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
+  if (heatingEnabled) {
+    ptr += "<span class='dht-labels'><B>"+String(BOILER_HEAT_ON);
+    if (automodeCO) ptr += F(" (AUTO)"); else ptr += F(" (Standard)");
+    ptr+= ("<br></B></span>");
+  }
+  if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(BOILER_IS_HEATING)+"<br></B></span></font>";
+  if (enableHotWater) ptr += "<span class='dht-labels'><B>"+String(DHW_HEAT_ON)+"<br></B></span>";
+  if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>"+String(Boiler_Active_heat_DHW)+"<br></B></span></font>";
+  if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>"+String(CoolingMode)+"<br></B></span></font>";
+  if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
+  if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
+  if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
+  if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
   AllSensorsStruct[i].Value = String(ptr);
+
   i++;
+  AllSensorsStruct[i].placeholder = "UsedMedia";
   ptr = "\0";
   ptr += String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
-  AllSensorsStruct[i].placeholder = "UsedMedia";
   AllSensorsStruct[i].Value = String(ptr);
-receivedwebsocketdata = false;
-  notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));  //moze nie potrzebne
+
+
+  if (!dont_send_after_sync) {
+    notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+  } else { receivedwebsocketdata = false; }
+  #endif
 }
 
 
@@ -338,32 +385,28 @@ void opentherm_update_data(unsigned long mqttdallas)
   // Set/Get Boiler Status
   bool enableCooling = false;
   receivedmqttdata = false;
+  bool COHeat = false;
 
-  if (temp_NEWS < cutOffTemp)
-    heatingEnabled = true;
-  if (CO_PumpWorking)
-    heatingEnabled = false;
-  if (temp_NEWS > (cutOffTemp + 0.9))
-    heatingEnabled = false;
-
-  //if (tmanual == false)
-  roomtemp =  getTemp();
+  roomtemp =  getTemp(); //default returns roomtemp (avg) and as global sp=roomtempset (avg), roomtemp is also global var
   if (roomtemp == -127)
     roomtemp = sp;
   if (roomtemp_last == -127)
     roomtemp_last = sp;
 
-  unsigned long response = ot.setBoilerStatus(heatingEnabled, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
-  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
-  if (responseStatus != OpenThermResponseStatus::SUCCESS)
-  {
-
-    LastboilerResponseError = String(response, HEX);
-    sprintf(log_chars,"!!!!!!!!!!!Error: Invalid boiler response %s", LastboilerResponseError.c_str());
-    log_message(log_chars);
+if (heatingEnabled)
+{
+  if (!automodeCO) {
+    //this will remove tempset avg from floors tempBoilerSet = op_override;  //for no automode
+    if (temp_NEWS < cutOffTemp)
+      COHeat = true;
+    if (CO_PumpWorking)
+      COHeat = false;
+    if (temp_NEWS > (cutOffTemp + 0.9))
+      COHeat = false;
   } else
   {
-    ot.setDHWSetpoint(dhwTarget);
+    if (roomtemp < (sp + 0.6)) COHeat = true; else COHeat = false;
+    //based on roomtemp<roomtemset
     float op = 0;
     unsigned long now = millis();
     new_ts = millis();
@@ -374,18 +417,23 @@ void opentherm_update_data(unsigned long mqttdallas)
     {
       op = noCommandSpOverride;
     }
-    if (automodeCO)
-    {
-      // WebSerial.println(F("tryb AutomodeCO"));
-      tempBoilerSet = op;
-    }
-    else
-    {
-      tempBoilerSet = op_override;
-    }
+    tempBoilerSet = op;
+    roomtemp_last = roomtemp;
+  }
+}
+
+  unsigned long response = ot.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
+  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
+  if (responseStatus != OpenThermResponseStatus::SUCCESS)
+  {
+    LastboilerResponseError = String(response, HEX);
+    sprintf(log_chars,"!!!!!!!!!!!Error: Invalid boiler response %s", LastboilerResponseError.c_str());
+    log_message(log_chars);
+  } else
+  {
+    ot.setDHWSetpoint(dhwTarget);
     ot.setBoilerTemperature(tempBoilerSet);
 
-    roomtemp_last = roomtemp;
     status_CHActive = ot.isCentralHeatingActive(response);
     status_WaterActive = ot.isHotWaterActive(response);
     bool status_flame_tmp = status_FlameOn;
@@ -409,14 +457,14 @@ void opentherm_update_data(unsigned long mqttdallas)
 
 String Boiler_Mode()
 {
-  if (automodeCO)
-    return "auto";
-  else
-  {
-    if (heatingEnabled)
+  if (automodeCO and heatingEnabled)
+  {  return "auto";
+  } else
+  if (heatingEnabled) {
       return "heat";
-    else
-      return "off";
+  } else
+  {
+    return "off";
   }
 }
 
@@ -770,8 +818,6 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
     if (PayloadStatus(payloadStr, true))
     {
       heatingEnabled = true;
-      automodeCO = false;
-      tempBoilerSet = op_override;
       receivedmqttdata = true;
       sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
       log_message(log_chars);
@@ -779,14 +825,14 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
     else if (PayloadStatus(payloadStr, false))
     {
       heatingEnabled = false;
-      automodeCO = false;
       receivedmqttdata = true;
       sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
       log_message(log_chars);
     }
     else if (payloadStr == "AUTO" or payloadStr == "2")
     {
-      automodeCO = true;
+      heatingEnabled = true;
+      if (heatingEnabled) automodeCO = true;
       receivedmqttdata = true;
       sprintf(log_chars, "%s to: CO mode  %s", ident.c_str(), String(payloadStr).c_str());
       log_message(log_chars);
@@ -929,30 +975,8 @@ void mqtt_reconnect_subscribe_list()
 void setup()
 {
   Serial.begin(74880);
-
-  Serial.println(F("Starting... ..."));
-  getFreeMemory();
-  #ifdef doubleResDet
-  // double reset detect from start
-  doubleResetDetect();
-  #endif
-  if (loadConfig())
-  {
-    Serial.println(F("Config loaded:"));
-    Serial.println(CONFIGURATION.version);
-    Serial.println(CONFIGURATION.ssid);
-    Serial.println(CONFIGURATION.pass);
-    Serial.println(CONFIGURATION.mqtt_server);
-    Serial.println(CONFIGURATION.COPUMP_GET_TOPIC);
-    Serial.println(CONFIGURATION.NEWS_GET_TOPIC);
-  }
-  else
-  {
-    Serial.println(F("Config not loaded!"));
-    SaveConfig(); // overwrite with the default settings
-  }
-
   MainCommonSetup();
+
   ot.begin(handleInterrupt);
 
   // Init DS18B20 sensor
@@ -987,7 +1011,7 @@ void loop()
   {
     lastUpdate = now;
     opentherm_update_data(lastUpdatemqtt); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
-  updateDatatoWWW();
+  updateDatatoWWW(false);  //send after sync struct with vars
   }
   if (status_FlameOn) {
     unsigned long nowtime = millis();

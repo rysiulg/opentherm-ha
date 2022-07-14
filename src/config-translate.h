@@ -27,7 +27,7 @@
 #define Outside_Cutoff_Below "Temperatura progu grzania CO gdy średnia NEWS: &lt; "
 #define msg_Connected "Połączony"
 #define msg_disConnected "Rozłączony"
-#define Flame_total "Suma mocy płomienia: "
+#define Flame_total "Suma zużycia: "
 #define Flame_time "Czas pracy płomienia: "
 #define t_day "dni"
 #define t_hour "godz."

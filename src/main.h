@@ -3,6 +3,11 @@
 #include <DallasTemperature.h>
 
 #include <OpenTherm.h>
+#ifdef ICACHE_RAM_ATTR
+#undef ICACHE_RAM_ATTR
+#define ICACHE_RAM_ATTR IRAM_ATTR
+#endif
+
 
 
 #include <WiFiClient.h>
@@ -59,15 +64,7 @@ const unsigned long extTempTimeout_ms = 180 * 1000,
                     WiFiinterval = 30 * 1000;
 
 // upper and lower bounds on heater level
-const float ophi = 65,               // upper max heat water
-            oplo = 30,               // lower min heat water
-            opcohi = 60,             // upper max heat boiler to CO
-            opcolo = oplo,           // lower min heat boiler to CO
-            cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
-            cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
-            roomtemphi = 30,         // upper max to set of room temperature
-            roomtemplo = 15,         // lower min to set of room temperature
-            noCommandSpOverride = 32; //heating water temperature for fail mode (no external temp provided) for co
+const float noCommandSpOverride = 32; //heating water temperature for fail mode (no external temp provided) for co
 
 unsigned int runNumber = 0, // count of restarts
              publishhomeassistantconfig = 4,                               // licznik wykonan petli -strat od 0

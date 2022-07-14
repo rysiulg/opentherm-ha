@@ -5,7 +5,7 @@
 #define ATOMIC_FS_UPDATE   //For uploading compressed filesystems, the application must be built with ATOMIC_FS_UPDATE defined because, otherwise, eboot will not be involved in writing the filesystem.
 #define enableWebSerial     //not fully implemented
 #define enableArduinoOTA
-#define enableWebUpdate
+//#define enableWebUpdate
 #define enableWebSocket
 #define doubleResDet
 #define wwwport 80
@@ -98,8 +98,9 @@ typedef struct
   String Value;
 } all_sensors_struct;
 all_sensors_struct AllSensorsStruct[30];
-void updateDatatoWWW();
+void updateDatatoWWW(bool dont_send_after_sync = false);
 void mqtt_reconnect_subscribe_list();
+
 //*********************************************************************************************************************************************
 
 const char version[10+1] =
@@ -153,6 +154,15 @@ bool starting = true,
      receivedmqttdata = false,
      receivedwebsocketdata = false,
      firstConnectSinceBoot = false;
+
+const float ophi = 65,               // upper max heat water
+            oplo = 30,               // lower min heat water
+            opcohi = 60,             // upper max heat boiler to CO
+            opcolo = oplo,           // lower min heat boiler to CO
+            cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
+            cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
+            roomtemphi = 30,         // upper max to set of room temperature
+            roomtemplo = 15;         // lower min to set of room temperature
 
 char log_chars[256];      //for logging buffer to log_message function
 int mqttReconnects = -1;
@@ -479,6 +489,10 @@ void doubleResetDetect() {
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   if (drd->detectDoubleReset())
   {
+    #ifdef enableWebSocket
+    SPIFFS.begin();
+    SPIFFS.format();
+    #endif
     Serial.println(F("DRD"));
     CONFIGURATION.version[0] = 'R';
     CONFIGURATION.version[1] = 'E';
@@ -489,6 +503,18 @@ void doubleResetDetect() {
     WiFi.persistent(true);
     WiFi.disconnect();
     WiFi.persistent(false);
+    #ifdef enableArduinoOTA
+    Setup_WiFi();
+    Setup_OTA();
+    #ifdef enableWebUpdate
+    SetupWebUpdate();
+    Setup_WebServer();
+    webserver.begin();
+    #endif
+    while (true) {
+    ArduinoOTA.handle();
+    }
+    #endif
     delay(4000);
     restart();
 
@@ -516,6 +542,7 @@ void Setup_OTA() {
    notifyClients(F("OTA Update Started"));
    // Close them
    WebSocket.closeAll();
+   webserver.end();
   #endif
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
@@ -547,6 +574,7 @@ void Setup_OTA() {
     } else if (error == OTA_RECEIVE_ERROR) { errorName = F("Receive Failed");
     } else if (error == OTA_END_ERROR) {errorName = F("End Failed");
     }
+    webserver.begin();
     sprintf(log_chars,"There is error upgrading by OTA: %s (%s)",String(error).c_str(), String(errorName).c_str());
     log_message(log_chars);
   });
@@ -848,8 +876,10 @@ String web_processor(const String var) {
     return retval;
   } else
   if (var == "stopkawebsite") {
-    String ptr;
-      ptr = F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
+    String ptr="\0";
+      #ifdef enableWebUpdate
+      ptr += F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
+      #endif
       #ifdef enableWebSerial
       ptr += F("&nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
       #endif
@@ -941,6 +971,7 @@ bool webhandleFileRead(AsyncWebServerRequest *request, String path){
 //***********************************************************************************************************************************************************************************************
 String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk)  //default processorAsk = "\0"
 {
+  updateDatatoWWW(true);    //update data true to not send after update values
   String toreturn = "{";
   for (u_int i = 0; i < sizeof(AllSensorsStruct)/sizeof(AllSensorsStruct[0]); i++)  /////////////////////////////korekta
   {
@@ -950,7 +981,11 @@ String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk)
       toreturn += F("\"");
       toreturn += AllSensorsStruct[i].placeholder;
       toreturn += F("\":");
-      toreturn += "\""+AllSensorsStruct[i].Value+"\"";
+      toreturn += F("\"");
+      String tmpStr = AllSensorsStruct[i].Value;
+      tmpStr.replace("\"","'");
+      toreturn += tmpStr;
+      toreturn += F("\"");
 //      if (isValidNumber(AllSensorsStruct[i].Value)) toreturn += AllSensorsStruct[i].Value; else toreturn += "\""+AllSensorsStruct[i].Value+"\"";
     }
     if (function == ValuesToWSWPforWebProcessor and AllSensorsStruct[i].placeholder == processorAsk) return String(AllSensorsStruct[i].Value);
@@ -961,13 +996,14 @@ String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk)
 //***********************************************************************************************************************************************************************************************
 void handleWebSocketMessage_sensors(String message)
 {
+  #ifdef enableWebSocket
   if (!message.isEmpty() and !message.isEmpty() and message.indexOf(":",1) != -1)
   {
     String placeholdertmp = message.substring(0,message.indexOf(":",1));
     String valuetmp = message.substring(message.indexOf(":",1)+1);
     placeholdertmp.trim();
     valuetmp.trim();
-    sprintf(log_chars,"Received placeholdertmp: %s, valuetmp: %s, validnumber: %s", placeholdertmp.c_str(), valuetmp.c_str(), String(isValidNumber(valuetmp)).c_str());
+    sprintf(log_chars,"Received placeholdertmp: %s, valuetmp: %s", placeholdertmp.c_str(), valuetmp.c_str());
     log_message(log_chars);
     for (u_int i = 0; i < sizeof(AllSensorsStruct)/sizeof(AllSensorsStruct[0]); i++)
     {
@@ -982,11 +1018,12 @@ void handleWebSocketMessage_sensors(String message)
           #if defined(enableMQTT) || defined(ENABLE_INFLUX)
           receivedmqttdata = true;
           #endif
-          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+//          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
         }
       }
     }
   }
+  #endif
 }
 
 //***********************************************************************************************************************************************************************************************
@@ -1140,22 +1177,50 @@ void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t
 //***********************************************************************************************************************************************************************************************
 void MainCommonSetup()
 {
+  Serial.println(F("Starting... ..."));
+  getFreeMemory();
+  #ifdef doubleResDet
+  // double reset detect from start
+  doubleResetDetect();
+  #endif
+
   int ledpin = LED_BUILTIN;
   pinMode(ledpin, OUTPUT);
   #ifdef ESP32
   btStop();   //disable bluetooth
   #endif
+
+  if (loadConfig())
+  {
+    Serial.println(F("Config loaded:"));
+    Serial.println(CONFIGURATION.version);
+    Serial.println(CONFIGURATION.ssid);
+    Serial.println(CONFIGURATION.pass);
+    Serial.println(CONFIGURATION.mqtt_server);
+  }
+  else
+  {
+    Serial.println(F("Config not loaded!"));
+    #ifdef enableWebSocket
+    SPIFFS.begin();
+    SPIFFS.format();
+    #endif
+    SaveConfig(); // overwrite with the default settings
+  }
+
   Setup_WiFi();
-#ifdef enableWebSerial
-  WebSerial.begin(&webserver);
-  WebSerial.msgCallback(recvMsg);
-#endif
-  starting = false;                   //we have webserial so we can enable it now
+  runNumber++;
   #ifdef enableArduinoOTA
   Setup_OTA();
   #endif
   Setup_DNS();
   #ifdef enableWebSocket
+#ifdef enableWebSerial
+  WebSerial.begin(&webserver);
+  WebSerial.msgCallback(recvMsg);
+#endif
+  starting = false;                   //we have webserial so we can enable it now
+
   Setup_FileSystem();
   Setup_WebSocket();
   Setup_WebServer();    //new www based on spiff files
@@ -1535,7 +1600,6 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
     lensep = 0;
     dod = 1;
   }
-  wdt_reset();
   if (lensep > 1) dod = 1 - lensep;
   char tmp[length * (2 + lensep) + dod - lensep];
   byte first;

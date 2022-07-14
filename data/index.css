@@ -26,11 +26,11 @@ body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-i
 
 .card-grid {max-width: 800px;   position: relative;   margin: 0 auto;   display: grid;   grid-gap: 1.5rem;   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));}
 
-.card {background-color: white;   border-radius: 5%; padding-left: 3%; padding-right: 3%; box-shadow: 0.1rem 0.1rem 1rem 0.1rem rgba(140,140,140,.5);}
+.card {background-color: white;   border-radius: 5%; padding: 3% 3% 3% 3%; box-shadow: 0.1rem 0.1rem 1rem 0.1rem rgba(140,140,140,.5);}
 
-.card-title {font-size: 2.0rem;   font-weight: bold;   color: #4208f2; padding-bottom: 0.2rem;}
+.card-title {font-size: 1.4rem;   font-weight: bold;   color: #4208f2; padding-bottom: 0.2rem; border-radius: 50px;}
 
-.state {font-size: 1.6rem;   font-weight: bold;   color:#092f39;}
+.state {font-size: 1.4rem;   font-weight: bold;   color:#092f39;}
 
 .twoCard {
   display: flex;
@@ -39,8 +39,8 @@ body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-i
   width: 100%;
   padding: 10px;
   text-align: -webkit-center;
-  font-size: 1.4rem;
-  font-weight: bold;
+  /* font-size: 1.4rem;
+  font-weight: bold; */
   color: #4208f2;
   padding-bottom: 1rem;
   }
@@ -48,6 +48,7 @@ body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-i
   border-left: 1px solid #ccc;
   }
 
+  .hidden {display:none}
 
 input[type=range] {
   -webkit-appearance: none;
@@ -96,7 +97,6 @@ input[type=range]::-moz-range-thumb {
   margin-top: -0.5rem;
 }
 
-
 .rangewrap{
   width: 100%;         /* length of belka*/
   position: relative;
@@ -110,7 +110,7 @@ input[type=range]::-moz-range-thumb {
   line-height: 1.8rem;
   text-align: center;
   background: #03a9f4;
-  color: #fff;
+  color: white;
   font-size: 1.4rem;
   font-weight: bold;
   position: absolute;
@@ -141,23 +141,76 @@ input[type=range]::-moz-range-thumb {
 .temperatureVal {
   text-align: center;
   color: rgb(0, 23, 198);
-  font-size: 2.8rem;
+  font-size: 2.1rem;
   font-weight: 700;
   vertical-align:middle;
   padding-bottom: 0.8rem;
   display: inline-block;
 }
-.unitsmain{font-size: 1.8rem; font-weight: bold; position: relative; top: 0%; color: #059e8a;}
-.units{font-size: 1.1rem; font-weight: bold; position: relative; top: 2%; color: black;}
+.unitsmain{font-size: 1.8rem; font-weight: bold; position: relative; top: 0%; color: #059e8a; display: inline-block;}
+.units{font-size: 1.1rem; font-weight: bold; position: relative; top: 2%; color: black; display: inline-block;}
 .fas {
-  color:#059e8a;font-size:2.1rem; text-shadow: 1px 1px 2px #000000; padding: 15px; position: relative; top: 2%;
+  color:#059e8a;font-size:2.2rem; text-shadow: 1px 1px 2px #000000; padding: 15px; position: relative; top: 1%; display: inline-block;
 }
 .dht-labels{
-  font-size:1.3rem;vertical-align:middle;padding-bottom:8px;
+  font-size:1.2rem;vertical-align:middle;padding-bottom:8px;font-weight: bold;
 }
 .units_update {
   font-size:1.1rem; font-weight: normal; color: lightseagreen; text-align: right; padding-top:18px; display: inline-block;
 }
+
+/* Tooltip container */
+.tooltip {
+  position: relative;
+  border-bottom: 0px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  font-size: 0.9rem;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 0.8rem 0.8rem;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 3;
+  left: 0%;
+  margin-left: 0px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  transform: rotate(0deg);
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  width: auto;
+  position:absolute;
+  bottom: 11rem;
+  display:inline-flexbox;
+  opacity: 0.8;
+}
+
+
 
 
 /* BUTTON*/
@@ -170,13 +223,13 @@ input[type=checkbox] {
 label {
   cursor: pointer;
   text-indent: -9999px;
-  width: 11rem;
-  height: 3.3rem;
+  /*width: 9rem;*/
+  height: 1.65rem;
   background: #03a9f4;
   display: block;
-  border-radius: 10rem;
+  border-radius: 30px;
   position: relative;
-  padding-top:1rem; padding-left:10px;color: white;
+  padding-left:10px;color: white;
   /*transform: rotate(270deg);*/
 }
 
@@ -187,17 +240,17 @@ label:after {
   position: absolute;
   top: 0.35rem;
   left: 0.35rem;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 1.4rem;
+  height: 1.0rem;
   background: #f1f7d7e6;
-  border-radius: 10rem;
+  border-radius: 30px;
   transition: 0.3s;
 }
 
 .BOILMODMODE {
   visibility: hidden;
 }
-.OFFMOD:checked ~ .BOILMODMODE {
+.boilerwww:checked ~ .BOILMODMODE {
   visibility:visible;
 }
 
@@ -215,3 +268,9 @@ input:checked + label:after {
 label:active:after {
   width: 13rem;
 }
+
+/* Not exacly name -this is only for informational purpose -applied in js code */
+#Boiler_CO { background-color: #8bf6cd; }
+#Hot_Water { background-color: #f7e08c; }
+#statusError { background-color: #ff0000;}
+#statusFlame { background-color: #ff0000;}

@@ -40,17 +40,25 @@ function onClose(event) {
 }
 
 function updateSliderPWM(element) {
-    var sliderNumber = element.id.charAt(element.id.length-1);
-    var sliderValue = document.getElementById(element.id).value;
-    document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
-    document.getElementById(element.id).setAttribute('value',parseFloat(sliderValue).toFixed(1));
-//    console.log(sliderValue);
-//    console.log("programaticallychange: "+programaticallychange.toString());
-//    if (programaticallychange===false) {
-        websocket.send("sliderValue"+sliderNumber+":"+sliderValue.toString());
-
-//    }
-//    programaticallychange = false;
+    var topic, message;
+    topic = element.id;
+    message = element.value;
+    if ((element.id).indexOf('slider') >= 0 )
+    {
+        var sliderNumber = element.id.charAt(element.id.length-1);
+        var sliderValue = document.getElementById(element.id).value;
+        document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
+        document.getElementById(element.id).setAttribute('value',parseFloat(sliderValue).toFixed(1));
+        topic = "sliderValue"+sliderNumber;
+        message = sliderValue.toString();
+    }
+    //for checkbox change messaqge from value to chcecked -in other case you have always have on ;(
+    if ( element?.tagName?.toLowerCase() === 'input' && element?.getAttribute('type') === 'checkbox')
+    {
+        message = element.checked?"on":"off";
+    }
+    //console.log("topic: "+topic+" message: "+message+" "+element.val+" "+element.checked);
+    if (topic != null && message != null) websocket.send(topic+":"+message);
 }
 
 function onMessage(event) {
@@ -62,18 +70,77 @@ function onMessage(event) {
         var key = keys[i];
         //var str=document.getElementById(key); str = str.replace(/^\s*|\s*$/g,""); if (str == "") { alert("I'm so brilliant"); }
         if (document.getElementById(key)!=null) {
-        // document.getElementById(key).innerHTML = myObj[key];
-        // if (document.getElementById(key)!=null) {
-            //document.getElementById(key).value = myObj[key];
             document.getElementById(key).innerHTML= myObj[key];
              if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
                  document.getElementById("slider"+ key.charAt(key.length-1)).value = myObj[key];
                  document.getElementById("slider"+ key.charAt(key.length-1)).setAttribute('value', myObj[key]);
-//                 programaticallychange = true;
-//                 document.getElementById("slider"+ key.charAt(key.length-1)).onchange();
-//                 console.log("programaticallychange: "+programaticallychange.toString());
-             }
-        //}
+             } else
+             if (key.trim() === "boilerhwwww") { //CWU water
+                console.log(key+" Stan HW: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById(key).checked = true;
+                    document.getElementById("HotWater_title").style.background = "#f7e08c";
+                } else {
+                    document.getElementById(key).checked = false;
+                    document.getElementById("HotWater_title").style.background = null;
+                }
+          //      document.getElementById(key).focus();
+          //      document.getElementById(key).click();
+             } else
+             if (key.trim() === "boilermodewww") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById(key).checked = true;
+                } else {
+                    document.getElementById(key).checked = false;
+                }
+            } else
+            if (key.trim() === "boilerwww") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById(key).checked = true;
+                    document.getElementById("BoilerCO_title").style.background = "#8bf6cd";
+                } else {
+                    document.getElementById(key).checked = false;
+                    document.getElementById("BoilerCO_title").style.background = null;
+                }
+            } else
+            if (key.trim() === "statusWaterActive") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById("HotWater_card").style.background = "#f7e08c";
+                } else {
+                    document.getElementById("HotWater_card").style.background = null;
+                }
+            } else
+            if (key.trim() === "statusCHActive") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById("BoilerCO_card").style.background = "#8bf6cd";
+                } else {
+                    document.getElementById("BoilerCO_card").style.background = null;
+                }
+            } else
+
+            if (key.trim() === "statusFlameOn") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById("status_Flame").style.background = "#ff0000";
+                } else {
+                    document.getElementById("status_Flame").style.background = null;
+                }
+            } else
+
+            if (key.trim() === "statusFault") {
+                console.log(key+" Stan mode: "+myObj[key]);
+                if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
+                    document.getElementById("status_Error").style.background = "#ff0000";
+                } else {
+                    document.getElementById("status_Error").style.background = null;
+                }
+            } else {
+                document.getElementById(key).innerHTML= myObj[key];
+            }
         }
     }
 }
