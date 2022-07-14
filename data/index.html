@@ -26,7 +26,7 @@
                 <p class="card-title">NEWS Temp</p>
                 <i class="fas fa-thermometer-half"></i>
                 <div class="temperatureVal">%temp_NEWS%</div>
-                <sup class="units">&deg;C</sup>
+                <sup class="unitsmain">&deg;C</sup>
                 <p></p>
                 <div class="units_update" style="margin-top: 20px;">Aktualizacja: </div>
                 <div class="units_update" id="lastNEWSSet">%lastNEWSSet%</div>
@@ -36,20 +36,41 @@
 
 
             <div class="card">
+                <p class="card-title">Statusy</p>
+                <p id="Statusy">%Statusy%</p>
+                </div>
+
+
+            <div class="card">
                 <p class="card-title">Tryb Pracy</p>
-                <lable for="BoilMOD">Boiler Mode</lable><input type="Radio" id="BOILMOD" Name="boilermodewww" value="2" checked>
-                <lable for="HWMOD">Boiler Mode</lable><input type="Radio" id="HWMOD" Name="boilerhwwww" value="1" checked>
-                <lable for="OFFMOD">Boiler Mode</lable><input type="Radio" id="OFFMOD" Name="boilermodewww" value="0" checked>
+                <div class="twoCard">
+                    <div class="cardPart cardPart1">Ogrzewanie CO
+                        <input type="checkbox" class="OFFMOD" id="OFFMOD" Name="boilerhwwww"/>
+                        <label for="OFFMOD">OK</label>
+                        <span class="BOILMODMODE">
+                        <hr>Tryb ręczny/AUTO
+                        <input type="checkbox" class="BoilMOD" id="BoilMOD" Name="boilerhwwww" />
+                        <label for="BoilMOD">AUTO</label>
+                        </span>
+                    </div>
+
+
+                    <div class="cardPart cardPart2">Podgrzewanie Wody
+                        <input type="checkbox" class="HWMOD" id="HWMOD" Name="boilerhwwww"/>
+                        <label for="HWMOD">OK</label>
+                    </div>
+                </div>
             </div>
 
 
             <div class="card">
                 <p class="card-title">Temperatura Grzania CO</p>
+                <i class="fas fa-thermometer-half"></i>
                 <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
-                <sup class="units">&deg;C</sup>
-                <div class="range-wrap">
-                    <div class="range-value" id="RangeV1"></div>
-                    <input type="range" class="range" onchange="updateSliderPWM(this)" id="slider1" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%></div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <span class="rangevalue" id="RangeV1">%sliderValue1%</span>
+                    <input type="range" class="range" id="slider1" onchange="updateSliderPWM(this)" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%></div>
                     <hr><p class="state">Docelowa: <span id="sliderValue1">%sliderValue1%</span> <sup class="units">&deg;C</sup></p>
             </div>
 
@@ -57,9 +78,10 @@
             <div class="card">
                 <p class="card-title">Gorąca Woda Użytkowa</p>
                 <i class="fas fa-thermometer-half"></i>
-                <div class="temperatureVal" id="tempCWU">%tempCWU%</div><sup class="units">&deg;C</sup>
-                <div class="range-wrap">
-                    <div class="range-value"><span class="span-val">%sliderValue2%</span></div>
+                <div class="temperatureVal" id="tempCWU">%tempCWU%</div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <span class="rangevalue">%sliderValue2%</span>
                     <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%"></div>
                     <hr><p class="state">Docelowa: <span id="sliderValue2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
                 </div>
@@ -68,27 +90,27 @@
                 <p class="card-title">Średnia temp pokoi</p>
                 <i class="fas fa-thermometer-half"></i>
                 <div class="temperatureVal" id="roomtemp">%roomtemp%</div>
-                <sup class="units">&deg;C</sup>
-                <div class="range-wrap">
-                    <div class="range-value"></div>
-                    <input type="range" class="range" onchange="updateSliderPWM(this)" id="slider4" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4%></div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <div class="rangevalue">%sliderValue4%</div>
+                    <input type="range" class="range" id="slider4" onchange="updateSliderPWM(this)" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4%></div>
                 <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
             </div>
 
             <div class="card">
                 <p class="card-title" onchange="setOneNumberDecimal">Temperatura odłączenia cutoff</p>
 
-                <div class="range-wrap">
-                    <div class="range-value"></div>
-                    <input type="range" class="range" onchange="updateSliderPWM(this)" id="sliderValue3" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%></div>
-                    <p></p>
+                <div class="rangewrap">
+                    <span class="rangevalue">%sliderValue3%</span>
+                    <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%></div>
+                    <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
             </div>
 
             <div class="card">
                 <p class="card-title">Temperatura Powrotu</p>
                 <i class="fas fa-thermometer-half"></i>
                 <div class="temperatureVal" id="retTemp">%retTemp%</div>
-                <sup class="units">&deg;C</sup>
+                <sup class="unitsmain">&deg;C</sup>
 
             </div>
 
@@ -96,8 +118,10 @@
         </div>
     </div>
 
-    <br /> <p id="StopkaStatusy">%StopkaStatusy%</p> <br /><br /> <span
-        id="stopkawebsite"></span>%stopkawebsite%</span>
+    <br /><br />
+
+    <p id="UsedMedia">%UsedMedia%</p>
+    <span id="stopkawebsite"></span>%stopkawebsite%</span>
     <!-- <script src=""jquery-3.6.0.slim.js"/>
     <script src="jquery-ui-slider-pips.js"/> -->
     <script src="index.js"></script>

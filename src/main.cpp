@@ -17,6 +17,7 @@
 
 void recvMsg(uint8_t *data, size_t len)
 { // for WebSerial
+#ifdef enableWebSerial
   log_message((char*)F("Received Data..."));
   String d = "";
   for (size_t i = 0; i < len; i++)
@@ -134,12 +135,13 @@ void recvMsg(uint8_t *data, size_t len)
       RESET_CONFIG     -UWAGA!!!! Resetuje konfigurację do wartości domyślnych\n \
       RESET_FLAMETOTAL -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"),0);
   }
+  #endif
 }
 
 void updateDatatoWWW()
 {
   //String dana = {"DHWTemp",DHW_Temp}
-
+  String ptr = "\0";
   u_int i = 0;
   AllSensorsStruct[i].placeholder = "uptimedana";
   AllSensorsStruct[i].Value = String(uptimedana(0));
@@ -246,7 +248,7 @@ void updateDatatoWWW()
   AllSensorsStruct[i].placeholder = "naglowekdane";
   AllSensorsStruct[i].Value = String("naglowekdane");
 
-      String ptr = "&nbsp;";
+      ptr = "\0";
       if (status_FlameOn) {
         ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>"+String(Flame_Active_Flame_level)+"</span><B>"+ String(flame_level,0)+"<sup class=\"units\">&#37;</sup></B>";
         ptr += "<br>";
@@ -261,9 +263,13 @@ void updateDatatoWWW()
       if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
       if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
       if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
-      ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
   i++;
-  AllSensorsStruct[i].placeholder = "StopkaStatusy";
+  AllSensorsStruct[i].placeholder = "Statusy";
+  AllSensorsStruct[i].Value = String(ptr);
+  i++;
+  ptr = "\0";
+  ptr += String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
+  AllSensorsStruct[i].placeholder = "UsedMedia";
   AllSensorsStruct[i].Value = String(ptr);
 receivedwebsocketdata = false;
   notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));  //moze nie potrzebne

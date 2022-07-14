@@ -10,6 +10,7 @@
 
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
+var programaticallychange = false;
 window.addEventListener('load', onload);
 
 function onload(event) {
@@ -42,8 +43,14 @@ function updateSliderPWM(element) {
     var sliderNumber = element.id.charAt(element.id.length-1);
     var sliderValue = document.getElementById(element.id).value;
     document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
-    console.log(sliderValue);
-    websocket.send("sliderValue"+sliderNumber+":"+sliderValue.toString());
+    document.getElementById(element.id).setAttribute('value',parseFloat(sliderValue).toFixed(1));
+//    console.log(sliderValue);
+//    console.log("programaticallychange: "+programaticallychange.toString());
+//    if (programaticallychange===false) {
+        websocket.send("sliderValue"+sliderNumber+":"+sliderValue.toString());
+
+//    }
+//    programaticallychange = false;
 }
 
 function onMessage(event) {
@@ -57,11 +64,14 @@ function onMessage(event) {
         if (document.getElementById(key)!=null) {
         // document.getElementById(key).innerHTML = myObj[key];
         // if (document.getElementById(key)!=null) {
-            document.getElementById(key).value = myObj[key];
-            //document.getElementById(key).outerHTML= myObj[key];
+            //document.getElementById(key).value = myObj[key];
+            document.getElementById(key).innerHTML= myObj[key];
              if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
-                 console.log("slider"+ key.charAt(key.length-1) + "  "+myObj[key]);
                  document.getElementById("slider"+ key.charAt(key.length-1)).value = myObj[key];
+                 document.getElementById("slider"+ key.charAt(key.length-1)).setAttribute('value', myObj[key]);
+//                 programaticallychange = true;
+//                 document.getElementById("slider"+ key.charAt(key.length-1)).onchange();
+//                 console.log("programaticallychange: "+programaticallychange.toString());
              }
         //}
         }
@@ -72,10 +82,10 @@ function onMessage(event) {
 function setOneNumberDecimal(event) {
     this.value = parseFloat(this.value).toFixed(1);
 }
-const allRanges = document.querySelectorAll(".range-wrap");
+const allRanges = document.querySelectorAll(".rangewrap");
 //console.log(allRanges);
 allRanges.forEach(wrap => {
-    const bubble = wrap.querySelector(".range-value");
+    const bubble = wrap.querySelector(".rangevalue");
     const range = wrap.querySelector(".range");
   range.addEventListener("input", () => {
     setBubble(range, bubble);
@@ -94,16 +104,26 @@ function setBubble(range, bubble) {
 
     // Sorta magic numbers based on size of the native UI thumb
     bubble.style.left = `calc(${newVal}% + (${15 - newVal * 0.30}px))`;
-    console.log(bubble.style.left);
-    console.log("SetBubble "+document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value+" <- "+val.toString());
+//    console.log(bubble.style.left);
+//    console.log("SetBubble "+document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value+" <- "+val.toString());
    document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value = `${parseFloat(range.value).toFixed(1)}`;
 
 
     /* } */
   }
 
+
+
+
+
   document.addEventListener("DOMContentLoaded", setBubble);
 
+
+
+
+//   document.getElementById('input').addEventListener('change',function() {
+//     this.setAttribute('value',this.value);
+//   });
 
 
 // const

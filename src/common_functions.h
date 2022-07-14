@@ -7,7 +7,11 @@
 #define enableArduinoOTA
 #define enableWebUpdate
 #define enableWebSocket
+#define doubleResDet
 #define wwwport 80
+
+
+#include <ESPAsyncWebServer.h>
 #ifdef ESP32
 //#include <WiFi.h>
 #ifdef enableWebUpdate
@@ -29,6 +33,7 @@
 //#include <ESPAsyncUDP.h>
 //#include <ESPAsyncDNSServer.h>
 #endif
+
 
 #ifdef enableMQTT
 #include <PubSubClient.h>
@@ -825,8 +830,8 @@ void Setup_WebSocket()
 //***********************************************************************************************************************************************************************************************
 #endif
 String web_processor(const String var) {
-  sprintf(log_chars,"WebProcessor variable: %s",var.c_str());
-  log_message(log_chars);
+  // sprintf(log_chars,"WebProcessor variable: %s",var.c_str());
+  // log_message(log_chars);
   if (var == "ME_TITLE") {return String(me_lokalizacja) + " v." + String(version);
   } else
   if (var == "DIR_LIST") {
@@ -844,7 +849,11 @@ String web_processor(const String var) {
   } else
   if (var == "stopkawebsite") {
     String ptr;
-      ptr = F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a> &nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>&nbsp;")+F("</a> &nbsp; &nbsp;&nbsp; <a href='/edit'>")+String("Edit FS")+F("</a>&nbsp;");
+      ptr = F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
+      #ifdef enableWebSerial
+      ptr += F("&nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
+      #endif
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FS")+F("</a>&nbsp;");
       ptr += F("</p><br/>");
       ptr += F("MAC: <B>");
       ptr += PrintHex8(mac, ':', sizeof(mac) / sizeof(mac[0]));
@@ -862,7 +871,7 @@ String web_processor(const String var) {
       ptr += F("</B>, CRT: <B>");
       ptr += String(runNumber);
       ptr += F("</B><br>");
-      ptr += F("<p>&copy; ");
+      ptr += F("<p style=\"color:darkblue;font-size:1.1rem;\">&copy; ");
       ptr += stopka;
       ptr += F("</p>");
     return String(ptr);
@@ -890,6 +899,10 @@ String web_processor(const String var) {
   }
 
 }
+
+
+
+
 //***********************************************************************************************************************************************************************************************
 bool webhandleFileRead(AsyncWebServerRequest *request, String path){
   sprintf(log_chars,"handleFileRead: %s", path.c_str());
@@ -900,7 +913,7 @@ bool webhandleFileRead(AsyncWebServerRequest *request, String path){
   //     request->requestAuthentication();
   // }
 
-  if(path.endsWith("/")) path += F("index.html");           // If a folder is requested, send the index file
+  if(path.endsWith("/") and path.length()<2) path += F("index.html");           // If a folder is requested, send the index file
   String contentType = webgetContentType(path);                // Get the MIME type
   String pathWithGz = path + F(".gz");
   if(SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)){     // If the file exists, either as a compressed archive, or normal
@@ -914,14 +927,15 @@ bool webhandleFileRead(AsyncWebServerRequest *request, String path){
     if (gzipped){
         response->addHeader("Content-Encoding", "gzip");
     }
-    Serial.print("Real file path: ");
-    Serial.println(path);
+    sprintf(log_chars,"Real file path: %s",String(path).c_str());
+    log_message(log_chars);
 
     request->send(response);
 
     return true;
   }
-  Serial.println(String(F("\tFile Not Found: ")) + path);
+  sprintf(log_chars,"File Not Found: %s",String(path).c_str());
+  log_message(log_chars);
   return false;                                             // If the file doesn't exist, return false
 }
 //***********************************************************************************************************************************************************************************************
@@ -974,6 +988,9 @@ void handleWebSocketMessage_sensors(String message)
     }
   }
 }
+
+//***********************************************************************************************************************************************************************************************
+const char edit_html[] =("<!DOCTYPE html> <html> <head> <title>%ME_TITLE% Uploader</title> <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'> </head> <body> <center> <header> <div class=\"topnav\"> <h1>%ME_TITLE%</h1> </div> <br> <h2>Uploader</h2> </header> <div> <p style=\"text-align: center\">Use this page to upload new files to the ESP.<br/>You can use compressed (deflated) files (files with a .gz extension) to save space and bandwidth.<br/>Existing files will be replaced.</p> <form method=\"post\" enctype=\"multipart/form-data\" style=\"margin: 0px auto 8px auto\" > <input type=\"file\" name=\"Choose file\" accept=\".gz,.html,.ico,.js,.css\"> <input class=\"button\" type=\"submit\" value=\"Upload\" name=\"submit\"> </form> </div> <br><br> %DIR_LIST% </center> </body> </html>");
 //***********************************************************************************************************************************************************************************************
 void Setup_WebServer()
 {
@@ -983,6 +1000,7 @@ void Setup_WebServer()
   #ifdef enableWebUpdate
   SetupWebUpdate();
   #endif
+
 //  webserver.rewrite("/", "/index.html");
 //  webserver.rewrite("/edit.html", "/edit");
 //  webserver.serveStatic("/index.html", SPIFFS, "/index.html");//no cache so can change
@@ -990,9 +1008,17 @@ void Setup_WebServer()
     request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
   }).setAuthentication("", "");
 
-  webserver.on("/edit" , HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/edit.html", "text/html; charset=utf-8",  false, web_processor);
-  }).setAuthentication("", "");
+  if (!SPIFFS.exists("/edit.html")) {
+    webserver.rewrite("/", "/edit");
+    webserver.on("/edit" , HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send_P(200, "text/html; charset=utf-8",  edit_html, web_processor);
+    }).setAuthentication("", "");
+  } else
+  {
+    webserver.on("/edit" , HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/edit.html", "text/html; charset=utf-8",  false, web_processor);
+    }).setAuthentication("", "");
+  }
 
   // webserver.on("/edit.html",  HTTP_POST, [&](AsyncWebServerRequest *request) {  // If a POST request is sent to the /edit.html address,
   //         // the request handler is triggered after the upload has finished...

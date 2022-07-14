@@ -12,11 +12,37 @@
 
 
 
-
 #include "config.h"
 #include "configmqtttopics.h"
 
-int slide1 =0, slide2 = 0, slide3=0;
+
+typedef struct
+{
+  char version[6]; // place to detect if settings actually are written
+  bool heatingEnabled;
+  bool enableHotWater;
+  bool automodeCO;
+  float tempBoilerSet;   //temp boiler set -mainly used in auto mode and for display on www actual temp
+  float sp;              //romtempsetpoint
+  float cutOffTemp;
+  float op_override;     //boiler tempset on heat mode
+  float dhwTarget;       //hot water temp set
+  float roomtemp;        //now is static sensor so for while save last value
+  float temp_NEWS;
+  char ssid[sensitive_size];
+  char pass[sensitive_size];
+  char mqtt_server[sensitive_size*2];
+  char mqtt_user[sensitive_size];
+  char mqtt_password[sensitive_size];
+  int mqtt_port;
+  char COPUMP_GET_TOPIC[255];  //temperatura outside avg NEWS
+  char NEWS_GET_TOPIC[255];   //pompa CO status
+  char NEWS_GET_TOPIC1[255];   //pompa CO status for 1st temp room sensor
+  char NEWS_GET_TOPIC2[255];   //pompa CO status for 2nd temp room sensor
+} configuration_type;
+
+// with DEFAULT values!
+configuration_type CONFIGURATION;
 
 OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
 DallasTemperature sensors(&oneWire);
