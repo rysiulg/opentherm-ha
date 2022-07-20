@@ -298,6 +298,8 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
   }
   #endif
   #ifdef enableWebSocketlog
+  send_string.replace("\"","\\\"");
+  send_string.replace("\\\\","\\");
     notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
   #endif
 

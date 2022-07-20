@@ -156,9 +156,7 @@ void updateMQTTData()
                       ",\"" + String(OT) + (ROOM_OTHERS_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(roomtempSet) + payloadvalue_startend_val +
                       ",\"" + String(OT) + (ROOM_OTHERS_PRESSURE) + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
                       "}").c_str(), mqtt_Retain); //"heat" : "off")
-#ifdef debug
-log_message((char*)F("mqtt publish 1st end"));
-#endif
+
   mqttclient.publish(String(HOT_WATER_TOPIC).c_str(),
                      ("{\"" + String(OT) + String(HOT_WATER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempCWU) + payloadvalue_startend_val +
                       ",\"" + String(OT) + String(HOT_WATER_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(dhwTarget, 1) + payloadvalue_startend_val +
@@ -167,9 +165,7 @@ log_message((char*)F("mqtt publish 1st end"));
                       ",\"" + String(OT) + String(FLAME_W_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_waterTotal, 4) + payloadvalue_startend_val +
                       ",\"" + String(OT) + String(FLAME_TIME_SEC_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_waterTotal) + payloadvalue_startend_val +
                       "}").c_str(), mqtt_Retain); //"heat" : "off")
-#ifdef debug
-log_message((char*)F("mqtt publish 2nd end"));
-#endif
+
   mqttclient.publish(String(BOILER_TOPIC).c_str(),
                      ("{\"" + String(OT) + String(BOILER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempBoiler) + payloadvalue_startend_val +
                       ",\"" + String(OT) + String(BOILER_TEMPERATURE_RET) + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +

@@ -49,6 +49,115 @@ float pid(float sp, float pv, float pv_last, float &ierr, float dt)
   return op;
 }
 
+// This function calculates temperature every second.
+void opentherm_update_data()
+{
+  log_message((char*)F("Update_OpenTherm_data"));
+  // Set/Get Boiler Status
+  bool enableCooling = false;
+  receivedmqttdata = false;
+  bool COHeat = false;
+  if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
+
+
+  getTemp(); //default returns roomtemp (avg) and as global sp=roomtempset (avg), roomtemp is also global var
+  float op = tempBoilerSet;
+  if (heatingEnabled)
+  {
+    //  if (!automodeCO) {
+    //this will remove tempset avg from floors tempBoilerSet = op_override;  //for no automode
+    if (temp_NEWS < cutOffTemp)
+      COHeat = true;
+    if (CO_PumpWorking)
+      COHeat = false;
+    if (temp_NEWS > (cutOffTemp + 0.9))
+      COHeat = false;
+    //  } else
+    if (automodeCO) {
+      if (roomtemp < (roomtempSet + 0.6)) COHeat = true; else COHeat = false;
+      //based on roomtemp<roomtemset
+      op = 0;
+      unsigned long now = millis();
+      new_ts = millis();
+      dt = (new_ts - ts) / 1000.0;
+      ts = new_ts;
+      op = pid(roomtempSet, roomtemp, roomtemp_last, ierr, dt);
+      if ((now - lastroomtempSet <= spOverrideTimeout_ms))
+      {
+        op = noCommandSpOverride;
+      }
+      //    tempBoilerSet = op;
+      roomtemp_last = roomtemp;
+    }
+  }
+
+sprintf(log_chars,"Statusy openth: COHEAT: %s, DHW: %s, automodeCO: %s, temp_NEWS: %s", String(COHeat?"chodzi":"stoi").c_str(), String(enableHotWater?"chodzi":"stoi").c_str(), String(automodeCO?"ON":"stoi").c_str(), String(temp_NEWS).c_str());
+log_message(log_chars);
+//COHeat = false;
+
+  unsigned long response = ot.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
+  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
+  if (responseStatus != OpenThermResponseStatus::SUCCESS)
+  {
+    LastboilerResponseError = String(response, HEX);
+    sprintf(log_chars, "!!!!!!!!!!!Error: Invalid boiler response %s", LastboilerResponseError.c_str());
+    log_message(log_chars);
+  } else
+  {
+    ot.setDHWSetpoint(dhwTarget);
+    ot.setBoilerTemperature(op);
+
+    status_CHActive = ot.isCentralHeatingActive(response);
+    status_WaterActive = ot.isHotWaterActive(response);
+    bool status_flame_tmp = status_FlameOn;
+    status_FlameOn = ot.isFlameOn(response);
+    if (status_flame_tmp != status_FlameOn) {
+      if (status_FlameOn) {
+        start_flame_time = millis();
+      } else start_flame_time = 0; //After change flame status If flame is on get timer, else reset timer
+      flame_time = 0;
+    }
+    status_Cooling = ot.isCoolingActive(response);
+    status_Diagnostic = ot.isDiagnostic(response);
+    flame_level = ot.getModulation();
+    tempBoiler = ot.getBoilerTemperature();
+    tempCWU = ot.getDHWTemperature();
+    retTemp = ot.getReturnTemperature();
+    pressure = ot.getPressure();
+  }
+
+  status_Fault = ot.isFault(response);
+
+}
+
+void IRAM_ATTR handleInterrupt()
+{
+  ot.handleInterrupt();
+}
+
+void getTemp()
+{
+  if (check_isValidTemp(floor2_tempset) && check_isValidTemp(floor1_tempset)) roomtempSet = (floor2_tempset + floor1_tempset) / 2; //{roomtemp_last=roomtemp; roomtemp=(floor2_tempset+floor1_tempset)/2;}
+  if (check_isValidTemp(floor2_tempset) && !check_isValidTemp(floor1_tempset)) {
+    roomtempSet = floor2_tempset;
+  }
+  if (!check_isValidTemp(floor2_tempset) && check_isValidTemp(floor1_tempset)) {
+    roomtempSet = floor1_tempset;
+  }
+
+  if (check_isValidTemp(floor2_temp) && check_isValidTemp(floor1_temp)) roomtemp = (floor2_temp + floor1_temp) / 2; //{roomtemp_last=roomtemp; roomtemp=(floor2_tempset+floor1_tempset)/2;}
+  if (check_isValidTemp(floor2_temp) && !check_isValidTemp(floor1_temp)) {
+    roomtemp = floor2_temp;
+  }
+  if (!check_isValidTemp(floor2_temp) && check_isValidTemp(floor1_temp)) {
+    roomtemp = floor1_temp;
+  }
+  sprintf(log_chars,"Get Temps: floor2_temp: %s/%s, floor1_temp: %s/%s, roomtemp: %s/%s", String(floor2_temp).c_str(), String(floor2_tempset).c_str(), String(floor1_temp).c_str(), String(floor1_tempset).c_str(), String(roomtemp).c_str(),String(roomtempSet).c_str());
+  log_message(log_chars);
+
+}
+
+
 
 String Boiler_Mode()
 {
