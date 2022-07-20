@@ -26,12 +26,12 @@ String STATS_TOPIC = String(BASE_TOPIC) + "/stats";
 #define TEMP_CUTOFF "temp_cutoff"
 #define FLAME_W "flame_used_energy"
 #define FLAME_W_TOTAL "flame_used_energy_total"
-#define FLAME_TIME_SEC_TOTAL "flame_working_secs_total"
+#define FLAME_TIME_SEC_TOTAL "flame_working_total_secs"
 
 #define FLAME_W_CH_TOTAL "flame_used_energy_central_heat_total"
-#define FLAME_TIME_SEC_CH_TOTAL "flame_working_secs_central_heat_total"
+#define FLAME_TIME_SEC_CH_TOTAL "flame_working_central_heat_total_secs"
 #define FLAME_W_DHW_TOTAL "flame_used_energy_dhw_total"
-#define FLAME_TIME_SEC_DHW_TOTAL "flame_working_secs_dhw_total"
+#define FLAME_TIME_SEC_DHW_TOTAL "flame_working_dhw_total_secs"
 #define ECOMODE_STATE "ecomode_state"
 
 #define HOT_WATER_TEMPERATURE String(HOT_WATER) + String(TEMPERATURE)
