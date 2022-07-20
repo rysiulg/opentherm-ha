@@ -73,12 +73,13 @@ void recvMsg(uint8_t *data, size_t len)
   if (d == "RESET_FLAMETOTAL" or d == "RFT")
   {
     log_message((char*)F("RESET flame Total var to 0..."), 0);
-    flame_time_total = 0;
+
     flame_used_power_kwh = 0;
-    flame_time_waterTotal = 0;
-    flame_used_power_waterTotal = 0;
     flame_time_total = 0;
+    flame_used_power_waterTotal = 0;
+    flame_time_waterTotal = 0;
     flame_used_power_CHTotal = 0;
+    flame_time_CHTotal = 0;
     SaveConfig();
   }
 
@@ -241,12 +242,12 @@ void updateDatatoWWW() //default false so if true than update
 
     ptr = "\0";
     ptr += String(Flame_total) + "<B>" + String(flame_used_power_kwh, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_total*1000), true)+"</B>");
+    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_total), true)+"</B>");
     ptr += "<br>w tym woda: <B>" + String(flame_used_power_waterTotal, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_waterTotal*1000), true)+"</B>");
+    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_waterTotal), true)+"</B>");
     ptr += "<br>w tym CO: <B>" + String(flame_used_power_CHTotal, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_CHTotal*1000), true)+"</B>");
-    sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total*1000), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal*1000), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal*1000), true)).c_str());
+    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_CHTotal), true)+"</B>");
+    sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
     ASS[ASS_UsedMedia].Value = String(ptr);
 

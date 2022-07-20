@@ -1,45 +1,36 @@
-/*************************************************************
-  This example runs directly on ESP8266 chip.
-
-  Please be sure to select the right ESP8266 module
-  in the Tools -> Board -> WeMos D1 Mini
-
-  Adjust settings in Config.h before run
- *************************************************************/
-
-//#include <Arduino.h>
-
+# 1 "C:\\Users\\Rysza\\AppData\\Local\\Temp\\tmp_r5tgt1q"
+#include <Arduino.h>
+# 1 "//nas/soft/EPROM/!Projekty/opentherm-ha/src/src.ino"
+# 12 "//nas/soft/EPROM/!Projekty/opentherm-ha/src/src.ino"
 const float InitTemp = 255;
-// ESP8266WebServer server(80);
+
 #include "declarations.h"
 #include "main.h"
-
-
-
-
-
-
-// op = pid(sp, t, t_last, ierr, dt);
+float pid(float sp, float pv, float pv_last, float &ierr, float dt);
+String Boiler_Mode();
+void setup();
+void loop();
+#line 23 "//nas/soft/EPROM/!Projekty/opentherm-ha/src/src.ino"
 float pid(float sp, float pv, float pv_last, float &ierr, float dt)
 {
   float KP = 10;
   float KI = 0.02;
 
-  // calculate the error
+
   float error = sp - pv;
-  // calculate the integral error
+
   ierr = ierr + KI * error * dt;
-  // calculate the measurement derivative
-  // float dpv = (pv - pv_last) / dt;
-  // calculate the PID output
-  float P = KP * error; // proportional contribution
-  float I = ierr;       // integral contribution
+
+
+
+  float P = KP * error;
+  float I = ierr;
   float op = P + I;
-  // implement anti-reset windup
+
   if ((op < opcolo) || (op > opcohi))
   {
     I = I - KI * error * dt;
-    // clip output
+
 
     op = max(opcolo, min(opcohi, op));
   }
@@ -69,16 +60,16 @@ void setup()
 
   ot.begin(handleInterrupt);
 
-  // Init DS18B20 sensor
+
   sensors.begin();
   sensors.requestTemperatures();
-  sensors.setWaitForConversion(false); // switch to async mode
+  sensors.setWaitForConversion(false);
   dallasTemp = sensors.getTempCByIndex(0);
   if (check_isValidTemp(dallasTemp)) dallasTemp = InitTemp;
-  //  lastTempSet = -extTempTimeout_ms;
+
 #ifdef debug
   log_message((char*)F("end setup...."));
-  //    SaveConfig();
+
 #endif
 }
 
@@ -86,21 +77,21 @@ void setup()
 void loop()
 {
   MainCommonLoop();
-  unsigned long now = millis(); // TO AVOID compare -2>10000 which is true ??? why?
-  // check mqtt is available and connected in other case check values in api.
+  unsigned long now = millis();
+
 
   if ((now - lastUpdate) > statusUpdateInterval_ms)
   {
 
     lastUpdate = now;
-    opentherm_update_data(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
+    opentherm_update_data();
   }
 
   if (status_FlameOn) {
     unsigned long long nowtime = millis();
     float boiler_power = 0;
     if (retTemp < boiler_50_30_ret) boiler_power = boiler_50_30; else boiler_power = boiler_80_60;
-    double boilerpower = boiler_power * (flame_level / 100); //kW
+    double boilerpower = boiler_power * (flame_level / 100);
     double time_to_hour = (nowtime - start_flame_time) / (double(hour_s) * 1000);
     flame_time_total += (nowtime - start_flame_time) ;
     if (status_WaterActive) {
@@ -119,9 +110,9 @@ void loop()
     log_message(log_chars);
   }
 
-  //#define abs(x) ((x)>0?(x):-(x))
-  if (((now - lastNEWSSet) > (temp_NEWS_interval_reduction_time_ms * 2)) and 1 == 0) //disable for now
-  { // at every 0,5hour lower temp NEWS when no communication why -2>1800000 is true ???
+
+  if (((now - lastNEWSSet) > (temp_NEWS_interval_reduction_time_ms * 2)) and 1 == 0)
+  {
     sprintf(log_chars, "nowtime: %s, lastNEWSSet: %s, temp_NEWS_interval_reduction_time_ms: %s", String(now).c_str(), String(lastNEWSSet, 6).c_str(), String(temp_NEWS_interval_reduction_time_ms).c_str());
     log_message(log_chars);
     lastNEWSSet = now;
@@ -138,11 +129,11 @@ void loop()
     }
     if (temp_NEWS_count > 10)
     {
-      CO_PumpWorking = false; // assume that we loose mqtt connection to other system where is co pump controlled -so after 10 times lowered NEWS temp by 5% we also disable CO_Pump_Working to allow heat by this heater -default it counts 5hours no communication
+      CO_PumpWorking = false;
       log_message((char*)F("Force disable CO_PumpWorking flag -after 10times execute every 30minutes lowered temp NEWS"));
       temp_NEWS_count = 0;
     }
-    // dobre miejsce do try get data by http api
+
     log_message((char*)F("Korekta temperatury NEWS z braku połaczenia -pomniejszona o 5%"));
   }
 
@@ -150,15 +141,15 @@ void loop()
   {
     lastSaveConfig = now;
     log_message((char*)F("Saving config to EEPROM memory..."));
-    SaveConfig(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
-    // String tempSource = (millis() - lastTempSet > extTempTimeout_ms)
-  //                         ? "(internal sensor)"
-  //                         : "(external sensor)";
+    SaveConfig();
+
+
+
   sensors.requestTemperatures();
-  sensors.setWaitForConversion(false); // switch to async mode
+  sensors.setWaitForConversion(false);
   dallasTemp = sensors.getTempCByIndex(0);
   if (check_isValidTemp(dallasTemp)) dallasTemp = InitTemp;
-  sprintf(log_chars, "Current temperature 18B20: %s °C ", String(dallasTemp).c_str()); //, tempSource.c_str());
+  sprintf(log_chars, "Current temperature 18B20: %s °C ", String(dallasTemp).c_str());
   log_message(log_chars);
 
   }

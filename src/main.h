@@ -101,15 +101,15 @@ unsigned long ts = 0, new_ts = 0, // timestamp
               lastmqtt_reconnect = 0,
               lastSaveConfig = 0,
               lastroomtempSet = 0,
-              WiFipreviousMillis = 0,
-              start_flame_time = 0,    //Flame Starts work
-              flame_time = 0;         //flame time
+              WiFipreviousMillis = 0;
+unsigned long long start_flame_time = 0,    //Flame Starts work
+                   flame_time_total = 0,         //total sum of flametime
+                   flame_time_waterTotal = 0,
+                   flame_time_CHTotal = 0,
+                   flame_time = 0;         //flame time
 
 double  flame_used_power_kwh = 0,     //f or count powerkWh between samples (boiler rated*flame power) use integer end when div use % do get decimal value
         flame_used_power = 0,         //for count used energy
-        flame_time_total = 0,         //total sum of flametime
-        flame_time_waterTotal = 0,
-        flame_time_CHTotal = 0,
         flame_used_power_waterTotal = 0,
         flame_used_power_CHTotal = 0;
 
