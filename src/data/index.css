@@ -1,0 +1,276 @@
+/* At-Rules */
+@font-face {
+      font-family: 'roboto';
+      src: url('roboto.eot'); /* ie9 compat modes */
+      src: url('roboto.eot?#iefix') format('embedded-opentype'), /* ie6-ie8 */
+      url('roboto.woff') format('woff'), /* modern browsers */
+      url('roboto.ttf')  format('truetype'), /* safari, android, ios */
+      url('roboto.svg#svgfontname') format('svg'); /* legacy ios */
+    }
+
+
+/*html, body, html * {font-family: 'Roboto', sans-serif;   font-family: 'Roboto Condensed', sans-serif;}*/
+
+html {font-family: 'Roboto', sans-serif;   display: inline-block;   text-align: center;}
+
+h1 {font-size: 2.1rem;   border-radius: 15%;   color: white;}
+
+p {font-size: 1.4rem;}
+
+.topnav {overflow: hidden;   background-color: #0A1128;}
+
+body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-image: linear-gradient(lightcyan, lightcyan),
+  url("ident.gif");}*/
+
+.content {padding: 1.5rem;}
+
+.card-grid {max-width: 800px;   position: relative;   margin: 0 auto;   display: grid;   grid-gap: 1.5rem;   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));}
+
+.card {background-color: white;   border-radius: 5%; padding: 3% 3% 3% 3%; box-shadow: 0.1rem 0.1rem 1rem 0.1rem rgba(140,140,140,.5);}
+
+.card-title {font-size: 1.4rem;   font-weight: bold;   color: #4208f2; padding-bottom: 0.2rem; border-radius: 50px;}
+
+.state {font-size: 1.4rem;   font-weight: bold;   color:#092f39;}
+
+.twoCard {
+  display: flex;
+  }
+  .cardPart {
+  width: 100%;
+  padding: 10px;
+  text-align: -webkit-center;
+  /* font-size: 1.4rem;
+  font-weight: bold; */
+  color: #4208f2;
+  padding-bottom: 1rem;
+  }
+  .cardPart2 {
+  border-left: 1px solid #ccc;
+  }
+
+  .hidden {display:none}
+
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 1.7rem 0;
+  margin-top: 2.5rem;  /*  High of ballon */
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: 453px;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 1.5rem;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #03a9f4;
+  border-radius: 2rem;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 1.5rem;
+  cursor: pointer;
+  animate: 0.2s;
+  background: #03a9f4;
+  border-radius: 2rem;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 50%;
+  background: #f1f7d7e6;
+  box-shadow: 0 1px 0.9rem 1px rgba(0,0,0, 1);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -0.5rem;
+}
+input[type=range]::-moz-range-thumb {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 50%;
+  background: #f1f7d7e6;
+  box-shadow: 0 1px 0.9rem 1px rgba(0,0,0, 1);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -0.5rem;
+}
+
+.rangewrap{
+  width: 100%;         /* length of belka*/
+  position: relative;
+}
+.rangevalue{
+  top: -0.5rem;
+  left: auto;
+
+  width: 5rem;
+  height: 1.8rem;
+  line-height: 1.8rem;
+  text-align: center;
+  background: #03a9f4;
+  color: white;
+  font-size: 1.4rem;
+  font-weight: bold;
+  position: absolute;
+  /*left: 65%;  tym by pomanewrowac by wysrodkowav*/
+  transform: translate(-50%, 0);
+  border-radius: 0.4rem;
+  /*display: block;*/
+  display: none;
+}
+
+.rangewrap:hover   .rangevalue{
+  display: block;
+}
+
+.rangevalue:before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-top: 10px solid #03a9f4;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  margin-top: 0px;
+}
+.temperatureVal {
+  text-align: center;
+  color: rgb(0, 23, 198);
+  font-size: 2.1rem;
+  font-weight: 700;
+  vertical-align:middle;
+  padding-bottom: 0.8rem;
+  display: inline-block;
+}
+.unitsmain{font-size: 1.8rem; font-weight: bold; position: relative; top: 0%; color: #059e8a; display: inline-block;}
+.units{font-size: 1.1rem; font-weight: bold; position: relative; top: 2%; color: black; display: inline-block;}
+.fas {
+  color:#059e8a;font-size:2.2rem; text-shadow: 1px 1px 2px #000000; padding: 15px; position: relative; top: 1%; display: inline-block;
+}
+.dht-labels{
+  font-size:1.2rem;vertical-align:middle;padding-bottom:8px;font-weight: bold;
+}
+.units_update {
+  font-size:1.1rem; font-weight: normal; color: lightseagreen; text-align: right; padding-top:18px; display: inline-block;
+}
+
+/* Tooltip container */
+.tooltip {
+  position: relative;
+  border-bottom: 0px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  font-size: 0.9rem;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 0.8rem 0.8rem;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 3;
+  left: 0%;
+  margin-left: 0px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  transform: rotate(0deg);
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  width: auto;
+  position:absolute;
+  bottom: 11rem;
+  display:inline-flexbox;
+  opacity: 0.8;
+}
+
+
+
+
+/* BUTTON*/
+input[type=checkbox] {
+  height: 0;
+  width: 0;
+  visibility: hidden;
+}
+
+label {
+  cursor: pointer;
+  text-indent: -9999px;
+  /*width: 9rem;*/
+  height: 1.65rem;
+  background: #03a9f4;
+  display: block;
+  border-radius: 30px;
+  position: relative;
+  padding-left:10px;color: white;
+  /*transform: rotate(270deg);*/
+}
+
+
+label:after {
+  text-indent: -9999px;
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  width: 1.4rem;
+  height: 1.0rem;
+  background: #f1f7d7e6;
+  border-radius: 30px;
+  transition: 0.3s;
+}
+
+.BOILMODMODE {
+  visibility: hidden;
+}
+.boilerwww:checked ~ .BOILMODMODE {
+  visibility:visible;
+}
+
+input:checked + label {
+  background: #ff0000;
+  text-indent: 2px;
+  text-align: left;
+}
+
+input:checked + label:after {
+  left: calc(100% - 5px);
+  transform: translateX(-100%);
+}
+
+label:active:after {
+  width: 13rem;
+}
+
+/* Not exacly name -this is only for informational purpose -applied in js code */
+#Boiler_CO { background-color: #8bf6cd; }
+#Hot_Water { background-color: #f7e08c; }
+#statusError { background-color: #ff0000;}
+#statusFlame { background-color: #ff0000;}

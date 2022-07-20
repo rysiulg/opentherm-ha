@@ -1,11 +1,13 @@
+
 //     https://maximeborges.github.io/esp-stacktrace-decoder/
 //Nice Info about ESP: https://tttapa.github.io/ESP8266/Chap01%20-%20ESP8266.html
 
 
 #define ATOMIC_FS_UPDATE   //For uploading compressed filesystems, the application must be built with ATOMIC_FS_UPDATE defined because, otherwise, eboot will not be involved in writing the filesystem.
-#define enableWebSerial     //not fully implemented
+//#define enableWebSerial     //not fully implemented
 #define enableArduinoOTA
 //#define enableWebUpdate
+#define enableWebSocketlog  //send log to websocket
 #define enableWebSocket
 #define doubleResDet
 #define wwwport 80
@@ -19,7 +21,7 @@
 #endif
 #include <AsyncTCP.h>
 #include <AsyncUDP.h>
-//#include <ESPmDNS.h>
+#include <ESPmDNS.h>
 #include <AsyncDNSServer.h>
 #include "esp_task_wdt.h"
 #else
@@ -62,7 +64,7 @@
 AsyncWebServer webserver(wwwport);
 #include <ESPAsyncWebServer.h>  //also must be <ESPAsyncTCP.h> <ESP8266WiFi.h>
 //#include <FS.h>                 //for spiffs files
-#include <LITTLEFS.h>
+#include "LittleFS.h" // LittleFS is declared
 #define SPIFFS LittleFS       //4kB less after conversion but filesystem is higher allocation min 4kB fo LF and 256B for SPIFFS
 #ifdef enableWebSocket
 AsyncWebSocket WebSocket("/ws");
@@ -86,20 +88,26 @@ PubSubClient mqttclient(espClient);
 #endif
 DNSServer dnsServer;
 
+#ifndef decimalPlaces
+#define decimalPlaces 1   //how much decimal places to show on www
+#endif
 //*********************************************************************************************************************************************
 //         SPECIFIC functions outside from this file to get specific values
 //*********************************************************************************************************************************************
 #define ValuesToWSWPinJSON 1
 #define ValuesToWSWPforWebProcessor 2
-
+#ifndef ASS_Num
+#define ASS_Num 21
+#endif
 typedef struct
 {
-  String placeholder;
   String Value;
 } all_sensors_struct;
-all_sensors_struct AllSensorsStruct[30];
-void updateDatatoWWW(bool dont_send_after_sync = false);
-void mqtt_reconnect_subscribe_list();
+all_sensors_struct ASS[ASS_Num];
+String get_PlaceholderName(u_int i);
+void updateDatatoWWW_received(u_int i);
+void updateDatatoWWW();
+void mqttReconnect_subscribe_list();
 
 //*********************************************************************************************************************************************
 
@@ -133,13 +141,12 @@ const char version[10+1] =
    __TIME__[3],__TIME__[4],
   '\0'
 };
-const String me_version = String(version);
-const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
-const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(me_version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
+
+
 uint8_t mac[6] = {(uint8_t)strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), (uint8_t)strtol(WiFi.macAddress().substring(3,5).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(6,8).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(9,11).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(12,14).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(15,17).c_str(),0,16)};
 
 const unsigned long mqttUpdateInterval_ms = 1 * 60 * 1000,      //send data to mqtt and influxdb
-                    LOOP_WAITTIME = 2*1000,    //for loop
+                    LOOP_WAITTIME = (2.1*1000),    //for loop
                     WIFIRETRYTIMER = 25 * 1000;
 
 
@@ -155,26 +162,49 @@ bool starting = true,
      receivedwebsocketdata = false,
      firstConnectSinceBoot = false;
 
+#ifndef ecoModeMaxTemp
+#define ecoModeMaxTemp 39
+#endif
+#ifndef ecoModeDisabledMaxTemp
+#define ecoModeDisabledMaxTemp 60
+#endif
+
+float opcohi = ecoModeDisabledMaxTemp,             // upper max heat boiler to CO
+      ecohi = ecoModeMaxTemp;
+
 const float ophi = 65,               // upper max heat water
-            oplo = 30,               // lower min heat water
-            opcohi = 60,             // upper max heat boiler to CO
+            opcohistatic = opcohi,
+            oplo = 29,               // lower min heat water
             opcolo = oplo,           // lower min heat boiler to CO
             cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
             cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
-            roomtemphi = 30,         // upper max to set of room temperature
+            roomtemphi = 29,         // upper max to set of room temperature
+
             roomtemplo = 15;         // lower min to set of room temperature
 
 char log_chars[256];      //for logging buffer to log_message function
-int mqttReconnects = -1;
+int mqttReconnects = -1,
+    temp_NEWS_count = 0,
+    mqtt_offline_retrycount = 0,
+    mqtt_offline_retries = 2; // retries to mqttconnect before timewait
 size_t content_len;
 
 //other_Modules
 
+char ssid[sensitive_size] = SSID_Name;
+char pass[sensitive_size] = SSID_PAssword;
 
+// Your MQTT broker address and credentials
+char mqtt_server[sensitive_size * 2] = MQTT_servername;
+char mqtt_user[sensitive_size] = MQTT_username;
+char mqtt_password[sensitive_size] = MQTT_Password_data;
+int mqtt_port = MQTT_port_No;
+const int mqtt_Retain = 1;
 
 //common_functions.h
-void log_message(char* string, u_int specialforce = 0);
-String uptimedana(unsigned long started_local);
+bool check_isValidTemp(float temptmp);
+void log_message(char* string, u_int specialforce);
+String uptimedana(unsigned long started_local, bool startFromZero);
 String getJsonVal(String json, String tofind);
 bool isValidNumber(String str);
 String convertPayloadToStr(byte *payload, unsigned int length);
@@ -183,7 +213,7 @@ int getWifiQuality();
 int getFreeMemory();
 bool PayloadStatus(String payloadStr, bool state);
 bool PayloadtoValidFloatCheck(String payloadStr);
-float PayloadtoValidFloat(String payloadStr,bool withtemps_minmax=false, float mintemp=InitTemp, float maxtemp=InitTemp);
+float PayloadtoValidFloat(String payloadStr,bool withtemps_minmax=false, float mintemp=-InitTemp, float maxtemp=InitTemp);
 void restart();
 String getIdentyfikator(int x);
 #ifdef enableArduinoOTA
@@ -214,7 +244,7 @@ void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t
 void MainCommonSetup();
 void MainCommonLoop();
 void Setup_Mqtt();
-void mqtt_reconnect();
+void mqttReconnect();
 String formatBytes(size_t bytes);
 String webgetContentType(String filename);
 void check_wifi();
@@ -226,64 +256,82 @@ void printProgress(size_t prg, size_t sz);
 #endif
 String PrintHex8(const uint8_t *data, char separator, uint8_t length);
 
-
 //***********************************************************************************************************************************************************************************************
-void log_message(char* string, u_int specialforce)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
+bool check_isValidTemp(float temptmp)
+{
+
+  #define DS18B20nodata 85
+  #define DS18B20nodata1 127
+  if (temptmp!=InitTemp && temptmp!=-InitTemp && temptmp!=DS18B20nodata && temptmp!=-DS18B20nodata && temptmp!=DS18B20nodata1 && temptmp!=-DS18B20nodata1) return true; else return false;
+  #undef DS18B20nodata
+  #undef DS18B20nodata1
+
+}
+//***********************************************************************************************************************************************************************************************
+void log_message(char* string, u_int specialforce = 0)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
 {
   #include "configmqtttopics.h"
   String send_string = String(millis()) + F(": ") + String(string);
-  #ifdef debug
+  //free(string);
+  #ifdef debugSerial
     Serial.println(send_string);
   #endif
   #ifdef enableWebSerial
-    if (send_string.length() > 100) send_string[100] = '\0';
+    if (send_string.length() > 255) send_string[255] = '\0';
     if (starting == false) {WebSerial.println(send_string);}
   #endif
 //   if (webSocket.connectedClients() > 0) {
 //     webSocket.broadcastTXT(string, strlen(string));
 //   }
   #ifdef enableMQTT
-  if (mqttclient.connected() and (sendlogtomqtt or (specialforce == 1)) and starting == false)
-  {
-    if (send_string.length() > 100) send_string[100] = '\0';
-    if (!mqttclient.publish(LOG_TOPIC.c_str(), send_string.c_str())) {
-      Serial.print(millis());
-      Serial.print(F(": "));
-      Serial.println(F("MQTT publish log message failed!"));
-      mqttclient.disconnect();
+  if (sendlogtomqtt || specialforce == 2) {
+    if (mqttclient.connected() && starting == false)
+    {
+      if (send_string.length() > 255) send_string[255] = '\0';
+      if (!mqttclient.publish(String(LOG_TOPIC).c_str(), send_string.c_str())) {
+        Serial.print(millis());
+        Serial.print(F(": "));
+        Serial.println(F("MQTT publish log message failed!"));
+        mqttclient.disconnect();
+      }
     }
   }
   #endif
+  #ifdef enableWebSocketlog
+    notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
+  #endif
+
 }
 
 //***********************************************************************************************************************************************************************************************
-String uptimedana(unsigned long started_local = 0) {
+String uptimedana(unsigned long started_local = 0, bool startFromZero = false) {
   String wynik = "\0";
-  unsigned long  partia = millis() - started_local;
+  unsigned long  partia;
+  if (startFromZero) partia = started_local; else partia = millis() - started_local;
   if (partia<1000) return "< 1 "+String(t_sek)+" ";
-  #ifdef debug2
-    Serial.print(F("Uptimedana: "));
-  #endif
+  // #ifdef debug2
+  //   Serial.print(F("Uptimedana: "));
+  // #endif
   if (partia >= 24 * 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
     partia -= podsuma * 24 * 60 * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_day)+" ";
+    wynik += (String)podsuma + ""+String(t_day)+" ";
   }
   if (partia >= 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 60 * 1000);
     partia -= podsuma * 60 * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_hour)+" ";
+    wynik += (String)podsuma + ""+String(t_hour)+" ";
   }
   if (partia >= 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 1000);
     partia -= podsuma * 60 * 1000;
-    wynik += (String)podsuma + " "+String(t_min)+" ";
+    wynik += (String)podsuma + ""+String(t_min)+" ";
     //Serial.println(podsuma);
   }
   if (partia >= 1 * 1000 ) {
     unsigned long  podsuma = partia / 1000;
     partia -= podsuma * 1000;
-    wynik += (String)podsuma + " "+String(t_sek)+" ";
+    wynik += (String)podsuma + ""+String(t_sek)+" ";
     //Serial.println(podsuma);
   }
   //wynik += (String)partia + "/1000";  //pomijam to wartosci <1sek
@@ -296,18 +344,56 @@ String getJsonVal(String json, String tofind)
   json.trim();
   tofind.trim();
   #ifdef debugweb
-  WebSerial.println("json0: "+json);
+  sprintf(log_chars,"json0: %s",json.c_str());
+  log_message(log_chars);
+  #endif
+  if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
+  {
+    if (json.indexOf(tofind)>=0 )
+    {
+      //Found string and get value
+      u_int valu_start_position = json.indexOf(":", json.indexOf(tofind)) + 1;
+      u_int valu_end_position = json.indexOf(",", valu_start_position);
+
+      String nvalue=json.substring(valu_start_position, valu_end_position); //get node value
+      nvalue.trim();
+      #ifdef debugweb
+      sprintf(log_chars,"Found node: %s, return val: %s", String(tofind).c_str(), String(nvalue).c_str());
+      log_message(log_chars);
+      #endif
+      return nvalue;
+    }
+    sprintf(log_chars, "Json %s, No mqttident contain searched value of %s", json.c_str(), tofind.c_str());
+    log_message(log_chars);  //3150232: Json "mqtt reconnects":53, No mqttident contain searched value of room
+
+  } else
+  {
+    sprintf(log_chars, "Inproper Json format or null: %s, to find: %s", json.c_str(), tofind.c_str());
+    log_message(log_chars);
+  }
+  return "\0";
+}
+
+//***********************************************************************************************************************************************************************************************
+String getJsonVal_old(String json, String tofind)
+{ //function to get value from json payload
+  json.trim();
+  tofind.trim();
+  #ifdef debugweb
+  sprintf(log_chars,"json0: %s",json.c_str());
+  log_message(log_chars);
   #endif
   if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
   {
     json=json.substring(1,json.length()-1);                             //cut start and end brackets json
     if (json.indexOf("{",1) !=-1)
     {
-      json.replace("{","\"jsonskip\",");
+      json.replace("{","\"jsonskip\":\"0\",");      //was "{","\"jsonskip\",");
       json.replace("}","");
     }
     #ifdef debugweb
-    WebSerial.println("json1: "+json);
+    sprintf(log_chars,"json1: %s",json.c_str());
+    log_message(log_chars);
     #endif
     int tee=0; //for safety ;)
     #define maxtee 500
@@ -322,7 +408,8 @@ String getJsonVal(String json, String tofind)
       json=json.substring(pos+1);                      //cut input for extracted node:value
       if (part.indexOf(":",1)==-1) {
         #ifdef debugweb
-        WebSerial.println("Return no : data");
+          sprintf(log_chars,"Return no data");
+          log_message(log_chars);
         #endif
         break;
       }
@@ -331,24 +418,25 @@ String getJsonVal(String json, String tofind)
       String nvalue=part.substring(part.indexOf(":",1)+1); //get node value
       nvalue.trim();
       #ifdef debugweb
-      WebSerial.println("jsonx: "+json);
-      WebSerial.println("tee: "+String(tee)+" tofind: "+tofind+" part: "+part+" node: "+node +" nvalue: "+nvalue + " indexof , :"+String(json.indexOf(",",1)));
+      sprintf(log_chars,"jsonx: %s, tee: %s, tofind: %s, part: %s, node: %s, nvalue: %s, indexof ,: %s",String(json).c_str(), String(tee).c_str(), String(tofind).c_str(), String(part).c_str(), String(node).c_str(), String(nvalue).c_str(), String(json.indexOf(",",1)).c_str());
+      log_message(log_chars);
       #endif
-      if (tofind==node)
+      if (tofind.indexOf(node) >=0 )
       {
+         nvalue.replace("\"","");
+         nvalue.replace(",",".");   //to get valid decimal number
          #ifdef debugweb
-         WebSerial.println("Found node return val");
+         sprintf(log_chars,"Found node: %s, return val: %s", String(tofind).c_str(), String(nvalue).c_str());
+         log_message(log_chars);
          #endif
         return nvalue;
         break;
       }
       tee++;
-      #ifdef debugweb
-      delay(1000);
-      #endif
       if (tee>maxtee) {
         #ifdef debugweb
-         WebSerial.println("tee exit: "+String(tee));
+        sprintf(log_chars,"tee exit: %s", String(tee).c_str());
+        log_message(log_chars);
         #endif
         break;  //safety bufor
       }
@@ -420,7 +508,6 @@ bool PayloadStatus(String payloadStr, bool state)
 {
   payloadStr.toUpperCase();
   payloadStr.trim();
-  payloadStr.replace(",", ".");      //for localization correction
   if (state and (payloadStr == "ON" or payloadStr == "TRUE" or payloadStr == "START" or payloadStr == "1"  or payloadStr == "ENABLE" or payloadStr == "HEAT")) return true;
   else
   if (!state and (payloadStr == "OFF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) return true;
@@ -430,19 +517,21 @@ bool PayloadStatus(String payloadStr, bool state)
 //***********************************************************************************************************************************************************************************************
 bool PayloadtoValidFloatCheck(String payloadStr)
 {
-  if (PayloadtoValidFloat(payloadStr)==InitTemp) return false; else return true;
+  if (isValidNumber(payloadStr)) return true; else return false;
 }
 
 //***********************************************************************************************************************************************************************************************
 float PayloadtoValidFloat(String payloadStr, bool withtemps_minmax, float mintemp, float maxtemp)  //bool withtemps_minmax=false, float mintemp=InitTemp,float
 {
   payloadStr.trim();
-  payloadStr.replace(",", ".");
+  if (isValidNumber(payloadStr))  payloadStr.replace(",", ".");
   float valuefromStr = payloadStr.toFloat();
   if (isnan(valuefromStr) || !isValidNumber(payloadStr))
   {
+    #ifdef debug
     sprintf(log_chars, "Value is not a valid number, ignoring... payload: %s", payloadStr.c_str());
     log_message(log_chars);
+    #endif
     return InitTemp;
   } else
   {
@@ -452,11 +541,14 @@ float PayloadtoValidFloat(String payloadStr, bool withtemps_minmax, float mintem
       // log_message(log_chars);
       // return valuefromStr;
     } else {
-      if (valuefromStr>maxtemp and maxtemp!=InitTemp) valuefromStr = maxtemp;
-      if (valuefromStr<mintemp and mintemp!=InitTemp) valuefromStr = mintemp;
+      if (valuefromStr>maxtemp and !check_isValidTemp(maxtemp)) valuefromStr = maxtemp;
+      if (valuefromStr<mintemp and !check_isValidTemp(mintemp)) valuefromStr = mintemp;
+      #ifdef debug
       sprintf(log_chars, "Value is valid number: %s", String(valuefromStr,2).c_str());
       log_message(log_chars);
+      #endif
     }
+    if (!check_isValidTemp(valuefromStr)) valuefromStr = InitTemp;
     return valuefromStr;
     //if here is sprintf and return -i have dpouble reading because first i check is ok and second get value
   }
@@ -489,11 +581,11 @@ void doubleResetDetect() {
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   if (drd->detectDoubleReset())
   {
+    Serial.println(F("DRD"));
     #ifdef enableWebSocket
     SPIFFS.begin();
     SPIFFS.format();
     #endif
-    Serial.println(F("DRD"));
     CONFIGURATION.version[0] = 'R';
     CONFIGURATION.version[1] = 'E';
     CONFIGURATION.version[2] = 'S';
@@ -506,13 +598,16 @@ void doubleResetDetect() {
     #ifdef enableArduinoOTA
     Setup_WiFi();
     Setup_OTA();
+    Setup_DNS();
     #ifdef enableWebUpdate
     SetupWebUpdate();
     Setup_WebServer();
     webserver.begin();
     #endif
     while (true) {
-    ArduinoOTA.handle();
+      ArduinoOTA.handle();
+      //yield();
+      check_wifi();
     }
     #endif
     delay(4000);
@@ -525,6 +620,7 @@ void doubleResetDetect() {
 //***********************************************************************************************************************************************************************************************
 #ifdef enableArduinoOTA
 void Setup_OTA() {
+  log_message((char*)"Setup Arduino OTA...");
   // Port defaults to 8266
   ArduinoOTA.setPort(8266);
 
@@ -696,7 +792,8 @@ void Setup_MeshWiFi()
 #endif
 void Setup_WiFi()
 {
-  Serial.println(("Connecting to " + String(ssid)));
+  sprintf(log_chars,"SetupWiFi...Connecting to: %s", String(ssid).c_str());
+  log_message(log_chars);
   #ifndef ESP32
   WiFi.hostname(String(me_lokalizacja).c_str());      //works for esp8266
   #else
@@ -707,11 +804,14 @@ void Setup_WiFi()
   #endif
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(String(me_lokalizacja).c_str());
+
   WiFi.begin(ssid, pass);
   WiFi.enableSTA(true);
   WiFi.setAutoReconnect(true);
   WiFi.setAutoConnect(true);
   WiFi.persistent(true);
+  sprintf(log_chars,"SSID: %s  PASS: %s", String(ssid).c_str(), String(pass).c_str());
+  log_message(log_chars);
 
   int deadCounter = 20;
   while (WiFi.status() != WL_CONNECTED && deadCounter-- > 0)
@@ -722,16 +822,17 @@ void Setup_WiFi()
 
   if (WiFi.status() != WL_CONNECTED)
   {
-    Serial.println(("Failed to connect to " + String(ssid)));
-    while (true);
+    sprintf(log_chars,"Failed to connect to : %s", String(ssid).c_str());
+    log_message(log_chars);
+    while (true); //this restart
   }
   else
   {
-    Serial.println(F("ok"));
+    sprintf(log_chars,"OK ");
+    log_message(log_chars);
   }
-  Serial.println(WiFi.getHostname());
-  Serial.println(WiFi.localIP());
-
+  sprintf(log_chars,"Hostname: %s, LocalIP: %s", String(WiFi.getHostname()).c_str(), WiFi.localIP().toString().c_str());
+  log_message(log_chars);
 }
 void Setup_Influx()
 {
@@ -740,7 +841,7 @@ void Setup_Influx()
   InfluxClient.setConnectionParamsV1(INFLUXDB_URL, INFLUXDB_DB_NAME, INFLUXDB_USER, INFLUXDB_PASSWORD);
   // Alternatively, set insecure connection to skip server certificate validation
   InfluxClient.setInsecure();
-  InfluxClient.setHTTPOptions(HTTPOptions().httpReadTimeout(20000));
+  InfluxClient.setHTTPOptions(HTTPOptions().httpReadTimeout(3000));
   InfluxClient.setWriteOptions(WriteOptions().bufferSize(1024));
   InfluxClient.setWriteOptions(WriteOptions().retryInterval(5));
   InfluxClient.setWriteOptions(WriteOptions().maxRetryInterval(300));
@@ -764,6 +865,7 @@ void Setup_Influx()
 //***********************************************************************************************************************************************************************************************
 void Setup_DNS()
 {
+  log_message((char*)F("Setup DNS..."));
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(53, "*", WiFi.localIP());
   MDNS.begin(String(me_lokalizacja).c_str());     // start the multicast domain name server
@@ -789,7 +891,7 @@ void Setup_FileSystem()
 #ifdef enableWebSocket
 void notifyClients(String Message)
 {
-  WebSocket.textAll(Message);
+  if (WebSocket.availableForWriteAll() && WebSocket.enabled()) WebSocket.textAll(Message);
 }
 //***********************************************************************************************************************************************************************************************
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
@@ -877,27 +979,18 @@ String web_processor(const String var) {
   } else
   if (var == "stopkawebsite") {
     String ptr="\0";
+    const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
       #ifdef enableWebUpdate
       ptr += F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
       #endif
       #ifdef enableWebSerial
       ptr += F("&nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
       #endif
-      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FS")+F("</a>&nbsp;");
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FileSystem")+F("</a>&nbsp;");
       ptr += F("</p><br/>");
       ptr += F("MAC: <B>");
       ptr += PrintHex8(mac, ':', sizeof(mac) / sizeof(mac[0]));
-      ptr += F("</B>, Free mem: <B>");
-      ptr += String(getFreeMemory());
-      ptr += F("&percnt;</B> Heap: <B>");
-      ptr += formatBytes(ESP.getFreeHeap());
-      ptr += F("</B><br>Wifi: <B>");
-      ptr += String(getWifiQuality());
-      ptr += F("&percnt;");
-      #ifdef enableMQTT
-      ptr += F("</B>, Mqtt reconnects: <B>");
-      ptr += mqttReconnects;
-      #endif
+
       ptr += F("</B>, CRT: <B>");
       ptr += String(runNumber);
       ptr += F("</B><br>");
@@ -971,24 +1064,25 @@ bool webhandleFileRead(AsyncWebServerRequest *request, String path){
 //***********************************************************************************************************************************************************************************************
 String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk)  //default processorAsk = "\0"
 {
-  updateDatatoWWW(true);    //update data true to not send after update values
+//  updateDatatoWWW();    //update data true to not send after update values zbyt czesto sie uruchamia -przy kazdej zmiennej zapytania
   String toreturn = "{";
-  for (u_int i = 0; i < sizeof(AllSensorsStruct)/sizeof(AllSensorsStruct[0]); i++)  /////////////////////////////korekta
+  processorAsk.trim();
+  for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)  /////////////////////////////korekta
   {
-    if (AllSensorsStruct[i].placeholder.length()>0)
+    String placeholdername = get_PlaceholderName(i);
+    if (ASS[i].Value.length()>0)
     {
       if (i>0) toreturn += F(",");
       toreturn += F("\"");
-      toreturn += AllSensorsStruct[i].placeholder;
+      toreturn += placeholdername;
       toreturn += F("\":");
       toreturn += F("\"");
-      String tmpStr = AllSensorsStruct[i].Value;
+      String tmpStr = ASS[i].Value;
       tmpStr.replace("\"","'");
       toreturn += tmpStr;
       toreturn += F("\"");
-//      if (isValidNumber(AllSensorsStruct[i].Value)) toreturn += AllSensorsStruct[i].Value; else toreturn += "\""+AllSensorsStruct[i].Value+"\"";
     }
-    if (function == ValuesToWSWPforWebProcessor and AllSensorsStruct[i].placeholder == processorAsk) return String(AllSensorsStruct[i].Value);
+    if (function == ValuesToWSWPforWebProcessor && (placeholdername).indexOf(processorAsk) >= 0 ) return String(ASS[i].Value);
   }
   if (function == ValuesToWSWPinJSON) return (toreturn + "}");
   return "\0";
@@ -1005,19 +1099,23 @@ void handleWebSocketMessage_sensors(String message)
     valuetmp.trim();
     sprintf(log_chars,"Received placeholdertmp: %s, valuetmp: %s", placeholdertmp.c_str(), valuetmp.c_str());
     log_message(log_chars);
-    for (u_int i = 0; i < sizeof(AllSensorsStruct)/sizeof(AllSensorsStruct[0]); i++)
+    for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)
     {
-      if (AllSensorsStruct[i].placeholder.length()>0)
+      if (ASS[i].Value.length()>0)
       {
-        //Serial.println("Debug: "+AllSensorsStruct[i].placeholder+", val: "+AllSensorsStruct[i].Value);
-        if (placeholdertmp.indexOf(AllSensorsStruct[i].placeholder) >= 0) {
+        String placeholdername = get_PlaceholderName(i);
+        //Serial.println("Debug: "+ASS[i].placeholder+", val: "+ASS[i].Value);
+        if (placeholdertmp.indexOf(placeholdername) >= 0) {
           sprintf(log_chars,"Received Websocket %s", String(message).c_str());
           log_message(log_chars);
-          AllSensorsStruct[i].Value = valuetmp;
-          receivedwebsocketdata = true;
+          ASS[i].Value = valuetmp;
+//          receivedwebsocketdata = true;
           #if defined(enableMQTT) || defined(ENABLE_INFLUX)
           receivedmqttdata = true;
+
           #endif
+          updateDatatoWWW_received(i);
+          notifyClients("{\""+String(placeholdername)+"\":\""+ASS[i].Value+"\"}");
 //          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
         }
       }
@@ -1057,6 +1155,19 @@ void Setup_WebServer()
     }).setAuthentication("", "");
   }
 
+
+  webserver.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if (request->hasParam("RESTART"))
+      {
+        restart();
+      }else {
+          //message = "No message sent PARAM_roomtempset0";
+      }    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Update value");
+    response->addHeader("Refresh", "1");
+    response->addHeader("Location", "/");
+    request->send(response);
+  });
+
   // webserver.on("/edit.html",  HTTP_POST, [&](AsyncWebServerRequest *request) {  // If a POST request is sent to the /edit.html address,
   //         // the request handler is triggered after the upload has finished...
   //     // create the response, add header, and send response
@@ -1095,7 +1206,7 @@ void Setup_WebServer()
 
   webserver.begin();                             // start the HTTP server
 #ifdef enableWebSocket
-  notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+//  notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
 #endif
   log_message((char*)F("HTTP server started."));
 }
@@ -1172,12 +1283,14 @@ void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t
       response->addHeader("Refresh", "2");
       response->addHeader("Location", "/success.html");
       request->send(response);
+      if ( filename.indexOf("index.htm") >-1 ) restart();
     }
 }
 //***********************************************************************************************************************************************************************************************
 void MainCommonSetup()
 {
-  Serial.println(F("Starting... ..."));
+  Serial.begin(115200);
+  Serial.println(F("Starting... MainSetup..."));
   getFreeMemory();
   #ifdef doubleResDet
   // double reset detect from start
@@ -1214,16 +1327,16 @@ void MainCommonSetup()
   Setup_OTA();
   #endif
   Setup_DNS();
-  #ifdef enableWebSocket
 #ifdef enableWebSerial
   WebSerial.begin(&webserver);
   WebSerial.msgCallback(recvMsg);
 #endif
   starting = false;                   //we have webserial so we can enable it now
-
+  #ifdef enableWebSocket
   Setup_FileSystem();
   Setup_WebSocket();
   Setup_WebServer();    //new www based on spiff files
+  updateDatatoWWW();
   #else
   starthttpserver();    //old www
   #endif
@@ -1241,6 +1354,7 @@ void MainCommonLoop()
   #ifdef doubleResDet
   drd->loop();
   #endif
+  log_message((char*)F("Main Common Loop..."));
   #ifdef enableArduinoOTA
   // Handle OTA first.
   ArduinoOTA.handle();
@@ -1259,17 +1373,30 @@ void MainCommonLoop()
   // WebSocket.loop();                           // constantly check for websocket events
   // webserver.handleClient();                      // run the server
   // #endif
+  if (Serial.available() > 0)
+  {
+    u_int8_t *data;
+    String test = Serial.readString();
+    data = (u_int8_t *)test.c_str();
+    recvMsg(data, (size_t)(test.length()-1));
+    //free(data);
+  }
 
-  if ((unsigned long)(millis() - lastloopRunTime) > (LOOP_WAITTIME))
+  if ((millis() - lastloopRunTime) > LOOP_WAITTIME and WiFi.status() == WL_CONNECTED)
   {
     lastloopRunTime = millis();
+    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww"));
+    updateDatatoWWW();
+    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (updateDatatoWWW)"));
+    notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (notifyClients)"));
     // check mqtt
   #ifdef enableMQTT
     if ((WiFi.isConnected()) && (!mqttclient.connected()))
     {
-      log_message((char *)"Lost MQTT connection! Trying Reconnect");
+      log_message((char *)F("Lost MQTT connection! Trying Reconnect"));
       mqttclient.disconnect();
-      mqtt_reconnect();
+      mqttReconnect();
     }
   #endif
   #ifdef ENABLE_INFLUX
@@ -1300,10 +1427,15 @@ void MainCommonLoop()
     #endif
     log_message((char *)message.c_str());
 
-    String stats = F("{\"uptime\":");
+
+    String stats = F("{\"CRT\":");
+    stats += String(runNumber);
+    stats += F(",\"rssi\":");
+    stats += String(WiFi.RSSI());
+    stats += F(",\"uptime\":");
     stats += String(millis());
     stats += F(",\"version\":");
-    stats += me_version;
+    stats += String(version);
     stats += F(",\"voltage\":");
     stats += 0;
     stats += F(",\"free memory\":");
@@ -1313,18 +1445,20 @@ void MainCommonLoop()
     stats += F(",\"wifi\":");
     stats += String(getWifiQuality());
     #ifdef enableMQTT
-    stats += F(",\"mqtt_reconnects\":");
+    stats += F(",\"mqttReconnects\":");
     stats += mqttReconnects;
     #endif
     stats += F("}");
     #ifdef enableMQTT
-    mqttclient.publish(STATS_TOPIC.c_str(), stats.c_str(), mqtt_Retain);
+    mqttclient.publish(String(STATS_TOPIC).c_str(), stats.c_str(), mqtt_Retain);
+
 
     // get new data
     //  if (!heishamonSettings.listenonly) send_panasonic_query();
 
     // Make sure the LWT is set to Online, even if the broker have marked it dead.
-    mqttclient.publish(WILL_TOPIC.c_str(), "Online");
+    mqttclient.publish(String(WILL_TOPIC).c_str(), "Online");
+    //updateDatatoWWW();  //send after sync struct with vars
     #endif
     if (WiFi.isConnected())
     {
@@ -1354,37 +1488,48 @@ void Setup_Mqtt()
 {
   #ifdef enableMQTT
   mqttclient.setBufferSize(2048);
-  mqttclient.setSocketTimeout(10);
+  mqttclient.setSocketTimeout(3);
   mqttclient.setKeepAlive(5); // fast timeout, any slower will block the main loop too long
   mqttclient.setServer(mqtt_server, mqtt_port);
   mqttclient.setCallback(mqtt_callback);
-  mqtt_reconnect();
+  mqttReconnect();
   #endif
 }
 //***********************************************************************************************************************************************************************************************
-void mqtt_reconnect()
+void mqttReconnect()
 {
+  log_message((char*)("!!!!mqttReconnect"));
   #ifdef enableMQTT
   mqttReconnects ++;
+  mqttclient.disconnect();
   // Loop until we're reconnected
   while (!mqttclient.connected() and mqtt_offline_retrycount < mqtt_offline_retries)
   {
     //log_message((char*)F("Attempting MQTT connection..."));
-    const char *clientId = BASE_TOPIC.c_str();
+    const char *clientId = String(BASE_TOPIC).c_str();
+    yield();
+
     if (mqttclient.connect(clientId, mqtt_user, mqtt_password))
     {
       log_message((char*)F("Success MQTT reconnection..."));
       mqtt_offline_retrycount = 0;
-      mqtt_reconnect_subscribe_list();
+      mqttReconnect_subscribe_list();
     }
     else
     {
-      sprintf(log_chars,"MQTT reconnect failed, rc=%s, try again in 5 seconds", String(mqttclient.state()).c_str());
+      sprintf(log_chars,"MQTT reconnect failed, rc state=%s, try again in 0 seconds.", String(mqttclient.state()).c_str());
       log_message(log_chars);
       mqtt_offline_retrycount++;
       // Wait 5 seconds before retrying
-      delay(5000);
+      //delay(2000);
     }
+  }
+  if (mqtt_offline_retrycount == mqtt_offline_retries)
+  {
+    mqtt_offline_retrycount = 0;
+
+
+ //   WiFi.disconnect();
   }
   #endif
 }
@@ -1423,7 +1568,8 @@ String webgetContentType(String filename){
  */
 void check_wifi()
 {
-  if ((WiFi.status() != WL_CONNECTED) || (!WiFi.localIP()))  {
+  wdt_reset();
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {//|| (!WiFi.localIP()))  {
     /*
      *  if we are not connected to an AP
      *  we must be in softAP so respond to DNS
@@ -1433,31 +1579,43 @@ void check_wifi()
     /* we need to stop reconnecting to a configured wifi network if there is a hotspot user connected
      *  also, do not disconnect if wifi network scan is active
      */
-    if ((ssid[0] != '\0') && (WiFi.status() != WL_DISCONNECTED) && (WiFi.scanComplete() != -1) ){ // && (WiFi.softAPgetStationNum() > 0))  {
-      log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
-      WiFi.disconnect(true);
-    }
+    // if ((ssid[0] != '\0') && (WiFi.status() != WL_DISCONNECTED) && (WiFi.scanComplete() != -1) ){ // && (WiFi.softAPgetStationNum() > 0))  {
+    //   log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
+    //   WiFi.disconnect();
+    // }
 
     /*  only start this routine if timeout on
      *  reconnecting to AP and SSID is set
      */
+  //  WiFi.disconnect();
+    #ifdef enableMQTT
+ ///   mqttclient.disconnect();
+    #endif
+
     if ((ssid[0] != '\0') && ((unsigned long)(millis() - lastWifiRetryTimer) > WIFIRETRYTIMER ) )  {
       lastWifiRetryTimer = millis();
       if (WiFi.softAPSSID() == "") {
         log_message((char *)"WiFi lost, starting setup hotspot...");
-        WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255, 255, 255, 0));
-        WiFi.softAP(String(me_lokalizacja).c_str());
+//        WiFi.softAPConfig(IPAddress(192,168,4,1), IPAddress(192,168,4,1), IPAddress(255, 255, 255, 0));
+//        WiFi.softAP(String(me_lokalizacja).c_str());
       }
-      if ((WiFi.status() == WL_DISCONNECTED) ) {//} && (WiFi.softAPgetStationNum() == 0 )) {
-        log_message((char *)"Retrying configured WiFi, ...");
+
+      if ((WiFi.status() == WL_DISCONNECTED) || WiFi.status() == 0 ) {//} && (WiFi.softAPgetStationNum() == 0 )) {
+        sprintf(log_chars,"Retrying configured WiFi, ... SSID: %s, pss: %s", String(ssid).c_str(), String(pass).c_str());
+        log_message((log_chars));
         if (pass[0] == '\0') {
           WiFi.begin(ssid);
         } else {
           WiFi.begin(ssid, pass);
         }
+//        Setup_OTA();
+//        Setup_DNS();
+
+//        Setup_Mqtt();
+
       } else {
         log_message((char *)"Reconnecting to WiFi failed. Waiting a few seconds before trying again.");
-        WiFi.disconnect(true);
+        WiFi.disconnect();
       }
     }
   } else { //WiFi connected
@@ -1489,10 +1647,14 @@ void check_wifi()
        it only starts the routine above after this timeout
     */
     lastWifiRetryTimer = millis();
+    sprintf(log_chars,"Adres after reconnect IP: %s",WiFi.localIP().toString().c_str() );
+    log_message(log_chars);
 
     // Allow MDNS processing
 //    MDNS.update();
   }
+  //Serial.println("WiFi Status: "+String(WiFi.status()));
+
 }
 
 //***********************************************************************************************************************************************************************************************
@@ -1618,10 +1780,10 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 
   }
   tmp[length * (2 + lensep) + 0 - lensep] = 0;
-#ifdef debug
-  Serial.print(F("MAC Addr: "));
-  Serial.println(tmp);
-#endif
+// #ifdef debug
+//   Serial.print(F("MAC Addr: "));
+//   Serial.println(tmp);
+// #endif
   //     debugA("%s",tmp);
   return tmp;
 }

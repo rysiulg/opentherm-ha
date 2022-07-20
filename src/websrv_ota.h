@@ -150,7 +150,7 @@ void starthttpserver() {
     request->send(200, "text/plain; charset=utf-8", String(roomtemp,1));
   }).setAuthentication("", "");
   webserver.on("/" tempROOMThermometerSetS, HTTP_GET, [](AsyncWebServerRequest * request) {
-    request->send(200, "text/plain; charset=utf-8", String(sp,1));
+    request->send(200, "text/plain; charset=utf-8", String(roomtempSet,1));
   }).setAuthentication("", "");
   webserver.on("/" NEWS_lastTimeS, HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain; charset=utf-8", String(uptimedana(lastNEWSSet)));
@@ -224,14 +224,14 @@ void starthttpserver() {
       }
       if (request->hasParam(PARAM_MESSAGE_tempROOMset)) {
           message = request->getParam(PARAM_MESSAGE_tempROOMset)->value();
-        String ident = String(millis())+": WebReceived Room Target sp ";
+        String ident = String(millis())+": WebReceived Room Target roomtempSet ";
         if (PayloadtoValidFloatCheck(message))  //wrong value are displayed in function
             {
               #ifdef debug
               Serial.print(ident);
               #endif
               WebSerial.print(ident);
-              sp = PayloadtoValidFloat(message, true, roomtemplo, roomtemphi);
+              roomtempSet = PayloadtoValidFloat(message, true, roomtemplo, roomtemphi);
               receivedmqttdata = true;
             } else {
               #ifdef debug
@@ -349,7 +349,7 @@ String processor(const String var) {
   #endif
   if (var == "ver") {
     String a = F("ESP CO Server dla: ")+String(me_lokalizacja);
-    a += F("<br>v. ") + String(me_version);
+    a += F("<br>v. ") + String(version);
     a += F("<br><font size=\"2\" color=\"DarkGreen\">");
     a += mqttclient.connected()? "MQTT "+String(msg_Connected)+": "+String(mqtt_server)+":"+String(mqtt_port) : "MQTT "+String(msg_disConnected)+": "+String(mqtt_server)+":"+String(mqtt_port) ;  //1 conn, 0 not conn
     #ifdef ENABLE_INFLUX
@@ -464,7 +464,7 @@ String processor(const String var) {
     ptr+=F("<br></td><td>");
     ptr+=tempicon+F("<span class=\"dht-labels\">")+String(Room_Temp_Set)+F("</span>");
     ptr+=F("<br>");
-    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(tempROOMThermometerSetS)+F("\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" value=\"")+String(sp,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(tempROOMThermometerSetS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(tempROOMThermometerSetS)+F("\" type=\"range\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_tempROOMset)+F("\" value=\"")+String(sp,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(tempROOMThermometerSetS)+F("');\">");
+    ptr+=F("<font size=\"4\" color=\"red\"><input type=\"number\" id=\"T")+String(tempROOMThermometerSetS)+F("\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" value=\"")+String(roomtempSet,1)+F("\" style=\"width:auto\" onchange=\"uTI(this.value, '")+String(tempROOMThermometerSetS)+F("');\"><sup class=\"units\">&deg;C</sup></B><input id=\"")+String(tempROOMThermometerSetS)+F("\" type=\"range\" min=\"")+String(roomtemplo,1)+F("\" max=\"")+String(roomtemphi,1)+F("\" step=\"")+String(tempstep,1)+F("\" name=\"")+String(PARAM_MESSAGE_tempROOMset)+F("\" value=\"")+String(roomtempSet,1)+F("\" style=\"width:50px\" onchange=\"uTI(this.value, 'T")+String(tempROOMThermometerSetS)+F("');\">");
     ptr+=F("<input type=\"submit\" style=\"width:45px\"></font>");
     ptr+=F("</td></tr>");
 
@@ -539,7 +539,7 @@ String do_stopkawebsite() {
       if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>"+String(DiagMode)+"<br></B></span></font>";
       if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_PompActive_Disable_heat)+"<br></B><br></span></font>";
       if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>"+String(Second_Engine_Heating_Water_PompActive)+"<br></B><br></span></font>";
-      if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(millis()-flame_time)+"<br></B><br></span></font>";
+      if (flame_time>0) ptr+= "<font color=\"green\"><span class='dht-labels'>"+String(Flame_time)+"<B>"+uptimedana(flame_time)+"<br></B><br></span></font>";
       ptr += "<br>"+String(Flame_total)+"<B>"+String(flame_used_power_kwh,4)+"kWh</B>";
     return String(ptr);
 }
@@ -548,10 +548,10 @@ String do_stopkawebsite() {
 
 #include <EEPROM.h>
 
-#define CONFIG_VERSION "V01" sensitive_sizeS
+#define CONFIG_VERSION "V03" sensitive_sizeS
 
 // Where in EEPROM?
-#define CONFIG_START 32
+#define CONFIG_START sizeof(flame_used_power_kwh)*15
 
 
 configuration_type CONFTMP;
@@ -559,12 +559,49 @@ configuration_type CONFTMP;
 // load whats in EEPROM in to the local CONFIGURATION if it is a valid setting
 bool loadConfig() {
   // is it correct?
-  if (sizeof(CONFIGURATION)<1024) EEPROM.begin(1024); else EEPROM.begin(sizeof(CONFIGURATION)+128); //Size can be anywhere between 4 and 4096 bytes.
-  EEPROM.get(1,runNumber);
+  if (sizeof(CONFIGURATION)<1024) EEPROM.begin(CONFIG_START); else EEPROM.begin(sizeof(CONFIGURATION)+CONFIG_START); //Size can be anywhere between 4 and 4096 bytes.
+  int EpromPosition = 1;
+  EEPROM.get(EpromPosition,runNumber);
   if (isnan(runNumber)) runNumber=0;
   runNumber++;
-  EEPROM.get(1+sizeof(runNumber),flame_used_power_kwh);
+  EEPROM.put(EpromPosition, runNumber);
+  EpromPosition += sizeof(runNumber);
+  EEPROM.get(EpromPosition, flame_time_total);
+  EpromPosition += sizeof(flame_time_total);
+  EEPROM.get(EpromPosition, flame_used_power_kwh);
+  EpromPosition += sizeof(flame_used_power_kwh);
+  EEPROM.get(EpromPosition, flame_time_waterTotal);
+  EpromPosition += sizeof(flame_time_waterTotal);
+  EEPROM.get(EpromPosition, flame_used_power_waterTotal);
+  EpromPosition += sizeof(flame_used_power_waterTotal);
+  EEPROM.get(EpromPosition, flame_time_CHTotal);
+  EpromPosition += sizeof(flame_time_CHTotal);
+  EEPROM.get(EpromPosition, flame_used_power_CHTotal);
+  EpromPosition += sizeof(flame_used_power_CHTotal);
+  byte statusy = 0;
+  EEPROM.get(EpromPosition, statusy);
+  heatingEnabled = statusy & 2;
+  enableHotWater = statusy & 4;
+  automodeCO = statusy & 8;
+  ecoMode = statusy & 16;
+
+  EpromPosition += sizeof(statusy);
+  EEPROM.get(EpromPosition, tempBoilerSet);
+  EpromPosition += sizeof(tempBoilerSet);
+  EEPROM.get(EpromPosition, cutOffTemp);
+  EpromPosition += sizeof(cutOffTemp);
+  EEPROM.get(EpromPosition, dhwTarget);
+  EpromPosition += sizeof(dhwTarget);
+
+
+
   if (isnan(flame_used_power_kwh)) flame_used_power_kwh = 0;
+  if (isnan(flame_time_total)) flame_time_total = 0;
+  if (isnan(flame_time_waterTotal)) flame_time_waterTotal = 0;
+  if (isnan(flame_time_CHTotal)) flame_time_CHTotal = 0;
+  if (isnan(flame_used_power_waterTotal)) flame_used_power_waterTotal = 0;
+  if (isnan(flame_used_power_CHTotal)) flame_used_power_CHTotal = 0;
+
   if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
       EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
       EEPROM.read(CONFIG_START + 2) == CONFIG_VERSION[2] &&
@@ -575,26 +612,36 @@ bool loadConfig() {
     for (unsigned int i=0; i<sizeof(configuration_type); i++){
       *((char*)&CONFIGURATION + i) = EEPROM.read(CONFIG_START + i);
     }
-    heatingEnabled = CONFIGURATION.heatingEnabled;
-    enableHotWater = CONFIGURATION.enableHotWater;
-    automodeCO = CONFIGURATION.automodeCO;
-    tempBoilerSet = CONFIGURATION.tempBoilerSet;
-    sp = CONFIGURATION.sp;
-    cutOffTemp = CONFIGURATION.cutOffTemp;
-    op_override = CONFIGURATION.op_override;
-    dhwTarget = CONFIGURATION.dhwTarget;
-    roomtemp = CONFIGURATION.roomtemp;
-    temp_NEWS = CONFIGURATION.temp_NEWS;
-    strcpy(ssid, CONFIGURATION.ssid);
-    strcpy(pass, CONFIGURATION.pass);
-    strcpy(mqtt_server, CONFIGURATION.mqtt_server);
-    strcpy(mqtt_user, CONFIGURATION.mqtt_user);
-    strcpy(mqtt_password, CONFIGURATION.mqtt_password);
-    mqtt_port = CONFIGURATION.mqtt_port;
-    COPUMP_GET_TOPIC=String(CONFIGURATION.COPUMP_GET_TOPIC);
-    NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC);
-    NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC1);
-    NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC2);
+//    if (String(CONFIGURATION.heatingEnabled)!="") heatingEnabled = CONFIGURATION.heatingEnabled;
+//    if (String(CONFIGURATION.enableHotWater)!="") enableHotWater = CONFIGURATION.enableHotWater;
+//    if (String(CONFIGURATION.automodeCO)!="") automodeCO = CONFIGURATION.automodeCO;
+//    if (String(CONFIGURATION.tempBoilerSet)!="") tempBoilerSet = CONFIGURATION.tempBoilerSet;
+//    if (String(CONFIGURATION.roomtempSet)!="") roomtempSet = CONFIGURATION.roomtempSet;
+//    if (String(CONFIGURATION.cutOffTemp)!="") cutOffTemp = CONFIGURATION.cutOffTemp;
+//    if (String(CONFIGURATION.dhwTarget)!="") dhwTarget = CONFIGURATION.dhwTarget;
+//    if (String(CONFIGURATION.roomtemp)!="") roomtemp = CONFIGURATION.roomtemp;
+//    if (String(CONFIGURATION.temp_NEWS)!="") temp_NEWS = CONFIGURATION.temp_NEWS;
+//    if (String(CONFIGURATION.ssid)!="") strcpy(ssid, CONFIGURATION.ssid);
+//    if (String(CONFIGURATION.pass)!="") strcpy(pass, CONFIGURATION.pass);
+//    if (String(CONFIGURATION.mqtt_server)!="") strcpy(mqtt_server, CONFIGURATION.mqtt_server);
+//    if (String(CONFIGURATION.mqtt_user)!="") strcpy(mqtt_user, CONFIGURATION.mqtt_user);
+//    if (String(CONFIGURATION.mqtt_password)!="") strcpy(mqtt_password, CONFIGURATION.mqtt_password);
+//    if (String(CONFIGURATION.mqtt_port)!="") mqtt_port = CONFIGURATION.mqtt_port;
+//    if (String(CONFIGURATION.COPUMP_GET_TOPIC)!="") COPUMP_GET_TOPIC=String(CONFIGURATION.COPUMP_GET_TOPIC);
+//    if (String(CONFIGURATION.NEWS_GET_TOPIC)!="") NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC);
+//    if (String(CONFIGURATION.NEWS_GET_TOPIC)!="") NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC1);
+//    if (String(CONFIGURATION.NEWS_GET_TOPIC)!="") NEWS_GET_TOPIC=String(CONFIGURATION.NEWS_GET_TOPIC2);
+
+sprintf(log_chars,"NEWS_GET_TOPIC: %s",String(NEWS_GET_TOPIC).c_str());
+log_message(log_chars);
+sprintf(log_chars,"COPUMP_GET_TOPIC: %s",String(COPUMP_GET_TOPIC).c_str());
+log_message(log_chars);
+sprintf(log_chars,"mqtt_server: %s, mqtt_user: %s, mqtt_password: %s, mqtt_port: %s",String(mqtt_server).c_str(),String(mqtt_user).c_str(),String(mqtt_password).c_str(),String(mqtt_port).c_str());
+log_message(log_chars);
+sprintf(log_chars,"temp_NEWS: %s",String(temp_NEWS).c_str());
+log_message(log_chars);
+sprintf(log_chars,"roomtemp: %s",String(roomtemp).c_str());
+log_message(log_chars);
 
     return true; // return 1 if config loaded
   }
@@ -605,13 +652,61 @@ bool loadConfig() {
 
 // save the CONFIGURATION in to EEPROM
 void SaveConfig() {
-  log_message((char*)F("Saving config...........................prepare "),0);
-  double runtmp = 0;
-  EEPROM.get(1,runtmp);
-  if (runtmp != flame_used_power_kwh) {EEPROM.put(1+sizeof(runNumber), flame_used_power_kwh);}
+  log_message((char*)F("Saving config...........................prepare "));
+  double runtmp = 0, runtmp1 = 0, runtmp2 = 0;
+  Serial.println("next");
+  int EpromPosition = 1 + sizeof(runNumber);
+  EEPROM.get(EpromPosition,runtmp);
+  EpromPosition += sizeof(flame_time_total) + sizeof(flame_used_power_kwh);
+  EEPROM.get(EpromPosition,runtmp1);
+  EpromPosition += sizeof(flame_time_waterTotal) + sizeof(flame_used_power_waterTotal);
+  EEPROM.get(EpromPosition,runtmp2);
+  EpromPosition += sizeof(flame_time_CHTotal) + sizeof(flame_used_power_CHTotal);
+  byte statusy = 0, statusytmp = 0;
+  statusy += int(heatingEnabled)*2;
+  statusy += int(enableHotWater)*4;
+  statusy += int(automodeCO)*8;
+  statusy += int(automodeCO)*16;
+  EEPROM.get(EpromPosition, statusytmp);
+  float tempBoilerSettmp = 0, cutOffTemptmp = 0, dhwTargettmp = 0;
+  EpromPosition += sizeof(statusy);
+  EEPROM.get(EpromPosition, tempBoilerSettmp);
+  EpromPosition += sizeof(tempBoilerSettmp);
+  EEPROM.get(EpromPosition, cutOffTemptmp);
+  EpromPosition += sizeof(cutOffTemptmp);
+  EEPROM.get(EpromPosition, dhwTargettmp);
+
+  EpromPosition = 1 + sizeof(runNumber);
+  if (runtmp != flame_time_total || runtmp != flame_time_waterTotal || runtmp != flame_time_CHTotal || statusytmp != statusy || tempBoilerSettmp != tempBoilerSet || cutOffTemptmp != cutOffTemp || dhwTargettmp != dhwTarget) {
+    log_message((char*)F("Saving config...........................Something changed "));
+    EEPROM.put(EpromPosition, flame_time_total);
+    EpromPosition += sizeof(flame_time_total);
+    EEPROM.put(EpromPosition, flame_used_power_kwh);
+    EpromPosition += sizeof(flame_used_power_kwh);
+    EEPROM.put(EpromPosition, flame_time_waterTotal);
+    EpromPosition += sizeof(flame_time_waterTotal);
+    EEPROM.put(EpromPosition, flame_used_power_waterTotal);
+    EpromPosition += sizeof(flame_used_power_waterTotal);
+    EEPROM.put(EpromPosition, flame_time_CHTotal);
+    EpromPosition += sizeof(flame_time_CHTotal);
+    EEPROM.put(EpromPosition, flame_used_power_CHTotal);
+    EpromPosition += sizeof(flame_used_power_CHTotal);
+
+    Serial.print("Statusy: ");
+    Serial.println(statusy,HEX);
+
+    EEPROM.put(EpromPosition, statusy);
+    EpromPosition += sizeof(statusy);
+    EEPROM.put(EpromPosition, tempBoilerSet);
+    EpromPosition += sizeof(tempBoilerSet);
+    EEPROM.put(EpromPosition, cutOffTemp);
+    EpromPosition += sizeof(cutOffTemp);
+    EEPROM.put(EpromPosition, dhwTarget);
+    EpromPosition += sizeof(dhwTarget);
+
+  }
   unsigned int temp =0;
-  //firs read content of eeprom
-  EEPROM.get(1,temp);
+log_message((char*)F("Saving config...........................struct data "));
   //firs read content of eeprom
   EEPROM.get(1,temp);
   if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
@@ -627,49 +722,48 @@ void SaveConfig() {
   }
 //now compare and if changed than save
   if (temp != runNumber ||
-      CONFTMP.heatingEnabled != heatingEnabled ||
-      CONFTMP.enableHotWater != enableHotWater ||
-      CONFTMP.automodeCO != automodeCO ||
-      CONFTMP.tempBoilerSet != tempBoilerSet ||
-      CONFTMP.sp != sp ||
-      CONFTMP.cutOffTemp != cutOffTemp ||
-      CONFTMP.op_override != op_override ||
-      CONFTMP.dhwTarget != dhwTarget ||
-      CONFTMP.roomtemp != roomtemp ||
-      CONFTMP.temp_NEWS != temp_NEWS ||
+//      CONFTMP.heatingEnabled != heatingEnabled ||
+//      CONFTMP.enableHotWater != enableHotWater ||
+//      CONFTMP.automodeCO != automodeCO ||
+//      CONFTMP.tempBoilerSet != tempBoilerSet ||
+//      CONFTMP.roomtempSet != roomtempSet ||
+//      CONFTMP.cutOffTemp != cutOffTemp ||
+//      CONFTMP.dhwTarget != dhwTarget ||
+//      CONFTMP.roomtemp != roomtemp ||
+//      CONFTMP.temp_NEWS != temp_NEWS ||
       strcmp(CONFTMP.ssid,ssid) != 0 ||
       strcmp(CONFTMP.pass,pass) != 0 ||
       strcmp(CONFTMP.mqtt_server,mqtt_server) != 0 ||
       strcmp(CONFTMP.mqtt_user,mqtt_user) != 0 ||
       strcmp(CONFTMP.mqtt_password,mqtt_password) != 0 ||
       CONFTMP.mqtt_port != mqtt_port ||
-      strcmp(CONFTMP.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str()) != 0 ||
-      strcmp(CONFTMP.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str()) != 0 ||
-      strcmp(CONFTMP.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str()) != 0 ||
-      strcmp(CONFTMP.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str()) != 0 ) {
+      strcmp(CONFTMP.COPUMP_GET_TOPIC, String(COPUMP_GET_TOPIC).c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC, String(NEWS_GET_TOPIC).c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC1, String(NEWS_GET_TOPIC).c_str()) != 0 ||
+      strcmp(CONFTMP.NEWS_GET_TOPIC2, String(NEWS_GET_TOPIC).c_str()) != 0 ) {
         EEPROM.put(1, runNumber);
         log_message((char*)F("Saving config........................... to EEPROM some data changed"),0);
         strcpy(CONFIGURATION.version,CONFIG_VERSION);
-        CONFIGURATION.heatingEnabled = heatingEnabled;
-        CONFIGURATION.enableHotWater = enableHotWater;
-        CONFIGURATION.automodeCO = automodeCO;
-        CONFIGURATION.tempBoilerSet = tempBoilerSet;
-        CONFIGURATION.sp = sp;
-        CONFIGURATION.cutOffTemp = cutOffTemp;
-        CONFIGURATION.op_override = op_override;
-        CONFIGURATION.dhwTarget = dhwTarget;
+//        CONFIGURATION.heatingEnabled = heatingEnabled;
+//        CONFIGURATION.enableHotWater = enableHotWater;
+//        CONFIGURATION.automodeCO = automodeCO;
+//        CONFIGURATION.tempBoilerSet = tempBoilerSet;
+        CONFIGURATION.roomtempSet = roomtempSet;
+//        CONFIGURATION.cutOffTemp = cutOffTemp;
+//        CONFIGURATION.op_override = 0;
+//        CONFIGURATION.dhwTarget = dhwTarget;
         CONFIGURATION.roomtemp = roomtemp;
-        CONFIGURATION.temp_NEWS = temp_NEWS;
+//        CONFIGURATION.temp_NEWS = temp_NEWS;
         strcpy(CONFIGURATION.ssid,ssid);
         strcpy(CONFIGURATION.pass,pass);
         strcpy(CONFIGURATION.mqtt_server,mqtt_server);
         strcpy(CONFIGURATION.mqtt_user,mqtt_user);
         strcpy(CONFIGURATION.mqtt_password,mqtt_password);
         CONFIGURATION.mqtt_port = mqtt_port;
-        strcpy(CONFIGURATION.COPUMP_GET_TOPIC,COPUMP_GET_TOPIC.c_str());
-        strcpy(CONFIGURATION.NEWS_GET_TOPIC,NEWS_GET_TOPIC.c_str());
-        strcpy(CONFIGURATION.NEWS_GET_TOPIC1,NEWS_GET_TOPIC.c_str());
-        strcpy(CONFIGURATION.NEWS_GET_TOPIC2,NEWS_GET_TOPIC.c_str());
+        strcpy(CONFIGURATION.COPUMP_GET_TOPIC, String(COPUMP_GET_TOPIC).c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC, String(NEWS_GET_TOPIC).c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC1, String(NEWS_GET_TOPIC).c_str());
+        strcpy(CONFIGURATION.NEWS_GET_TOPIC2, String(NEWS_GET_TOPIC).c_str());
 
         for (unsigned int i=0; i<sizeof(configuration_type); i++)
             {EEPROM.write(CONFIG_START + i, *((char*)&CONFIGURATION + i));}

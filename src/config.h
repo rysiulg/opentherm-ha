@@ -16,7 +16,9 @@
 #define debug
 //#define debug1
 //#define debugweb
-#define me_lokalizacja "BOILER_GAZ"
+#define debugSerial   //send log_message to websocket
+#define loctmp "\0"//_TMP"
+#define me_lokalizacja "BOILER_GAZ" loctmp
 
 #define MFG "MARM.pl Sp. z o.o."
 
@@ -78,15 +80,7 @@
 // Set password to "" for open networks.
 #define sensitive_size 32
 #define sensitive_sizeS "32" //length of ssid,passwd and mqtt needed as string for version check -important 2 letters
-char ssid[sensitive_size] = SSID_Name;
-char pass[sensitive_size] = SSID_PAssword;
 
-// Your MQTT broker address and credentials
-char mqtt_server[sensitive_size*2] = MQTT_servername;
-char mqtt_user[sensitive_size] = MQTT_username;
-char mqtt_password[sensitive_size] = MQTT_Password_data;
-int mqtt_port = MQTT_port_No;
-const int mqtt_Retain = 1;
 
 // Master OpenTherm Shield pins configuration
 const int OT_IN_PIN = D1;  // for Arduino, 4 for ESP8266 (D2), 21 for ESP32
@@ -101,5 +95,5 @@ const int ROOM_TEMP_SENSOR_PIN = D0; // 0; //for Arduino, 14 for ESP8266 (D5), 1
    if no values on setter for more than 1 minute - thermostat falls back to built-in sensor
 */
 
-#define InitTemp 85             //temperatura inicjalna gdy brak odczuty
-float floor1_temp = InitTemp, floor2_temp = InitTemp, floor1_tempset = InitTemp, floor2_tempset = InitTemp;  //temps from floor1 nad floor2 temp is min of temps and tempset is max set value
+
+  //temps from floor1 nad floor2 temp is min of temps and tempset is max set value
