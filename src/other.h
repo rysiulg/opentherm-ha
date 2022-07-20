@@ -219,6 +219,8 @@ void updateDatatoWWW() //default false so if true than update
     ASS[ASS_statusFlameOn].Value = String(status_FlameOn ? "on" : "off");
     ASS[ASS_statusFault].Value = String(status_Fault ? "on" : "off");
     ASS[ASS_EnableHeatingCO].Value = String(heatingEnabled ? "on" : "off");
+    ASS[ASS_opcohi].Value = String(opcohi, decimalPlaces);
+
     ptr = "\0";
     if (status_FlameOn) {
       ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>" + String(Flame_Active_Flame_level) + "</span><B>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></B>";
@@ -269,6 +271,3 @@ void updateDatatoWWW() //default false so if true than update
 
 #endif
 }
-
-
-

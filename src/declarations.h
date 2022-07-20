@@ -22,8 +22,9 @@
 #define ASS_UsedMedia 19           //Statistical data of used media
 #define ASS_MemStats 20
 #define ASS_ecoMode 21          //tryb pracy kondensacyjny -eco -temp grzania CO max 40st
+#define ASS_opcohi 22
 
-#define ASS_Num (21 + 1)              //number of ASS definitions
+#define ASS_Num (22 + 1)              //number of ASS definitions
 #define numDecimalsWWW 1
 #define cutoff_histereza 0.7        //histereza cutoff and roomtemp/roomtempset
 #define dhwTargetStart 51           // domyslna temperatura docelowa wody uzytkowej
