@@ -10,8 +10,12 @@
 #define enableWebSocketlog  //send log to websocket
 #define enableWebSocket
 #define doubleResDet
+//#define enableMESHNETWORK
 #define wwwport 80
 
+#define websocketendpoint "/ws"
+#define SerialSpeed 115200
+#define OTA_Port 8266
 
 #include <ESPAsyncWebServer.h>
 #ifdef ESP32
@@ -67,8 +71,9 @@ AsyncWebServer webserver(wwwport);
 #include "LittleFS.h" // LittleFS is declared
 #define SPIFFS LittleFS       //4kB less after conversion but filesystem is higher allocation min 4kB fo LF and 256B for SPIFFS
 #ifdef enableWebSocket
-AsyncWebSocket WebSocket("/ws");
+AsyncWebSocket WebSocket(websocketendpoint);
 #endif
+
 #ifdef ENABLE_INFLUX
 InfluxDBClient InfluxClient(INFLUXDB_URL, INFLUXDB_DB_NAME);
 Point InfluxSensor(InfluxMeasurments);
@@ -182,7 +187,7 @@ const float ophi = 65,               // upper max heat water
 
             roomtemplo = 15;         // lower min to set of room temperature
 
-char log_chars[256];      //for logging buffer to log_message function
+char log_chars[1024];      //for logging buffer to log_message function
 int mqttReconnects = -1,
     temp_NEWS_count = 0,
     mqtt_offline_retrycount = 0,
@@ -204,7 +209,7 @@ const int mqtt_Retain = 1;
 //common_functions.h
 bool check_isValidTemp(float temptmp);
 void log_message(char* string, u_int specialforce);
-String uptimedana(unsigned long started_local, bool startFromZero);
+String uptimedana(unsigned long started_local, bool startFromZero, bool forlogall);
 String getJsonVal(String json, String tofind);
 bool isValidNumber(String str);
 String convertPayloadToStr(byte *payload, unsigned int length);
@@ -255,7 +260,9 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 void printProgress(size_t prg, size_t sz);
 #endif
 String PrintHex8(const uint8_t *data, char separator, uint8_t length);
-
+#ifdef enableMQTT
+void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass, String unitClass, String stateClass, String HAicon, const String payloadvalue_startend_val, const String payloadON, const String payloadOFF );
+#endif
 //***********************************************************************************************************************************************************************************************
 bool check_isValidTemp(float temptmp)
 {
@@ -270,8 +277,20 @@ bool check_isValidTemp(float temptmp)
 //***********************************************************************************************************************************************************************************************
 void log_message(char* string, u_int specialforce = 0)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
 {
+  // macros from DateTime.h
+/* Useful Constants */
+#define SECS_PER_MIN  (60UL)
+#define SECS_PER_HOUR (3600UL)
+#define SECS_PER_DAY  (SECS_PER_HOUR * 24L)
+
+/* Useful Macros for getting elapsed time */
+#define numberOfSeconds(_time_) (_time_ % SECS_PER_MIN)
+#define numberOfMinutes(_time_) ((_time_ / SECS_PER_MIN) % SECS_PER_MIN)
+#define numberOfHours(_time_) (( _time_% SECS_PER_DAY) / SECS_PER_HOUR)
+#define elapsedDays(_time_) ( _time_ / SECS_PER_DAY)
+
   #include "configmqtttopics.h"
-  String send_string = String(millis()) + F(": ") + String(string);
+  String send_string = String(uptimedana(millis(), true, true)) + F(": ") + String(string);
   //free(string);
   #ifdef debugSerial
     Serial.println(send_string);
@@ -283,6 +302,9 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
 //   if (webSocket.connectedClients() > 0) {
 //     webSocket.broadcastTXT(string, strlen(string));
 //   }
+  send_string.replace("\"","'");
+  send_string.replace("\\","");
+  send_string.trim();
   #ifdef enableMQTT
   if (sendlogtomqtt || specialforce == 2) {
     if (mqttclient.connected() && starting == false)
@@ -298,43 +320,89 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
   }
   #endif
   #ifdef enableWebSocketlog
-  send_string.replace("\"","\\\"");
-  send_string.replace("\\\\","\\");
-    notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
+  notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
   #endif
 
 }
 
 //***********************************************************************************************************************************************************************************************
-String uptimedana(unsigned long started_local = 0, bool startFromZero = false) {
+String uptimedana(unsigned long started_local = 0, bool startFromZero = false, bool forlogall = false) {
   String wynik = "\0";
   unsigned long  partia;
   if (startFromZero) partia = started_local; else partia = millis() - started_local;
-  if (partia<1000) return "< 1 "+String(t_sek)+" ";
+  if (partia<1000) {
+    if (!forlogall) {
+      return "< 1 "+String(t_sek)+" ";
+    } else {
+      if (partia<10) {
+        return "00d00h00m00s.00" + String(partia);
+      }
+      if (partia<100) {
+        return "00d00h00m00s.0" + String(partia);
+      } else {
+        return "00d00h00m00s." + String(partia);
+      }
+    }
+  }
+
   // #ifdef debug2
   //   Serial.print(F("Uptimedana: "));
   // #endif
   if (partia >= 24 * 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
     partia -= podsuma * 24 * 60 * 60 * 1000;
-    wynik += (String)podsuma + ""+String(t_day)+" ";
+    if (!forlogall) {
+      wynik += (String)podsuma + ""+String(t_day)+" ";
+    } else {
+      if (podsuma<10) { wynik += "0"; }
+      wynik += (String)podsuma + "d";
+    }
   }
   if (partia >= 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 60 * 1000);
     partia -= podsuma * 60 * 60 * 1000;
-    wynik += (String)podsuma + ""+String(t_hour)+" ";
+    if (!forlogall) {
+      wynik += (String)podsuma + ""+String(t_hour)+" ";
+    } else {
+      if (podsuma<10) { wynik += "0"; }
+      wynik += (String)podsuma + ":";
+    }
+  } else {
+    if (forlogall) wynik += "00:";
   }
   if (partia >= 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 1000);
     partia -= podsuma * 60 * 1000;
-    wynik += (String)podsuma + ""+String(t_min)+" ";
-    //Serial.println(podsuma);
+    if (!forlogall) {
+      wynik += (String)podsuma + ""+String(t_min)+" ";
+    } else {
+      if (podsuma<10) { wynik += "0"; }
+      wynik += (String)podsuma + ":";
+    }
+  } else {
+    if (forlogall) wynik += "00:";
   }
   if (partia >= 1 * 1000 ) {
     unsigned long  podsuma = partia / 1000;
     partia -= podsuma * 1000;
-    wynik += (String)podsuma + ""+String(t_sek)+" ";
-    //Serial.println(podsuma);
+    if (!forlogall) {
+      wynik += (String)podsuma + ""+String(t_sek)+" ";
+    } else {
+      if (podsuma<10) { wynik += "0"; }
+      wynik += (String)podsuma + "";
+    }
+  } else {
+    if (forlogall) wynik += "00";
+  }
+  if (forlogall) {
+    if (partia<10) {
+      wynik += ".00" + String(started_local % 1000);
+    } else
+    if (partia<100) {
+      wynik += ".0" + String(started_local % 1000);
+    } else {
+      wynik += "." + String(started_local % 1000);
+    }
   }
   //wynik += (String)partia + "/1000";  //pomijam to wartosci <1sek
   return wynik;
@@ -351,6 +419,12 @@ String getJsonVal(String json, String tofind)
   #endif
   if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
   {
+    json=json.substring(1,json.length()-1);                             //cut start and end brackets json
+    if (json.indexOf("{",1) !=-1)
+    {
+      json.replace("{","\"jsonskip\":\"0\",");      //was "{","\"jsonskip\",");
+      json.replace("}","");
+    }
     if (json.indexOf(tofind)>=0 )
     {
       //Found string and get value
@@ -509,10 +583,16 @@ int getFreeMemory() {
 bool PayloadStatus(String payloadStr, bool state)
 {
   payloadStr.toUpperCase();
+  payloadStr.replace("\"","");
   payloadStr.trim();
+  #ifdef debug
+  sprintf(log_chars,"PayloadStatus. PayloadStr: %s", payloadStr.c_str());
+  log_message(log_chars);
+  #endif
+
   if (state and (payloadStr == "ON" or payloadStr == "TRUE" or payloadStr == "START" or payloadStr == "1"  or payloadStr == "ENABLE" or payloadStr == "HEAT")) return true;
   else
-  if (!state and (payloadStr == "OFF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) return true;
+  if (!state and (payloadStr == "OFF" or payloadStr == "OF" or payloadStr == "FALSE" or payloadStr == "STOP" or payloadStr == "0" or payloadStr == "DISABLE")) return true;
   else return false;
 }
 
@@ -621,10 +701,13 @@ void doubleResetDetect() {
 
 //***********************************************************************************************************************************************************************************************
 #ifdef enableArduinoOTA
+#ifndef OTA_Port
+#define OTA_Port 8266
+#endif
 void Setup_OTA() {
   log_message((char*)"Setup Arduino OTA...");
   // Port defaults to 8266
-  ArduinoOTA.setPort(8266);
+  ArduinoOTA.setPort(OTA_Port);
 
   // Hostname defaults to esp8266-[ChipID]
   ArduinoOTA.setHostname(String(me_lokalizacja).c_str());
@@ -757,7 +840,7 @@ void MeshWiFi_receivedCallback( uint32_t from, String &msg ) {
 }
 void MeshWiFi_newConnectionCallback(uint32_t nodeId) {
   //the newConnectionCallback() runs whenever a new node joins the network. This function prints the chip ID of the new node.
-  sprintf(log_chars,"Mesh --> startHere: New Connection, nodeId = %u\n", nodeId);
+  sprintf(log_chars,"Mesh --> startHere: New Connection, nodeId = %u", nodeId);
   log_message(log_chars);
 }
 void MeshWiFi_changedConnectionCallback() {
@@ -767,7 +850,7 @@ void MeshWiFi_changedConnectionCallback() {
 }
 void MeshWiFi_nodeTimeAdjustedCallback(int32_t offset) {
   //The nodeTimeAdjustedCallback() runs when the network adjusts the time, so that all nodes are synchronized.
-  sprintf(log_chars,"Mesh Adjusted time: %u. Offset = %d\n", MeshWiFi.getNodeTime(), offset);
+  sprintf(log_chars,"Mesh Adjusted time: %u. Offset = %d", MeshWiFi.getNodeTime(), offset);
   log_message(log_chars);
 }
 
@@ -883,7 +966,7 @@ void Setup_FileSystem()
     while (dir.next()) {                      // List the file system contents
       String fileName = dir.fileName();
       size_t fileSize = dir.fileSize();
-      sprintf(log_chars, "\tFS File: %s, size: %s", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
+      sprintf(log_chars, "  FS File: %s, size: %s", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
       log_message(log_chars);
     }
     //
@@ -902,9 +985,21 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       data[len] = 0;
       String message = (char*)data;
       message.trim();
-      if (strcmp((char*)data, "toggle") == 0) {
+
+      String placeholdertmp = message.substring(0,message.indexOf(":",1));
+      String valuetmp = message.substring(message.indexOf(":",1)+1);
+      placeholdertmp.trim();
+      placeholdertmp.toLowerCase();
+      valuetmp.trim();
+      if (placeholdertmp.indexOf("remotecommand") >= 0) {
+        u_int8_t *datatmp;
+        datatmp = (u_int8_t *)valuetmp.c_str();
+        recvMsg(datatmp, (size_t)(valuetmp.length()));  //received command from web ;)
+      } else
+      if (strcmp((char*)data, "LED") == 0) {
+
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        notifyClients(digitalRead(LED_BUILTIN) ? "on" : "off");       //notify
+//        notifyClients(digitalRead(LED_BUILTIN) ? "on" : "off");       //notify
       } else
       {
         handleWebSocketMessage_sensors(message);
@@ -928,7 +1023,7 @@ void Event_WebSocket(AsyncWebSocket       *webserver,  //
   #ifdef enableWebSocket
   switch (type) {
     case WS_EVT_DISCONNECT:             // if the websocket is disconnected
-      sprintf(log_chars, "[%s] Disconnected!\n", String(client->id()).c_str());
+      sprintf(log_chars, "[%s] Disconnected!", String(client->id()).c_str());
       log_message(log_chars);
       break;
     case WS_EVT_CONNECT: {              // if a new websocket connection is established
@@ -964,7 +1059,7 @@ void Setup_WebSocket()
 String web_processor(const String var) {
   // sprintf(log_chars,"WebProcessor variable: %s",var.c_str());
   // log_message(log_chars);
-  if (var == "ME_TITLE") {return String(me_lokalizacja) + " v." + String(version);
+  if (var == "ME_TITLE") {return String(me_lokalizacja) + "  v." + String(version);
   } else
   if (var == "DIR_LIST") {
     String retval = "FS started. Contents:";
@@ -972,7 +1067,7 @@ String web_processor(const String var) {
     while (dir.next()) {                      // List the file system contents
       String fileName = dir.fileName();
       size_t fileSize = dir.fileSize();
-      retval += F("\n<br>\tFS File: ");
+      retval += F("<br> FS File: ");
       retval += String(fileName);
       retval += F(", size: ");
       retval += formatBytes((size_t)fileSize);
@@ -981,25 +1076,77 @@ String web_processor(const String var) {
   } else
   if (var == "stopkawebsite") {
     String ptr="\0";
-    const String  stopka = String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
-      #ifdef enableWebUpdate
-      ptr += F("<p><br><span class='units'><a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
-      #endif
-      #ifdef enableWebSerial
-      ptr += F("&nbsp; &nbsp;&nbsp; <a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
-      #endif
-      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FileSystem")+F("</a>&nbsp;");
-      ptr += F("</p><br/>");
       ptr += F("MAC: <B>");
       ptr += PrintHex8(mac, ':', sizeof(mac) / sizeof(mac[0]));
-
-      ptr += F("</B>, CRT: <B>");
-      ptr += String(runNumber);
       ptr += F("</B><br>");
-      ptr += F("<p style=\"color:darkblue;font-size:1.1rem;\">&copy; ");
-      ptr += stopka;
+      ptr += F("<p style=\"font-size:1.15rem;\">&copy; ");
+      ptr += String(MFG)+" "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
       ptr += F("</p>");
     return String(ptr);
+  } else
+  if (var == "linkiac") {
+    String ptr="\0";
+      ptr += "<p>";
+      #ifdef enableWebUpdate
+      ptr += F("<a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
+      #endif
+      #ifdef enableWebSerial
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
+      #endif
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FileSystem")+F("</a>");
+      ptr += F("</p>");
+      return ptr;
+  } else
+  if (var == "BuildOptions") {
+    String ptr="\0";
+      ptr += "<p><H2>BUILD OPTIONS:</H2>";
+      #ifdef enableWebSocket
+      ptr += F("WebSocket integration with endpoint: <IP_Addr>");
+      ptr += String(websocketendpoint) + "<br>";
+      #endif
+      #ifdef enableMESHNETWORK
+      ptr += F("PainlessMesh network integration. MeshName: ");
+      ptr += String(MESH_PREFIX) + "<br>";
+      #endif
+      #ifdef doubleResDet
+      ptr += F("ESP double Reset Detector integration<br>");
+      #endif
+      #ifdef ENABLE_INFLUX
+      ptr += F("InfluxDB integration to: ");
+      ptr += String(INFLUXDB_URL) + " DB: " + String(INFLUXDB_DB_NAME) + ", Measurments: " + String(InfluxMeasurments) + "<br>";
+      #endif
+      #ifdef enableMQTT
+      ptr += F("MQTT integration to: ");
+      ptr += String(MQTT_servername) + ":" + String(MQTT_port_No) + "<br>";
+      #endif
+      #ifdef enableWebUpdate
+      ptr += F("WebUpdate OTA<br>");
+      #endif
+      #ifdef enableArduinoOTA
+      ptr += F("ArduinoOTA on :");
+      ptr += String(OTA_Port);
+      #endif
+      #ifdef debug
+      ptr += F("Build with debug flag<br>");
+      #endif
+      #ifdef debugweb
+      ptr += F("Build with debugweb flag<br>");
+      #endif
+      #ifdef debug1
+      ptr += F("Build with debug1 flag<br>");
+      #endif
+      #ifdef debugSerial
+      ptr += F("Serial logging and simple commands is enabled after connecting Serial at ");
+      ptr += String(SerialSpeed) + "bps<br>";
+      #endif
+      #ifdef enableWebSocketlog
+      ptr += F("Send log to WebSocket as webSerial but native<br>");
+      #endif
+      #ifdef enableWebSerial
+      ptr += F("WebSerial included on <a href='/webserial'>/webserial</a><br>");
+      #endif
+      ptr += F("</p>");
+      return ptr;
   } else
   if (var == "opcolo") { return String(opcolo);
   } else
@@ -1101,27 +1248,28 @@ void handleWebSocketMessage_sensors(String message)
     valuetmp.trim();
     sprintf(log_chars,"Received placeholdertmp: %s, valuetmp: %s", placeholdertmp.c_str(), valuetmp.c_str());
     log_message(log_chars);
-    for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)
-    {
-      if (ASS[i].Value.length()>0)
+      for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)
       {
-        String placeholdername = get_PlaceholderName(i);
-        //Serial.println("Debug: "+ASS[i].placeholder+", val: "+ASS[i].Value);
-        if (placeholdertmp.indexOf(placeholdername) >= 0) {
-          sprintf(log_chars,"Received Websocket %s", String(message).c_str());
-          log_message(log_chars);
-          ASS[i].Value = valuetmp;
-//          receivedwebsocketdata = true;
-          #if defined(enableMQTT) || defined(ENABLE_INFLUX)
-          receivedmqttdata = true;
+        if (ASS[i].Value.length()>0)
+        {
+          String placeholdername = get_PlaceholderName(i);
+          //Serial.println("Debug: "+ASS[i].placeholder+", val: "+ASS[i].Value);
+          if (placeholdertmp.indexOf(placeholdername) >= 0) {
+            sprintf(log_chars,"Received Websocket %s", String(message).c_str());
+            log_message(log_chars);
+            ASS[i].Value = valuetmp;
+  //          receivedwebsocketdata = true;
+            #if defined(enableMQTT) || defined(ENABLE_INFLUX)
+            receivedmqttdata = true;
 
-          #endif
-          updateDatatoWWW_received(i);
-          notifyClients("{\""+String(placeholdername)+"\":\""+ASS[i].Value+"\"}");
-//          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+            #endif
+            updateDatatoWWW_received(i);
+            notifyClients("{\""+String(placeholdername)+"\":\""+ASS[i].Value+"\"}");
+  //          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+          }
         }
       }
-    }
+
   }
   #endif
 }
@@ -1214,17 +1362,17 @@ void Setup_WebServer()
 }
 //***********************************************************************************************************************************************************************************************
 void webhandleNotFound(AsyncWebServerRequest *request) {
-  String message = F("File Not Found\n\n");
+  String message = F("File Not Found...");
   message += F("URI: ");
   message += request->url();
-  message += F("\nMethod: ");
+  message += F("<br>Method: ");
   message += (request->method() == HTTP_GET) ? "GET" : "POST";
-  message += F("\nArguments: ");
+  message += F("<br>Arguments: ");
   message += request->args();
-  message += F("\n");
+  message += F("<br>");
 
   for (uint8_t i = 0; i < request->args(); i++) {
-    message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+    message += " " + request->argName(i) + ": " + request->arg(i) + "<br>";
   }
   request->send(404, "text/plain", message);
 }
@@ -1291,7 +1439,10 @@ void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t
 //***********************************************************************************************************************************************************************************************
 void MainCommonSetup()
 {
-  Serial.begin(115200);
+  #ifndef SerialSpeed
+  #define SerialSpeed 115200
+  #endif
+  Serial.begin(SerialSpeed);
   Serial.println(F("Starting... MainSetup..."));
   getFreeMemory();
   #ifdef doubleResDet
@@ -1380,18 +1531,24 @@ void MainCommonLoop()
     u_int8_t *data;
     String test = Serial.readString();
     data = (u_int8_t *)test.c_str();
-    recvMsg(data, (size_t)(test.length()-1));
+    recvMsg(data, (size_t)(test.length() ));
     //free(data);
   }
 
   if ((millis() - lastloopRunTime) > LOOP_WAITTIME and WiFi.status() == WL_CONNECTED)
   {
     lastloopRunTime = millis();
+    #ifdef debug
     log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww"));
+    #endif
     updateDatatoWWW();
+    #ifdef debug
     log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (updateDatatoWWW)"));
+    #endif
     notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+    #ifdef debug
     log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (notifyClients)"));
+    #endif
     // check mqtt
   #ifdef enableMQTT
     if ((WiFi.isConnected()) && (!mqttclient.connected()))
@@ -1470,7 +1627,7 @@ void MainCommonLoop()
 
   if (((millis() - lastUpdatemqtt) > mqttUpdateInterval_ms) or lastUpdatemqtt == 0 or receivedmqttdata == true) // recived data ronbi co 800ms -wylacze ten sttus dla odebrania news
   {
-    sprintf(log_chars, "mqtt+influxDB lastUpdatemqtt: %s receivedmqttdata: %s mqttUpdateInterval_ms: %s", String(lastUpdatemqtt).c_str(), String(receivedmqttdata).c_str(), String(mqttUpdateInterval_ms).c_str());
+    sprintf(log_chars, "Update MQTT and influxDB. lastUpdatemqtt: %s receivedmqttdata: %s mqttUpdateInterval_ms: %s", String(lastUpdatemqtt).c_str(), String(receivedmqttdata).c_str(), String(mqttUpdateInterval_ms).c_str());
     log_message(log_chars,0);
     receivedmqttdata = false;
     lastUpdatemqtt = millis();
@@ -1509,7 +1666,8 @@ void mqttReconnect()
   {
     //log_message((char*)F("Attempting MQTT connection..."));
     const char *clientId = String(BASE_TOPIC).c_str();
-    yield();
+    //yield();
+    wdt_reset();
 
     if (mqttclient.connect(clientId, mqtt_user, mqtt_password))
     {
@@ -1790,3 +1948,49 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
   return tmp;
 }
 //***********************************************************************************************************************************************************************************************
+#ifdef enableMQTT
+void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass = "\0", String unitClass = "\0", String stateClass = "\0", String HAicon = "\0", const String payloadvalue_startend_val = "", const String payloadON = "1", const String payloadOFF = "0")
+{
+  const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
+
+
+  String unitbuilder = "\0";
+  int DCswitch = 0;
+  #define tempswitch 1
+  #define energyswitch 2
+  DeviceClass.toLowerCase();
+  stateClass.toLowerCase();
+  HAicon.toLowerCase();
+  if (unitClass.length() == 0) unitClass = " ";
+  if (DeviceClass.length()>0)
+  {
+    unitbuilder += ",\"dev_cla\":\"" + DeviceClass + "\"";
+    if (DeviceClass.indexOf("temperature") >= 0) DCswitch = tempswitch;
+    if (DeviceClass.indexOf("energy") >= 0) DCswitch = energyswitch;
+    switch (DCswitch) {
+      case tempswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "°C";
+        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
+        if (stateClass.length()>0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
+        if (HAicon.length() == 0) HAicon = "mdi:thermometer";
+        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+      }
+      case energyswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "kWh";
+        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
+        if (stateClass.length() == 0) stateClass = "total_increasing";
+        unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
+        if (HAicon.length() == 0) HAicon = "mdi:fire";
+        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+      }
+      default: {
+        if (unitClass.length() > 0) unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
+        if (stateClass.length() > 0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
+        if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+      }
+    }
+
+  }
+  mqttclient.publish((discoverytopic + appendname + nameval + "/config").c_str(), ("{\"name\":\"" + appendname + nameval + "\",\"uniq_id\": \"" + appendname + nameval + "\",\"stat_t\":\"" + sensorswitchValTopic + "\",\"val_tpl\":\"{{value_json." + appendname + nameval + "}}\"" + unitbuilder + ",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
+}
+#endif

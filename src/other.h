@@ -10,18 +10,20 @@ void recvMsg(uint8_t *data, size_t len)
   }
   d.trim();
   d.toUpperCase();
+  #ifdef debug
   sprintf(log_chars, "DirectCommands recvMsg Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
   log_message(log_chars);
+  #endif
 
   if (d == "RESTART")
   {
     log_message((char*)F("OK. Restarting... by command..."));
     restart();
-  }
+  } else
   if (d == "RECONNECT")
   {
     mqttReconnect();
-  }
+  } else
   if (d == "ROOMTEMP+")
   {
     float startroomtemp = roomtemp;
@@ -32,7 +34,7 @@ void recvMsg(uint8_t *data, size_t len)
     lastTempSet = millis();
     sprintf(log_chars, "Change ROOMTEMP+ from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
     log_message(log_chars);
-  }
+  } else
   if (d == "ROOMTEMP-")
   {
     float startroomtemp = roomtemp;
@@ -43,20 +45,20 @@ void recvMsg(uint8_t *data, size_t len)
     tmanual = true;
     sprintf(log_chars, "Change ROOMTEMP- from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
     log_message(log_chars);
-  }
+  } else
   if (d == "ROOMTEMP0")
   {
     tmanual = !tmanual;
     lastTempSet = millis();
     sprintf(log_chars, "Toggle ROOMTEMP0 from: %s to: %s", String(!tmanual ? "MANUAL" : "AUTO").c_str(), String(tmanual ? "MANUAL" : "AUTO").c_str());
     log_message(log_chars);
-  }
+  } else
   if (d == "SAVE")
   {
     sprintf(log_chars, "Saving config to EEPROM memory by command...  CONFIG Size: %s", String(sizeof(CONFIGURATION)).c_str());
     log_message(log_chars, 0);
     SaveConfig();
-  }
+  } else
   if (d == "RESET_CONFIG")
   {
     sprintf(log_chars, "RESET config to DEFAULT VALUES and restart...  CONFIG Size: %s", String(sizeof(CONFIGURATION)).c_str());
@@ -69,10 +71,10 @@ void recvMsg(uint8_t *data, size_t len)
     CONFIGURATION.version[4] = 'T';
     SaveConfig();
     restart();
-  }
+  } else
   if (d == "RESET_FLAMETOTAL" or d == "RFT")
   {
-    log_message((char*)F("RESET flame Total var to 0..."), 0);
+    log_message((char*)F("RESET flame Total var to 0..."));
 
     flame_used_power_kwh = 0;
     flame_time_total = 0;
@@ -81,47 +83,83 @@ void recvMsg(uint8_t *data, size_t len)
     flame_used_power_CHTotal = 0;
     flame_time_CHTotal = 0;
     SaveConfig();
-  }
-
-  if (d == "HELP")
+  } else
+  if (d.indexOf("HELP")>=0)
   {
-    log_message((char*)F("KOMENDY:\n \
-      ROOMTEMP0        -Przelacza temperature z pokoju na automat,\n \
-      ROOMTEMP+        -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,\n \
-      ROOMTEMP-        -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,\n \
-      RESTART          -Uruchamia ponownie układ,\n \
-      RECONNECT        -Dokonuje ponownej próby połączenia z bazami,\n \
-      SAVE             -Wymusza zapis konfiguracji,\n \
-      RESET_CONFIG     -UWAGA!!!! Resetuje konfigurację do wartości domyślnych\n \
-      RESET_FLAMETOTAL -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"), 0);
-  }
+    String d1 = d;
+    d1.replace("HELP","");
+    d1.trim();
+    if (d1.length()==0) {
+      log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"));
+      log_message((char*)F("KOMENDY: RECONNECT, SAVE, RESET_CONFIG, RESTART, RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-"));
+      log_message((char*)F("Dodatkowa pomoc dot. komendy po wpisaniu jej wartości np. HELP SAVE"));
+      log_message((char*)F("------------------------------------------------------------------------------------------------"));
+    } else
+    {
+      if (d.indexOf(F("RECONNECT")) >=0) {
+        log_message((char*)F(" RECONNECT   -Dokonuje ponownej próby połączenia z bazami,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("SAVE") >=0) {
+        log_message((char*)F(" SAVE    -Wymusza zapis konfiguracji,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("RESET_CONFIG") >=0) {
+        log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("RESET_FLAMETOTAL") >=0) {
+        log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("ROOMTEMP0") >=0) {
+        log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("ROOMTEMP+") >=0) {
+        log_message((char*)F(" ROOMTEMP+  -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("ROOMTEMP-") >=0) {
+        log_message((char*)F(" ROOMTEMP-  -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      } else
+      if (d.indexOf("RESTART") >=0) {
+        log_message((char*)F(" RESTART  -Uruchamia ponownie układ,"));
+        log_message((char*)F("------------------------------------------------------------------------------------------------"));
+      }
+    }
+  } else
+  log_message((char*)F("Unknown command received from serial or webserial input."));
 #endif
 }
 String get_PlaceholderName(u_int i)
 {
   switch(i) {
-    case ASS_uptimedana: return "uptimedana"; break;
-    case ASS_temp_NEWS: return "temp_NEWS"; break;
-    case ASS_tempBoiler: return "tempBoiler"; break;
-    case ASS_tempBoilerSet: return "sliderValue1"; break;
-    case ASS_retTemp: return "retTemp"; break;
-    case ASS_tempCWU: return "tempCWU"; break;
-    case ASS_dhwTarget: return "sliderValue2"; break;
-    case ASS_cutOffTemp: return "sliderValue3"; break;
-    case ASS_roomtemp: return "roomtemp"; break;
-    case ASS_roomtempSet: return "sliderValue4"; break;  //Room Target sp
-    case ASS_lastNEWSSet: return "lastNEWSSet"; break;
-    case ASS_AutoMode: return "boilermodewww"; break;
-    case ASS_EnableHeatingCO: return "boilerwww"; break;
-    case ASS_statusWaterActive: return "statusWaterActive"; break;  //pump for water cwu active
-    case ASS_statusCHActive: return "statusCHActive"; break;
-    case ASS_statusFlameOn: return "statusFlameOn"; break;
-    case ASS_statusFault: return "statusFault"; break;
-    case ASS_EnableHotWater: return "boilerhwwww"; break;
-    case ASS_Statusy: return "Statusy"; break;
-    case ASS_UsedMedia: return "UsedMedia"; break;
-    case ASS_ecoMode: return "ecoMode"; break;
-    case ASS_MemStats: return "MemStats"; break;
+    case ASS_uptimedana: return PSTR("uptimedana"); break;
+    case ASS_temp_NEWS: return PSTR("temp_NEWS"); break;
+    case ASS_tempBoiler: return PSTR("tempBoiler"); break;
+    case ASS_tempBoilerSet: return PSTR("sliderValue1"); break;
+    case ASS_retTemp: return PSTR("retTemp"); break;
+    case ASS_tempCWU: return PSTR("tempCWU"); break;
+    case ASS_dhwTarget: return PSTR("sliderValue2"); break;
+    case ASS_cutOffTemp: return PSTR("sliderValue3"); break;
+    case ASS_roomtemp: return PSTR("roomtemp"); break;
+    case ASS_roomtempSet: return PSTR("sliderValue4"); break;  //Room Target sp
+    case ASS_lastNEWSSet: return PSTR("lastNEWSSet"); break;
+    case ASS_AutoMode: return PSTR("boilermodewww"); break;
+    case ASS_EnableHeatingCO: return PSTR("boilerwww"); break;
+    case ASS_statusWaterActive: return PSTR("statusWaterActive"); break;  //pump for water cwu active
+    case ASS_statusCHActive: return PSTR("statusCHActive"); break;
+    case ASS_statusFlameOn: return PSTR("statusFlameOn"); break;
+    case ASS_statusFault: return PSTR("statusFault"); break;
+    case ASS_EnableHotWater: return PSTR("boilerhwwww"); break;
+    case ASS_Statusy: return PSTR("Statusy"); break;
+    case ASS_UsedMedia: return PSTR("UsedMedia"); break;
+    case ASS_ecoMode: return PSTR("ecoMode"); break;
+    case ASS_MemStats: return PSTR("MemStats"); break;
+    case ASS_opcohi: return PSTR("opcohi"); break;
+
   }
   return "\0";
 }
@@ -174,7 +212,21 @@ void updateDatatoWWW_received(u_int i)
         //log_message(log_chars);
       }
       break;
-    case ASS_EnableHotWater:
+    case ASS_ecoMode:
+      if (PayloadStatus(ASS[ASS_ecoMode].Value, true)) {
+        ecoMode = true;
+        opcohi = ecohi;
+      } else if (PayloadStatus(ASS[ASS_ecoMode].Value, false)) {
+        ecoMode = false;
+        opcohi = opcohistatic;
+      } else
+      {
+        //sprintf(log_chars, "Unknown mode: %s", ASS[ASS_EnableHeatingCO].Value.c_str());
+        //log_message(log_chars);
+      }
+      if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
+      break;
+      case ASS_EnableHotWater:
       if (PayloadStatus(ASS[ASS_EnableHotWater].Value, true)) {
         enableHotWater = true;
       } else if (PayloadStatus(ASS[ASS_EnableHotWater].Value, false)) {
@@ -200,8 +252,9 @@ void updateDatatoWWW() //default false so if true than update
 
   //tempBoilerSet
     if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
+    if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
 
-    ASS[ASS_uptimedana].Value = String(uptimedana(0));
+    ASS[ASS_uptimedana].Value = String(uptimedana(0) + "    CRT: <B>" + String(runNumber));
     ASS[ASS_temp_NEWS].Value = String(temp_NEWS, decimalPlaces);
     ASS[ASS_tempBoiler].Value = String(tempBoiler, decimalPlaces);
     ASS[ASS_tempBoilerSet].Value = String(tempBoilerSet, decimalPlaces);
@@ -220,6 +273,7 @@ void updateDatatoWWW() //default false so if true than update
     ASS[ASS_statusFault].Value = String(status_Fault ? "on" : "off");
     ASS[ASS_EnableHeatingCO].Value = String(heatingEnabled ? "on" : "off");
     ASS[ASS_opcohi].Value = String(opcohi, decimalPlaces);
+    ASS[ASS_ecoMode].Value = String(ecoMode ? "on" : "off");
 
     ptr = "\0";
     if (status_FlameOn) {
@@ -243,12 +297,12 @@ void updateDatatoWWW() //default false so if true than update
     ASS[ASS_Statusy].Value = String(ptr);
 
     ptr = "\0";
-    ptr += String(Flame_total) + "<B>" + String(flame_used_power_kwh, 4) + "kWh</B>";
+    ptr += "<p>" + String(Flame_total) + "<B>" + String(flame_used_power_kwh, 4) + "kWh</B>";
     ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_total), true)+"</B>");
     ptr += "<br>w tym woda: <B>" + String(flame_used_power_waterTotal, 4) + "kWh</B>";
     ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_waterTotal), true)+"</B>");
     ptr += "<br>w tym CO: <B>" + String(flame_used_power_CHTotal, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_CHTotal), true)+"</B>");
+    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_CHTotal), true)+"</B></p>");
     sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
     ASS[ASS_UsedMedia].Value = String(ptr);
@@ -267,7 +321,7 @@ void updateDatatoWWW() //default false so if true than update
     ptr += mqttReconnects;
     #endif
     ASS[ASS_MemStats].Value = String(ptr);
-    ASS[ASS_ecoMode].Value = String(ecoMode ? "on" : "off");
+
 
 #endif
 }

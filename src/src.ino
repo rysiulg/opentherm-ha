@@ -58,6 +58,7 @@ void opentherm_update_data()
   receivedmqttdata = false;
   bool COHeat = false;
   if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
+  if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
 
 
   getTemp(); //default returns roomtemp (avg) and as global sp=roomtempset (avg), roomtemp is also global var
@@ -74,7 +75,7 @@ void opentherm_update_data()
       COHeat = false;
     //  } else
     if (automodeCO) {
-      if (roomtemp < (roomtempSet + 0.6)) COHeat = true; else COHeat = false;
+      if (roomtemp < (roomtempSet + 0.6) && COHeat) COHeat = true; else COHeat = false;
       //based on roomtemp<roomtemset
       op = 0;
       unsigned long now = millis();

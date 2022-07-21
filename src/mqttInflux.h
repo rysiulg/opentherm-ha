@@ -5,6 +5,8 @@ void updateInfluxDB()
 #ifdef ENABLE_INFLUX
   log_message((char*)F("Sending data to InfluxDB ..."));
   String boilermode = Boiler_Mode();
+  yield();
+  wdt_reset();
   InfluxSensor.clearFields();
   // Report RSSI of currently connected network
   InfluxSensor.addField("rssi_BCO", (WiFi.RSSI()));
@@ -31,23 +33,25 @@ void updateInfluxDB()
   InfluxSensor.addField(String(FLAME_LEVEL), flame_level);
   InfluxSensor.addField(String(FLAME_W), flame_used_power);
   InfluxSensor.addField(String(FLAME_W_TOTAL), flame_used_power_kwh);
-  InfluxSensor.addField(String(FLAME_TIME_SEC_TOTAL), flame_time_total);
+  InfluxSensor.addField(String(FLAME_TIME_SEC_TOTAL), (unsigned long)flame_time_total);
   InfluxSensor.addField(String(FLAME_W_DHW_TOTAL), flame_used_power_waterTotal);
-  InfluxSensor.addField(String(FLAME_TIME_SEC_DHW_TOTAL), flame_time_waterTotal);
+  InfluxSensor.addField(String(FLAME_TIME_SEC_DHW_TOTAL), (unsigned long)flame_time_waterTotal);
   InfluxSensor.addField(String(FLAME_W_CH_TOTAL), flame_used_power_CHTotal);
-  InfluxSensor.addField(String(FLAME_TIME_SEC_CH_TOTAL), flame_time_CHTotal);
+  InfluxSensor.addField(String(FLAME_TIME_SEC_CH_TOTAL), (unsigned long)flame_time_CHTotal);
 
 
-  InfluxSensor.addField(String(ECOMODE_STATE), ecoMode ? "1" : "0");
+  InfluxSensor.addField(String(ECOMODE_STATE), ecoMode ? 1 : 0);
 
   InfluxSensor.addField(String(TEMP_CUTOFF), cutOffTemp);
-  InfluxSensor.addField(String(DIAGS_OTHERS_FAULT), status_Fault ? "1" : "0");
-  InfluxSensor.addField(String(DIAGS_OTHERS_DIAG), status_Diagnostic ? "1" : "0");
+  InfluxSensor.addField(String(DIAGS_OTHERS_FAULT), status_Fault ? 1 : 0);
+  InfluxSensor.addField(String(DIAGS_OTHERS_DIAG), status_Diagnostic ? 1 : 0);
   InfluxSensor.addField(String(INTEGRAL_ERROR_GET_TOPIC), ierr);
   InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponseError);
 
   // Print what are we exactly writing
-  sprintf(log_chars, "Writing to InfluxDB:  %s", String(InfluxClient.getLastErrorMessage()).c_str());
+  String tmpstring = String(InfluxClient.getLastErrorMessage());
+  tmpstring.replace("\"","\\\"");
+  sprintf(log_chars, "Writing to InfluxDB:  %s", tmpstring.c_str());
   log_message(log_chars);
   //WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
   // Write point
@@ -61,52 +65,7 @@ void updateInfluxDB()
 
 
 
-void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass = "\0", String unitClass = "\0", String stateClass = "\0", String HAicon = "\0")
-{
-  const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
-  const String payloadvalue_startend_val = F(""); // value added before and after value send to mqtt queue
-  const String payloadON = F("1");
-  const String payloadOFF = F("0");
 
-  String unitbuilder = "\0";
-  int DCswitch = 0;
-  #define tempswitch 1
-  #define energyswitch 2
-  DeviceClass.toLowerCase();
-  stateClass.toLowerCase();
-  HAicon.toLowerCase();
-  if (unitClass.length() == 0) unitClass = " ";
-  if (DeviceClass.length()>0)
-  {
-    unitbuilder += ",\"dev_cla\":\"" + DeviceClass + "\"";
-    if (DeviceClass.indexOf("temperature") >= 0) DCswitch = tempswitch;
-    if (DeviceClass.indexOf("energy") >= 0) DCswitch = energyswitch;
-    switch (DCswitch) {
-      case tempswitch: {
-        if (unitClass.length() == 0 || unitClass == " ") unitClass = "°C";
-        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
-        if (stateClass.length()>0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
-        if (HAicon.length() == 0) HAicon = "mdi:thermometer";
-        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
-      }
-      case energyswitch: {
-        if (unitClass.length() == 0 || unitClass == " ") unitClass = "kWh";
-        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
-        if (stateClass.length() == 0) stateClass = "total_increasing";
-        unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
-        if (HAicon.length() == 0) HAicon = "mdi:fire";
-        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
-      }
-      default: {
-        if (unitClass.length() > 0) unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
-        if (stateClass.length() > 0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
-        if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
-      }
-    }
-
-  }
-  mqttclient.publish((discoverytopic + "_" + nameval + "/config").c_str(), ("{\"name\":\"" + appendname + nameval + "\",\"uniq_id\": \"" + appendname + nameval + "\",\"stat_t\":\"" + sensorswitchValTopic + "\",\"val_tpl\":\"{{value_json." + appendname + nameval + "}}\"" + unitbuilder + ",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-}
 
 
 // This function  sends data to MQTT .
@@ -189,7 +148,8 @@ void updateMQTTData()
                       ",\"" + String(OT) + String(INTEGRAL_ERROR_GET_TOPIC) + "\": " + payloadvalue_startend_val + String(ierr) + payloadvalue_startend_val +
                       "}").c_str(), mqtt_Retain); //"heat" : "off")
 
-
+  yield();
+  wdt_reset();
   publishhomeassistantconfig++; // zwiekszamy licznik wykonan wyslania mqtt by co publishhomeassistantconfigdivider wysłań wysłać autoconfig discovery dla homeassisatnt
   if (publishhomeassistantconfig % publishhomeassistantconfigdivider == 0)
   {
@@ -198,40 +158,41 @@ void updateMQTTData()
     #endif
     //mqttclient.setBufferSize(2048);
 
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(DIAG_HABS_TOPIC), "problem");
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(DIAG_HABS_TOPIC));
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(INTEGRAL_ERROR_GET_TOPIC), String(DIAG_HA_TOPIC));
-    HADiscovery(String(LOG_GET_TOPIC), String(OT), String(LOGS), String(DIAG_HA_TOPIC));
-    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE), String(ROOM_OTHERS_HA_TOPIC), "temperature");
-    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE_SETPOINT), String(ROOM_OTHERS_HA_TOPIC), "temperature");
-    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_PRESSURE), String(ROOM_OTHERS_HA_TOPIC), "pressure", "hPa");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE), String(HOT_WATER_HA_TOPIC), "temperature");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE_SETPOINT), String(HOT_WATER_HA_TOPIC), "temperature");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_CH_STATE), String(HOT_WATER_HABS_TOPIC), "heat");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_SOFTWARE_CH_STATE), String(HOT_WATER_HABS_TOPIC), "heat");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE), String(BOILER_HA_TOPIC), "temperature");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_RET), String(BOILER_HA_TOPIC), "temperature");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_SETPOINT), String(BOILER_HA_TOPIC), "temperature");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_CH_STATE), String(BOILER_HABS_TOPIC), "heat");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(ECOMODE_STATE), String(BOILER_HABS_TOPIC), "heat");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_SOFTWARE_CH_STATE_MODE), String(BOILER_HA_TOPIC));
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_STATE), String(BOILER_HABS_TOPIC), "heat", "\0", "\0", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_LEVEL), String(BOILER_HA_TOPIC), "power", "%", "\0", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W), String(BOILER_HA_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_TOTAL), String(BOILER_HA_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(BOILER_HA_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(BOILER_HA_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(BOILER_HA_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HOT_WATER_HA_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HOT_WATER_HA_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(TEMP_CUTOFF), String(BOILER_HA_TOPIC), "temperature");
+
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(HA_BINARY_TOPIC), "problem");
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(HA_BINARY_TOPIC));
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(INTEGRAL_ERROR_GET_TOPIC), String(HA_SENSORS_TOPIC));
+    HADiscovery(String(LOG_GET_TOPIC), String(OT), String(LOGS), String(HA_SENSORS_TOPIC));
+    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_PRESSURE), String(HA_SENSORS_TOPIC), "pressure", "hPa");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_SOFTWARE_CH_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_RET), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(ECOMODE_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_SOFTWARE_CH_STATE_MODE), String(HA_SENSORS_TOPIC));
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_STATE), String(HA_BINARY_TOPIC), "heat", "\0", "\0", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(TEMP_CUTOFF), String(HA_SENSORS_TOPIC), "temperature");
     // homeassistant/sensor/BB050B_OPENTHERM_OT10_lo/config = {"name":"Opentherm OPENTHERM OT10 lo","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_lo","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['lo']}}"} (retained) problem
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
-//    HADiscovery(String(DIAG_HABS_TOPIC), String(DIAGS_OTHERS_FAULT), String(OT), String(DIAG_TOPIC), "problem");
-//    mqttclient.publish((String(DIAG_HABS_TOPIC) + "_" + String(DIAGS_OTHERS_FAULT) + "/config").c_str(), ("{\"name\":\"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"uniq_id\": \"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"stat_t\":\"" + String(DIAG_TOPIC) + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + String(OT) + String(DIAGS_OTHERS_FAULT) + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
+//    HADiscovery(String(HA_BINARY_TOPIC), String(DIAGS_OTHERS_FAULT), String(OT), String(DIAG_TOPIC), "problem");
+//    mqttclient.publish((String(HA_BINARY_TOPIC) + "_" + String(DIAGS_OTHERS_FAULT) + "/config").c_str(), ("{\"name\":\"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"uniq_id\": \"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"stat_t\":\"" + String(DIAG_TOPIC) + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + String(OT) + String(DIAGS_OTHERS_FAULT) + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
 
 
-    mqttclient.publish((String(HOT_WATER_HACLI_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Hot Water\",\"uniq_id\": \"" + String(OT) + "Hot_Water\", \
+    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Hot Water\",\"uniq_id\": \"" + String(OT) + "Hot_Water\", \
 \"modes\":[\"off\",\"heat\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + String(HOT_WATER_TOPIC) + "\", \
@@ -250,7 +211,7 @@ void updateMQTTData()
 \"min_temp\": " + oplo + ", \
 \"max_temp\": " + ophi + ", \
 \"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(BOILER_HACLI_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler CO\",\"uniq_id\": \"" + String(OT) + "Boiler_CO\", \
+    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler CO\",\"uniq_id\": \"" + String(OT) + "Boiler_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + String(BOILER_TOPIC) + "\", \
@@ -269,7 +230,7 @@ void updateMQTTData()
 \"min_temp\": " + opcolo + ", \
 \"max_temp\": " + opcohi + ", \
 \"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(ROOM_OTHERS_HACLI_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + String(OT) + "Boiler_RoomTemp_Control_CO\", \
+    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + String(OT) + "Boiler_RoomTemp_Control_CO\", \
 \"modes\":[\"off\",\"heat\",\"auto\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
@@ -288,7 +249,7 @@ void updateMQTTData()
 \"min_temp\": " + roomtemplo + ", \
 \"max_temp\": " + roomtemphi + ", \
 \"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(ROOM_OTHERS_HACLI_TOPIC) + "cutoff_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "CutoffTemp\",\"uniq_id\": \"" + String(OT) + "CutoffTemp\", \
+    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "cutoff_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "CutoffTemp\",\"uniq_id\": \"" + String(OT) + "CutoffTemp\", \
 \"modes\":\"\", \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + String(NEWS_GET_TOPIC) + "\", \
@@ -524,8 +485,8 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
       receivedmqttdata = true;
       if (PayloadStatus(getJsonVal(payloadStr, String(COPumpStatus_json)), true)) {
         CO_PumpWorking = true;
-      }
-      else if (PayloadStatus(getJsonVal(payloadStr, String(COPumpStatus_json)), false)) {
+      } else
+      if (PayloadStatus(getJsonVal(payloadStr, String(COPumpStatus_json)), false)) {
         CO_PumpWorking = false;
       }
       else

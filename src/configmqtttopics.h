@@ -19,7 +19,7 @@ String STATS_TOPIC = String(BASE_TOPIC) + "/stats";
 // const String BOILER_MOD = BOILER+"-mode";   //tryb pracy
 #define BOILER_TEMPERATURE_RET String(BOILER) + String(TEMPERATURE) + "_return"
 #define BOILER_TEMPERATURE_SETPOINT String(BOILER) + String(TEMPERATURE) + "_setpoint"
-#define BOILER_CH_STATE BOILER "_ch_state"
+#define BOILER_CH_STATE String(BOILER) + "_ch_state"
 #define BOILER_SOFTWARE_CH_STATE_MODE String(BOILER) + "_software_ch_state_and_mode"
 #define FLAME_STATE "flame_state"
 #define FLAME_LEVEL "flame_level"
@@ -75,8 +75,6 @@ String roomF2tempset_json = ("FL2_room_temperature_setpoint_0");
 // logs topic
 #define DIAGS "diag"
 #define DIAG_TOPIC String(BASE_TOPIC) + "/" + String(DIAGS) + "/attributes"
-#define DIAG_HA_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/"
-#define DIAG_HABS_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/"
 
 #define LOGS "log"
 #define LOG_GET_TOPIC String(BASE_TOPIC) + "/" + String(DIAGS) + "/" + String(LOGS)
@@ -85,18 +83,9 @@ String roomF2tempset_json = ("FL2_room_temperature_setpoint_0");
 #define DIAGS_OTHERS_DIAG String(DIAGS) + "_" + "diagnostic"
 
 //Homeassistant Autodiscovery topics
-#define BOILER_HA_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/" + String(BOILER)             //+"/state"
-#define BOILER_HABS_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/" + String(BOILER)     //+"/state"
-#define BOILER_HACLI_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/" + String(BOILER) //+"/state"
-
-#define HOT_WATER_HA_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/"                 //+"/state
-#define HOT_WATER_HABS_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/" + String(HOT_WATER)        //+"/state"
-#define HOT_WATER_HACLI_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/" + String(HOT_WATER) //+"/state"
-
-#define ROOM_OTHERS_HA_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/" + String(ROOM_OTHERS)     //+"/state"
-#define ROOM_OTHERS_HACLI_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/" + String(ROOM_OTHERS) //+"/state"
-
-
+#define HA_SENSORS_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/"
+#define HA_BINARY_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/"
+#define HA_CLIMATE_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/"
 
 // setpoint topic
 #define SETPOINT_OVERRIDE  "setpoint-override"

@@ -17,143 +17,207 @@
     <div class="topnav">
         <h1>%ME_TITLE%</h1>
     </div>
+    <button class="tablink" onclick="openPage('Home', this, 'red')" id="defaultOpen">Home</button>
+    <button class="tablink" onclick="openPage('WebSerial', this, 'green')">WebSerial</button>
+    <button class="tablink" onclick="openPage('FSEditor', this, 'blue')">FS Editor</button>
+    <button class="tablink" onclick="openPage('Config', this, 'orange')">Configuration</button>
+
     <h2>Uptime: <span id="uptimedana">%uptimedana%</span></h2>
 
-        <div class="card-grid">
+    <div id="Home" class="tabcontent">
+
+
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="tooltip">
+                        <span class="tooltiptext">Temperatura na zewnątrz</span>
+                        <p class="card-title">NEWS Temp</p>
+                            <i class="fas fa-thermometer-half"></i>
+                            <div class="temperatureVal" id="temp_NEWS">%temp_NEWS%</div>
+                            <sup class="unitsmain">&deg;C</sup>
+                        <p></p>
+                    </div>
+                        <div class="tooltip">
+                            <span class="tooltiptext">Czas ostatniej aktualizacji temperatury Średniej na zewnątrz</span>
+                        <div class="units_update" style="margin-top: 20px;">Aktualizacja: </div>
+                        <div class="units_update" id="lastNEWSSet">%lastNEWSSet%</div>
+                        <div class="units_update"> temu</div>
+                        </div>
+                </div>
+
+
+                <div class="card" id="status_Error">
+                    <p class="card-title" id="status_Flame">Statusy</p>
+                    <p class="Statusy" id="Statusy">%Statusy%</p>
+                </div>
+
+
+                <div class="card">
+                    <p class="card-title"  id="switchCard">Tryb Pracy</p>
+
+                    <div class="twoCard">
+                        <div class="cardPart cardPart1">Ogrzewanie CO
+                        <div class="tooltip">
+                            <span class="tooltiptext">Stan ogrzewania Centralnego oraz trb pracy ręczny-oparty na temp. cutoff i automatyczny oparty na odczytach z pomieszczen "Średnia temp w pomieszczeniach"</span>
+                            <input type="checkbox" class="boilerwww" id="boilerwww" Name="boilerwww" value="%boilerwww%" onchange="updateSliderPWM(this)"/>
+                            <label for="boilerwww">OK</label>
+                            <hr>
+                            <span class="BOILMODMODE">
+                                Tryb ręczny/AUTO
+                                <input type="checkbox" class="boilermodewww" id="boilermodewww" Name="boilermodewww"  value="%boilermodewww%" onchange="updateSliderPWM(this)"/>
+                                <label for="boilermodewww">AUTO</label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="cardPart cardPart2">Podgrzewanie Wody
+                        <div class="tooltip">
+                            <span class="tooltiptext">Stan pracy podgrzewania Ciepłej Wodu CWU oraz tryb Eco -oznacza tryb pracy kondensacyjny/niskotemperaturowy ogrzewania -ogranicza temp CO do max 40st.</span>
+                            <input type="checkbox" class="boilerhwwww" id="boilerhwwww" Name="boilerhwwww" value="%boilerhwwww%" onchange="updateSliderPWM(this)"/>
+                            <label for="boilerhwwww">OK</label>
+                            <hr>
+                            <span class="ECOMODMODE">
+                                Tryb ECO (kondensacyjny)
+                                <input type="checkbox" class="ecoMode" id="ecoMode" Name="ecoMode"  value="%ecoMode%" onchange="updateSliderPWM(this)"/>
+                                <label for="ecoMode">ECO</label>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="card" id="HotWater_card">
+                <p class="card-title" id="HotWater_title">Ciepła Woda CWU</p>
+                <i class="fas fa-thermometer-half"></i>
+                <div class="temperatureVal" id="tempCWU">%tempCWU%</div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <span class="rangevalue">%sliderValue2%</span>
+                    <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%">
+                </div>
+                <hr><p class="state">Docelowa: <span id="sliderValue2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
+            </div>
+
+
+            <div class="card" id="BoilerCO_card">
+                <p class="card-title" id="BoilerCO_title">Temperatura Grzania CO</p>
+                <i class="fas fa-thermometer-half"></i>
+                <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <span class="rangevalue" id="RangeV1">%sliderValue1%</span>
+                    <input type="range" class="range" id="slider1" onchange="updateSliderPWM(this)" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%>
+                </div>
+                <hr><p class="state">Docelowa: <span id="sliderValue1">%sliderValue1%</span> <sup class="units">&deg;C</sup></p>
+            </div>
+
+
             <div class="card">
                 <div class="tooltip">
-                    <span class="tooltiptext">Temperatura na zewnątrz</span>
-                    <p class="card-title">NEWS Temp</p>
-                        <i class="fas fa-thermometer-half"></i>
-                        <div class="temperatureVal" id="temp_NEWS">%temp_NEWS%</div>
-                        <sup class="unitsmain">&deg;C</sup>
-                    <p></p>
+                    <span class="tooltiptext">Średnia Temperatura Pomieszczeń oraz Maksymalna Docelowa Ustawiona temperatura w Pomieszczeniach -ustawienie poglądowe</span>
+                <p class="card-title">Średnia z Pomieszczeń</p>
+                <i class="fas fa-thermometer-half"></i>
+                <div class="temperatureVal" id="roomtemp">%roomtemp%</div>
+                <sup class="unitsmain">&deg;C</sup>
+                <div class="rangewrap">
+                    <div class="rangevalue">%sliderValue4%</div>
+                    <input type="range" class="range" id="slider4" onchange="updateSliderPWM(this)" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4% disabled>
                 </div>
-                    <div class="tooltip">
-                        <span class="tooltiptext">Czas ostatniej aktualizacji temperatury Średniej na zewnątrz</span>
-                    <div class="units_update" style="margin-top: 20px;">Aktualizacja: </div>
-                    <div class="units_update" id="lastNEWSSet">%lastNEWSSet%</div>
-                    <div class="units_update"> temu</div>
-                    </div>
+                <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
+                </div>
             </div>
 
-
-            <div class="card" id="status_Error">
-                <p class="card-title" id="status_Flame">Statusy</p>
-                <p class="Statusy" id="Statusy">%Statusy%</p>
-            </div>
 
 
             <div class="card">
-                <p class="card-title">Tryb Pracy</p>
-
-                <div class="twoCard">
-                    <div class="cardPart cardPart1">Ogrzewanie CO
-                    <div class="tooltip">
-                        <span class="tooltiptext">Stan ogrzewania Centralnego oraz trb pracy ręczny-oparty na temp. cutoff i automatyczny oparty na odczytach z pomieszczen "Średnia temp w pomieszczeniach"</span>
-                        <input type="checkbox" class="boilerwww" id="boilerwww" Name="boilerwww" value="%boilerwww%" onchange="updateSliderPWM(this)" />
-                        <label for="boilerwww">OK</label>
-                        <hr>
-                        <span class="BOILMODMODE">
-                            Tryb ręczny/AUTO
-                            <input type="checkbox" class="boilermodewww" id="boilermodewww" Name="boilermodewww"  value="%boilermodewww%" onchange="updateSliderPWM(this)"/>
-                            <label for="boilermodewww">AUTO</label>
-                        </span>
+                <div class="tooltip">
+                    <span class="tooltiptext">Próg Aktywacji grzania powyżej której nastąpi uruchomienia pieca do ogrzeania CO. Poniżej tej Wartości grzanie CO się nie włączy.</span>
+                    <p class="card-title" onchange="setOneNumberDecimal">Temperatura odłączenia cutoff</p>
+                    <div class="rangewrap">
+                        <span class="rangevalue">%sliderValue3%</span>
+                        <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%>
                     </div>
-                </div>
-
-                <div class="cardPart cardPart2">Podgrzewanie Wody
-                    <div class="tooltip">
-                        <span class="tooltiptext">Stan pracy podgrzewania Ciepłej Wodu CWU</span>
-                        <input type="checkbox" class="boilerhwwww" id="boilerhwwww" Name="boilerhwwww" value="%boilerhwwww%" onchange="updateSliderPWM(this)"/>
-                        <label for="boilerhwwww">OK</label>
-                        <hr>
-                        <span class="ECOMODMODE">
-                            Tryb ECO (kondensacyjny)
-                            <input type="checkbox" class="ecoMode" id="ecoMode" Name="ecoMode"  value="%ecoMode%" onchange="updateSliderPWM(this)"/>
-                            <label for="ecoMode">ECO</label>
-                        </span>
-                    </div>
+                    <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
                 </div>
             </div>
-        </div>
 
-
-
-        <div class="card" id="HotWater_card">
-            <p class="card-title" id="HotWater_title">Ciepła Woda CWU</p>
-            <i class="fas fa-thermometer-half"></i>
-            <div class="temperatureVal" id="tempCWU">%tempCWU%</div>
-            <sup class="unitsmain">&deg;C</sup>
-            <div class="rangewrap">
-                <span class="rangevalue">%sliderValue2%</span>
-                <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%">
-            </div>
-            <hr><p class="state">Docelowa: <span id="sliderValue2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
-        </div>
-
-
-        <div class="card" id="BoilerCO_card">
-            <p class="card-title" id="BoilerCO_title">Temperatura Grzania CO</p>
-            <i class="fas fa-thermometer-half"></i>
-            <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
-            <sup class="unitsmain">&deg;C</sup>
-            <div class="rangewrap">
-                <span class="rangevalue" id="RangeV1">%sliderValue1%</span>
-                <input type="range" class="range" id="slider1" onchange="updateSliderPWM(this)" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%>
-            </div>
-            <hr><p class="state">Docelowa: <span id="sliderValue1">%sliderValue1%</span> <sup class="units">&deg;C</sup></p>
-        </div>
-
-
-        <div class="card">
-            <div class="tooltip">
-                <span class="tooltiptext">Średnia Temperatura Pomieszczeń oraz Maksymalna Docelowa Ustawiona temperatura w Pomieszczeniach -ustawienie poglądowe</span>
-            <p class="card-title">Średnia z Pomieszczeń</p>
-            <i class="fas fa-thermometer-half"></i>
-            <div class="temperatureVal" id="roomtemp">%roomtemp%</div>
-            <sup class="unitsmain">&deg;C</sup>
-            <div class="rangewrap">
-                <div class="rangevalue">%sliderValue4%</div>
-                <input type="range" class="range" id="slider4" onchange="updateSliderPWM(this)" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4%>
-            </div>
-            <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
-            </div>
-        </div>
-
-
-
-        <div class="card">
-            <div class="tooltip">
-                <span class="tooltiptext">Próg Aktywacji grzania powyżej której nastąpi uruchomienia pieca do ogrzeania CO. Poniżej tej Wartości grzanie CO się nie włączy.</span>
-                <p class="card-title" onchange="setOneNumberDecimal">Temperatura odłączenia cutoff</p>
-                <div class="rangewrap">
-                    <span class="rangevalue">%sliderValue3%</span>
-                    <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%>
+            <div class="card">
+                <div class="tooltip">
+                    <span class="tooltiptext">Wartość temperatury powrotu cieczy do boilera -zarówno CO i CWU zależnie co jest aktualnie aktywne</span>
+                    <p class="card-title">Temperatura Powrotu</p>
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="temperatureVal" id="retTemp">%retTemp%</div>
+                    <sup class="unitsmain">&deg;C</sup>
                 </div>
-                <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
+            </div>
+
+            <div class="card">
+                <div class="tooltip">
+                    <span class="tooltiptext">Statystyki</span>
+                    <p class="card-title"><i class="fas fa-info-circle"></i>Statystyki</p>
+                    <div class="Statusy" id="UsedMedia">%UsedMedia%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="tooltip">
+                    <span class="tooltiptext">Memory i Status WiFi</span>
+                    <p class="card-title">Memory/WiFi</p>
+                    <div class="formal_text" id="MemStats">%MemStats%</div>
+                </div>
+            </div>
+
             </div>
         </div>
+    </div> <!-- end of home content -->
 
-        <div class="card">
-            <div class="tooltip">
-                <span class="tooltiptext">Wartość temperatury powrotu cieczy do boilera -zarówno CO i CWU zależnie co jest aktualnie aktywne</span>
-                <p class="card-title">Temperatura Powrotu</p>
-                <i class="fas fa-thermometer-half"></i>
-                <div class="temperatureVal" id="retTemp">%retTemp%</div>
-                <sup class="unitsmain">&deg;C</sup>
+
+    <div id="WebSerial" class="tabcontent">
+        <div class="container">
+            <div class="row">
+                <div class="command2send">
+                    <input type="text" id="RemoteCommand" value="" placeholder="Wpisz HELP by poznać listę komend. Autoscroll jest automatyczny gdy suwak wysokosci na dole" onchange="updateSliderPWM(this)">
+                </div>
+                <br>
+                <div class="content">
+                    <textarea class="contentTextArea" id="log" name="webSerialLog" placeholder="Please wait to receive webserial log data" readonly="true"></textarea>
+                </div>
             </div>
-        </div>
-
-
         </div>
     </div>
 
-    <br /><br />
 
-    <p id="UsedMedia">%UsedMedia%</p>
-    <span id="MemStats">%MemStats%</span>
-    <span id="stopkawebsite">%stopkawebsite%</span>
+    <div id="FSEditor" class="tabcontent">
+        <span class="formal_text">
+            <h2>Uploader</h2>
+            <div>
+                <p style="text-align: center">Use this page to upload new files to the ESP.<br/>You can use compressed (deflated) files (files with a .gz extension) to save space and bandwidth.<br/>Existing files will be replaced.</p>
+                <form method="post" enctype="multipart/form-data" style="margin: 0px auto 8px auto" >
+                    <input type="file" name="Choose file" accept=".gz,.html,.ico,.js,.css">
+                    <input class="button" type="submit" value="Upload" name="submit">
+                </form>
+            </div>
+            <p style="color: blue" onclick="openPage('Home', this, 'lightyellow')">Back to Home</p>
+            <br><br>
+            %DIR_LIST%
+        </span>
+    </div>
+
+    <div id="Config" class="tabcontent">
+        <span class="formal_text">
+            <h3>About</h3>
+            <p>Who we are and what we do.</p>
+            %linkiac%
+            <br><br>
+            %BuildOptions%
+        </span>
+    </div>
+
+
+    <span class="stopkawebsite" id="stopkawebsite">%stopkawebsite%</span>
     <!-- <script src=""jquery-3.6.0.slim.js"/>
     <script src="jquery-ui-slider-pips.js"/> -->
     <script src="index.js"></script>
@@ -161,7 +225,7 @@
 <div class="hidden" id="statusCHActive">.</div>
 <div class="hidden" id="statusFlameOn">.</div>
 <div class="hidden" id="statusFault">.</div>
-<div class="hidden" id="ecoMode">.</div>
+<div class="hidden" id="opcohi">.</div>
 </body>
 
 </html>

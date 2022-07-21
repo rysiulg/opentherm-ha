@@ -579,6 +579,7 @@ bool loadConfig() {
   EEPROM.get(EpromPosition, flame_used_power_CHTotal);
   EpromPosition += sizeof(flame_used_power_CHTotal);
   byte statusy = 0;
+  if (isnan(statusy)) statusy = '0';
   EEPROM.get(EpromPosition, statusy);
   heatingEnabled = statusy & 2;
   enableHotWater = statusy & 4;
@@ -586,21 +587,22 @@ bool loadConfig() {
   ecoMode = statusy & 16;
 
   EpromPosition += sizeof(statusy);
-  EEPROM.get(EpromPosition, tempBoilerSet);
+  float tmpfloat = 0;
+  EEPROM.get(EpromPosition, tmpfloat);
+  if (!isnan(tmpfloat)) tempBoilerSet = tmpfloat;
   EpromPosition += sizeof(tempBoilerSet);
-  EEPROM.get(EpromPosition, cutOffTemp);
+  EEPROM.get(EpromPosition, tmpfloat);
+  if (!isnan(tmpfloat)) cutOffTemp = tmpfloat;
   EpromPosition += sizeof(cutOffTemp);
-  EEPROM.get(EpromPosition, dhwTarget);
-  EpromPosition += sizeof(dhwTarget);
+  EEPROM.get(EpromPosition, tmpfloat);
+  if (!isnan(tmpfloat)) dhwTarget = tmpfloat;
 
-
-
-  if (isnan(flame_used_power_kwh)) flame_used_power_kwh = 0;
-  if (isnan(flame_time_total)) flame_time_total = 0;
-  if (isnan(flame_time_waterTotal)) flame_time_waterTotal = 0;
-  if (isnan(flame_time_CHTotal)) flame_time_CHTotal = 0;
-  if (isnan(flame_used_power_waterTotal)) flame_used_power_waterTotal = 0;
-  if (isnan(flame_used_power_CHTotal)) flame_used_power_CHTotal = 0;
+  if (isnan(flame_used_power_kwh) || (flame_used_power_kwh + 1) == 0) flame_used_power_kwh = 0;
+  if (isnan(flame_time_total) || (flame_time_total + 1) == 0) flame_time_total = 0;
+  if (isnan(flame_time_waterTotal) || (flame_time_waterTotal + 1) == 0) flame_time_waterTotal = 0;
+  if (isnan(flame_time_CHTotal) || (flame_time_CHTotal + 1) == 0) flame_time_CHTotal = 0;
+  if (isnan(flame_used_power_waterTotal) || (flame_used_power_waterTotal + 1) == 0) flame_used_power_waterTotal = 0;
+  if (isnan(flame_used_power_CHTotal) || (flame_used_power_CHTotal + 1) == 0) flame_used_power_CHTotal = 0;
 
   if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
       EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
@@ -666,7 +668,7 @@ void SaveConfig() {
   statusy += int(heatingEnabled)*2;
   statusy += int(enableHotWater)*4;
   statusy += int(automodeCO)*8;
-  statusy += int(automodeCO)*16;
+  statusy += int(ecoMode)*16;
   EEPROM.get(EpromPosition, statusytmp);
   float tempBoilerSettmp = 0, cutOffTemptmp = 0, dhwTargettmp = 0;
   EpromPosition += sizeof(statusy);
@@ -691,9 +693,6 @@ void SaveConfig() {
     EpromPosition += sizeof(flame_time_CHTotal);
     EEPROM.put(EpromPosition, flame_used_power_CHTotal);
     EpromPosition += sizeof(flame_used_power_CHTotal);
-
-    Serial.print("Statusy: ");
-    Serial.println(statusy,HEX);
 
     EEPROM.put(EpromPosition, statusy);
     EpromPosition += sizeof(statusy);
