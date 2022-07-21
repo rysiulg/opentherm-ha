@@ -55,10 +55,12 @@ void updateInfluxDB()
   log_message(log_chars);
   //WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
   // Write point
-  if (!InfluxClient.writePoint(InfluxSensor))
-  {
-    sprintf(log_chars, "InfluxDB write failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
-    log_message(log_chars);
+  if (tempBoiler>0 && retTemp>0){
+    if (!InfluxClient.writePoint(InfluxSensor))
+    {
+      sprintf(log_chars, "InfluxDB write failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
+      log_message(log_chars);
+    }
   }
 #endif
 }
@@ -81,6 +83,7 @@ void updateMQTTData()
 
   String boilermode = Boiler_Mode();
 
+  #ifdef debug
   if (status_Fault)
   { sprintf(log_chars, "Błąd: %s", String(status_Fault ? "on" : "off").c_str());
     log_message(log_chars);
@@ -105,43 +108,52 @@ void updateMQTTData()
   { sprintf(log_chars, "Status_Cooling: %s", String(status_Cooling ? "on" : "off").c_str());
     log_message(log_chars);
   }
+  if (ecoMode)
+  { sprintf(log_chars, "Status_Cooling: %s", String(ecoMode ? "on" : "off").c_str());
+    log_message(log_chars);
+  }
   if (status_Diagnostic)
   { sprintf(log_chars, "Status_Diagnostic: %s", String(status_Diagnostic ? "on" : "off").c_str());
     log_message(log_chars);
   }
+  #endif
 
-  mqttclient.publish(String(ROOM_OTHERS_TOPIC).c_str(),(
-                      "{\"" + String(OT) + (ROOM_OTHERS_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + (ROOM_OTHERS_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(roomtempSet) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + (ROOM_OTHERS_PRESSURE) + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
-                      "}").c_str(), mqtt_Retain); //"heat" : "off")
+  if (tempBoiler>0 && retTemp>0)
+  {
 
-  mqttclient.publish(String(HOT_WATER_TOPIC).c_str(),
-                     ("{\"" + String(OT) + String(HOT_WATER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempCWU) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(HOT_WATER_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(dhwTarget, 1) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(HOT_WATER_CH_STATE) + "\": " + payloadvalue_startend_val + String(status_WaterActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(HOT_WATER_SOFTWARE_CH_STATE) + "\": \"" + String(enableHotWater ? "heat" : "off") + "\"" +
-                      ",\"" + String(OT) + String(FLAME_W_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_waterTotal, 4) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_TIME_SEC_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_waterTotal) + payloadvalue_startend_val +
-                      "}").c_str(), mqtt_Retain); //"heat" : "off")
 
-  mqttclient.publish(String(BOILER_TOPIC).c_str(),
-                     ("{\"" + String(OT) + String(BOILER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempBoiler) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(BOILER_TEMPERATURE_RET) + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(BOILER_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(tempBoilerSet, 1) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(BOILER_CH_STATE) + "\": " + payloadvalue_startend_val + String(status_CHActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(ECOMODE_STATE) + "\": " + payloadvalue_startend_val + String(ecoMode ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "\": \"" + String(boilermode) + "\""+
-                      ",\"" + String(OT) + String(FLAME_STATE) + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_LEVEL) + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_W) + "\": " + payloadvalue_startend_val + String(flame_used_power, 4) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_W_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh, 4) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_TIME_SEC_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_total) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_W_CH_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_CHTotal, 4) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(FLAME_TIME_SEC_CH_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_CHTotal) + payloadvalue_startend_val +
-                      ",\"" + String(OT) + String(TEMP_CUTOFF) + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
-                      "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
+    mqttclient.publish(String(ROOM_OTHERS_TOPIC).c_str(),(
+                        "{\"" + String(OT) + (ROOM_OTHERS_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(roomtemp) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + (ROOM_OTHERS_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(roomtempSet) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + (ROOM_OTHERS_PRESSURE) + "\": " + payloadvalue_startend_val + String(pressure) + payloadvalue_startend_val +
+                        "}").c_str(), mqtt_Retain); //"heat" : "off")
 
+    mqttclient.publish(String(HOT_WATER_TOPIC).c_str(),
+                      ("{\"" + String(OT) + String(HOT_WATER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempCWU) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(HOT_WATER_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(dhwTarget, 1) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(HOT_WATER_CH_STATE) + "\": " + payloadvalue_startend_val + String(status_WaterActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(HOT_WATER_SOFTWARE_CH_STATE) + "\": \"" + String(enableHotWater ? "heat" : "off") + "\"" +
+                        ",\"" + String(OT) + String(FLAME_W_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_waterTotal, 4) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_TIME_SEC_DHW_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_waterTotal) + payloadvalue_startend_val +
+                        "}").c_str(), mqtt_Retain); //"heat" : "off")
+
+    mqttclient.publish(String(BOILER_TOPIC).c_str(),
+                      ("{\"" + String(OT) + String(BOILER_TEMPERATURE) + "\": " + payloadvalue_startend_val + String(tempBoiler) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(BOILER_TEMPERATURE_RET) + "\": " + payloadvalue_startend_val + String(retTemp) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(BOILER_TEMPERATURE_SETPOINT) + "\": " + payloadvalue_startend_val + String(tempBoilerSet, 1) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(BOILER_CH_STATE) + "\": " + payloadvalue_startend_val + String(status_CHActive ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(ECOMODE_STATE) + "\": " + payloadvalue_startend_val + String(ecoMode ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "\": \"" + String(boilermode) + "\""+
+                        ",\"" + String(OT) + String(FLAME_STATE) + "\": " + payloadvalue_startend_val + String(status_FlameOn ? payloadON : payloadOFF) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_LEVEL) + "\": " + payloadvalue_startend_val + String(flame_level, 0) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_W) + "\": " + payloadvalue_startend_val + String(flame_used_power, 4) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_W_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_kwh, 4) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_TIME_SEC_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_total) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_W_CH_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_used_power_CHTotal, 4) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(FLAME_TIME_SEC_CH_TOTAL) + "\": " + payloadvalue_startend_val + String(flame_time_CHTotal) + payloadvalue_startend_val +
+                        ",\"" + String(OT) + String(TEMP_CUTOFF) + "\": " + payloadvalue_startend_val + String(cutOffTemp, 1) + payloadvalue_startend_val +
+                        "}").c_str(), mqtt_Retain); //"heat" : "off")    boilermode.c_str(),1);// ? "auto" : "heat" : "off",1); //heatingEnabled ? "1" : "0",1);  //"heat" : "off",1);
+  }
   mqttclient.publish(String(DIAG_TOPIC).c_str(),
                      ("{\"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\": " + payloadvalue_startend_val + String(status_Fault ? payloadON : payloadOFF) + payloadvalue_startend_val +
                       ",\"" + String(OT) + String(DIAGS_OTHERS_DIAG) + "\": " + payloadvalue_startend_val + String(status_Diagnostic ? payloadON : payloadOFF) + payloadvalue_startend_val +

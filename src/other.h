@@ -21,6 +21,12 @@ void recvMsg(uint8_t *data, size_t len)
     log_message((char*)F("OK. Restarting... by command..."));
     restart();
   } else
+  if (d == "SENDLOGTOMQTT sendlogtomqttRECONNECT")
+  {
+    sendlogtomqtt = !sendlogtomqtt;
+    sprintf(log_chars,"Toggle Value sending log to MQTT. Actual Value: %s", String(sendlogtomqtt? "MQTT LOG":"DISABLED").c_str());
+    log_message(log_chars);
+  } else
   if (d == "RECONNECT")
   {
     mqttReconnect();
