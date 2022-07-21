@@ -78,7 +78,7 @@ function updateSliderPWM(element) {
     if ((element.id).indexOf('RemoteCommand') >= 0 )
     {
         element.value = null;
-        element.scrollTop = element.scrollHeight;
+        document.getElementById("log").scrollTop = document.getElementById("log").scrollHeight;
     }
 //    console.log("topic: "+topic+" message: "+message+" element_val: "+element.value+" el.checked: "+element.checked);
     if (topic != null && message != null) websocket.send(topic+":"+message);

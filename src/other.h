@@ -10,6 +10,7 @@ void recvMsg(uint8_t *data, size_t len)
   }
   d.trim();
   d.toUpperCase();
+  log_message((char*)F("------------------------------------------------------------------------------------------------"));
   #ifdef debug
   sprintf(log_chars, "DirectCommands recvMsg Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
   log_message(log_chars);
@@ -93,44 +94,37 @@ void recvMsg(uint8_t *data, size_t len)
       log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"));
       log_message((char*)F("KOMENDY: RECONNECT, SAVE, RESET_CONFIG, RESTART, RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-"));
       log_message((char*)F("Dodatkowa pomoc dot. komendy po wpisaniu jej wartości np. HELP SAVE"));
-      log_message((char*)F("------------------------------------------------------------------------------------------------"));
     } else
     {
       if (d.indexOf(F("RECONNECT")) >=0) {
         log_message((char*)F(" RECONNECT   -Dokonuje ponownej próby połączenia z bazami,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("SAVE") >=0) {
         log_message((char*)F(" SAVE    -Wymusza zapis konfiguracji,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("RESET_CONFIG") >=0) {
         log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("RESET_FLAMETOTAL") >=0) {
         log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("ROOMTEMP0") >=0) {
         log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("ROOMTEMP+") >=0) {
         log_message((char*)F(" ROOMTEMP+  -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("ROOMTEMP-") >=0) {
         log_message((char*)F(" ROOMTEMP-  -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       } else
       if (d.indexOf("RESTART") >=0) {
         log_message((char*)F(" RESTART  -Uruchamia ponownie układ,"));
-        log_message((char*)F("------------------------------------------------------------------------------------------------"));
       }
     }
   } else
   log_message((char*)F("Unknown command received from serial or webserial input."));
+  log_message((char*)F("------------------------------------------------------------------------------------------------"));
+
 #endif
 }
 String get_PlaceholderName(u_int i)
