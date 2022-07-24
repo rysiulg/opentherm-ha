@@ -17,72 +17,84 @@
     <div class="topnav">
         <h1>%ME_TITLE%</h1>
     </div>
-    <button class="tablink" onclick="openPage('Home', this, 'red')" id="defaultOpen">Home</button>
-    <button class="tablink" onclick="openPage('WebSerial', this, 'green')">WebSerial</button>
-    <button class="tablink" onclick="openPage('FSEditor', this, 'blue')">FS Editor</button>
-    <button class="tablink" onclick="openPage('Config', this, 'orange')">Configuration</button>
+    <button class="tablink" onclick="openPage('Home', this, 'red')" id="defaultOpen"><i class="fas fa-solid fa-home" id="whicon"></i>H</button>
+    <button class="tablink" onclick="openPage('WebSerial', this, 'green')"><i class="fas fa-solid fa-terminal" id="whicon"></i>T</button>
+    <button class="tablink" onclick="openPage('FSEditor', this, 'blue')"><i class="fas fa-solid fa-folder-open" id="whicon"></i>F</button>
+    <button class="tablink" onclick="openPage('Config', this, 'orange')"><i class="fas fa-solid fa-check" id="whicon"></i>C</button>
 
     <h2>Uptime: <span id="uptimedana">%uptimedana%</span></h2>
 
     <div id="Home" class="tabcontent">
 
 
-
-            <div class="card-grid">
-                <div class="card">
-                    <div class="tooltip">
-                        <span class="tooltiptext">Temperatura na zewnątrz</span>
-                        <p class="card-title">NEWS Temp</p>
-                            <i class="fas fa-thermometer-half"></i>
-                            <div class="temperatureVal" id="temp_NEWS">%temp_NEWS%</div>
-                            <sup class="unitsmain">&deg;C</sup>
-                        <p></p>
-                    </div>
-                        <div class="tooltip">
-                            <span class="tooltiptext">Czas ostatniej aktualizacji temperatury Średniej na zewnątrz</span>
-                        <div class="units_update" style="margin-top: 20px;">Aktualizacja: </div>
-                        <div class="units_update" id="lastNEWSSet">%lastNEWSSet%</div>
-                        <div class="units_update"> temu</div>
-                        </div>
+        <div class="card-grid">
+            <div class="card">
+                <div class="tooltip">
+                    <span class="tooltiptext">Temperatura na zewnątrz</span>
+                    <p class="card-title">NEWS Temp</p>
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="temperatureVal" id="temp_NEWS">%temp_NEWS%</div>
+                    <sup class="unitsmain">&deg;C</sup>
+                    <p></p>
                 </div>
-
-
-                <div class="card" id="status_Error">
-                    <p class="card-title" id="status_Flame">Statusy</p>
-                    <p class="Statusy" id="Statusy">%Statusy%</p>
+                <div class="tooltip">
+                    <span class="tooltiptext">Czas ostatniej aktualizacji temperatury Średniej na zewnątrz</span>
+                    <div class="units_update" style="margin-top: 20px;">Aktualizacja: </div>
+                    <div class="units_update" id="lastNEWSSet">%lastNEWSSet%</div>
+                    <div class="units_update"> temu</div>
                 </div>
+            </div>
+
+            <div class="card" id="status_Error">
+                <p class="card-title" id="status_Flame">Statusy</p>
+                <p class="Statusy" id="Statusy">%Statusy%</p>
+            </div>
 
 
-                <div class="card">
-                    <p class="card-title"  id="switchCard">Tryb Pracy</p>
-
-                    <div class="twoCard">
-                        <div class="cardPart cardPart1">Ogrzewanie CO
+            <div class="card">
+                <p class="card-title"  id="switchCard">Tryb Pracy</p>
+                <div class="twoCard">
+                    <div class="cardPart cardPart1">
+                        Ogrzewanie CO
                         <div class="tooltip">
-                            <span class="tooltiptext">Stan ogrzewania Centralnego oraz trb pracy ręczny-oparty na temp. cutoff i automatyczny oparty na odczytach z pomieszczen "Średnia temp w pomieszczeniach"</span>
-                            <input type="checkbox" class="boilerwww" id="boilerwww" Name="boilerwww" value="%boilerwww%" onchange="updateSliderPWM(this)"/>
-                            <label for="boilerwww">OK</label>
-                            <hr>
-                            <span class="BOILMODMODE">
-                                Tryb ręczny/AUTO
-                                <input type="checkbox" class="boilermodewww" id="boilermodewww" Name="boilermodewww"  value="%boilermodewww%" onchange="updateSliderPWM(this)"/>
-                                <label for="boilermodewww">AUTO</label>
-                            </span>
+                            <span class="tooltiptext">Stan ogrzewania Centralnego grzanie po przekroczeniu temperatury zewnętrznej 'cutoff'"</span>
+                            <div class="RoundSwitchCheckbox">
+                                <input type="checkbox" class="boilerwww" id="boilerwww" Name="boilerwww" value="%boilerwww%" onchange="updateSliderPWM(this)"/>
+                                <label for="boilerwww"></label>
+                            </div>
+                        </div>
+                        <hr>
+                        Tryb AUTO
+                        <div id="BOILMODMODE">
+                            <div class="tooltip">
+                                <span class="tooltiptext">Tryb pracy ręczny (gdy wyłączony przycisk lub AUTOmatyczny gdy włączony. W obu trybach grzanie po przekroczeniu temperatury zewnętrznej 'cutoff'. Tryb ręczny bazuje na Temp. grzania -wartość na rurze CO. Tryb AUTO bazuje na krzywej i dopasowuje do Średniej z pomieszczeń: Odczyt/Docelowa</span>
+                                <div class="RoundSwitchCheckbox">
+                                    <input type="checkbox" class="boilermodewww" id="boilermodewww" Name="boilermodewww"  value="%boilermodewww%" onchange="updateSliderPWM(this)"/>
+                                    <label for="boilermodewww"></label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="cardPart cardPart2">Podgrzewanie Wody
+                    <div class="cardPart cardPart2">
+                        Podgrzewanie Wody
                         <div class="tooltip">
                             <span class="tooltiptext">Stan pracy podgrzewania Ciepłej Wodu CWU oraz tryb Eco -oznacza tryb pracy kondensacyjny/niskotemperaturowy ogrzewania -ogranicza temp CO do max 40st.</span>
-                            <input type="checkbox" class="boilerhwwww" id="boilerhwwww" Name="boilerhwwww" value="%boilerhwwww%" onchange="updateSliderPWM(this)"/>
-                            <label for="boilerhwwww">OK</label>
-                            <hr>
-                            <span class="ECOMODMODE">
-                                Tryb ECO (kondensacyjny)
-                                <input type="checkbox" class="ecoMode" id="ecoMode" Name="ecoMode"  value="%ecoMode%" onchange="updateSliderPWM(this)"/>
-                                <label for="ecoMode">ECO</label>
-                            </span>
+                            <div class="RoundSwitchCheckbox">
+                                <input type="checkbox" class="boilerhwwww" id="boilerhwwww" Name="boilerhwwww" value="%boilerhwwww%" onchange="updateSliderPWM(this)"/>
+                                <label for="boilerhwwww"></label>
+                            </div>
                         </div>
+                        <hr>
+                        Tryb ECO (kondensacyjny)
+                        <span class="ECOMODMODE">
+                            <span class="tooltiptext">
+                                <div class="RoundSwitchCheckbox">
+                                    <input type="checkbox" class="ecoMode" id="ecoMode" Name="ecoMode"  value="%ecoMode%" onchange="updateSliderPWM(this)"/>
+                                    <label for="ecoMode"></label>
+                                </div>
+                            </span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -90,10 +102,13 @@
 
 
             <div class="card" id="HotWater_card">
-                <p class="card-title" id="HotWater_title">Ciepła Woda CWU</p>
-                <i class="fas fa-thermometer-half"></i>
-                <div class="temperatureVal" id="tempCWU">%tempCWU%</div>
-                <sup class="unitsmain">&deg;C</sup>
+                <div class="tooltip">
+                    <p class="card-title" id="HotWater_title">Ciepła Woda CWU</p>
+                    <span class="tooltiptext">Temperatura w zbiorniku ciepłej wody użytkowej</span>
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="temperatureVal" id="tempCWU">%tempCWU%</div>
+                    <sup class="unitsmain">&deg;C</sup>
+                </div>
                 <div class="rangewrap">
                     <span class="rangevalue">%sliderValue2%</span>
                     <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%">
@@ -103,10 +118,13 @@
 
 
             <div class="card" id="BoilerCO_card">
-                <p class="card-title" id="BoilerCO_title">Temperatura Grzania CO</p>
-                <i class="fas fa-thermometer-half"></i>
-                <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
-                <sup class="unitsmain">&deg;C</sup>
+                <div class="tooltip">
+                    <span class="tooltiptext">Temperatura wody boilera -pieca. Gdy aktywne podgrzewanie wody temp grzania wody, Gdy aktywne CO -temperatura grzania CO.</span>
+                    <p class="card-title" id="BoilerCO_title">Temperatura Grzania CO</p>
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="temperatureVal" id="tempBoiler">%tempBoiler%</div>
+                    <sup class="unitsmain">&deg;C</sup>
+                </div>
                 <div class="rangewrap">
                     <span class="rangevalue" id="RangeV1">%sliderValue1%</span>
                     <input type="range" class="range" id="slider1" onchange="updateSliderPWM(this)" min=%opcolo% max=%opcohi% step="0.5" value=%sliderValue1%>
@@ -117,37 +135,38 @@
 
             <div class="card">
                 <div class="tooltip">
+                    <p class="card-title">Średnia z Pomieszczeń</p>
                     <span class="tooltiptext">Średnia Temperatura Pomieszczeń oraz Maksymalna Docelowa Ustawiona temperatura w Pomieszczeniach -ustawienie poglądowe</span>
-                <p class="card-title">Średnia z Pomieszczeń</p>
-                <i class="fas fa-thermometer-half"></i>
-                <div class="temperatureVal" id="roomtemp">%roomtemp%</div>
-                <sup class="unitsmain">&deg;C</sup>
+                    <i class="fas fa-thermometer-half"></i>
+                    <div class="temperatureVal" id="roomtemp">%roomtemp%</div>
+                    <sup class="unitsmain">&deg;C</sup>
+                </div>
                 <div class="rangewrap">
                     <div class="rangevalue">%sliderValue4%</div>
                     <input type="range" class="range" id="slider4" onchange="updateSliderPWM(this)" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4% disabled>
                 </div>
                 <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
-                </div>
             </div>
 
 
 
             <div class="card">
                 <div class="tooltip">
-                    <span class="tooltiptext">Próg Aktywacji grzania powyżej której nastąpi uruchomienia pieca do ogrzeania CO. Poniżej tej Wartości grzanie CO się nie włączy.</span>
                     <p class="card-title" onchange="setOneNumberDecimal">Temperatura odłączenia cutoff</p>
-                    <div class="rangewrap">
-                        <span class="rangevalue">%sliderValue3%</span>
-                        <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%>
-                    </div>
-                    <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
+                    <span class="tooltiptext">Próg Aktywacji grzania powyżej której nastąpi uruchomienia pieca do ogrzeania CO. Poniżej tej Wartości grzanie CO się nie włączy.</span>
                 </div>
+                <div class="rangewrap">
+                    <span class="rangevalue">%sliderValue3%</span>
+                    <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%>
+                </div>
+                <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
+
             </div>
 
             <div class="card">
                 <div class="tooltip">
-                    <span class="tooltiptext">Wartość temperatury powrotu cieczy do boilera -zarówno CO i CWU zależnie co jest aktualnie aktywne</span>
                     <p class="card-title">Temperatura Powrotu</p>
+                    <span class="tooltiptext">Wartość temperatury powrotu cieczy do boilera -zarówno CO i CWU zależnie co jest aktualnie aktywne</span>
                     <i class="fas fa-thermometer-half"></i>
                     <div class="temperatureVal" id="retTemp">%retTemp%</div>
                     <sup class="unitsmain">&deg;C</sup>
@@ -158,16 +177,16 @@
                 <div class="tooltip">
                     <span class="tooltiptext">Statystyki</span>
                     <p class="card-title"><i class="fas fa-info-circle"></i>Statystyki</p>
-                    <div class="Statusy" id="UsedMedia">%UsedMedia%</div>
                 </div>
+                <div class="Statusy" id="UsedMedia">%UsedMedia%</div>
             </div>
 
             <div class="card">
                 <div class="tooltip">
-                    <span class="tooltiptext">Memory i Status WiFi</span>
                     <p class="card-title">Memory/WiFi</p>
-                    <div class="formal_text" id="MemStats">%MemStats%</div>
+                    <span class="tooltiptext">Memory i Status WiFi</span>
                 </div>
+                <div class="StatusBlackNormalSmall" id="MemStats">%MemStats%</div>
             </div>
 
             </div>
@@ -187,11 +206,13 @@
                 </div>
             </div>
         </div>
+        <span id="StatusBlackNormal">%linkiac%<br><br></span>
+        <div class="StatusBlackNormalSmall" id="MemStats1">%MemStats%</div>
     </div>
 
 
     <div id="FSEditor" class="tabcontent">
-        <span class="formal_text">
+        <span id="StatusBlackNormal">
             <h2>Uploader</h2>
             <div>
                 <p style="text-align: center">Use this page to upload new files to the ESP.<br/>You can use compressed (deflated) files (files with a .gz extension) to save space and bandwidth.<br/>Existing files will be replaced.</p>
@@ -202,18 +223,157 @@
             </div>
             <p style="color: blue" onclick="openPage('Home', this, 'lightyellow')">Back to Home</p>
             <br><br>
-            %DIR_LIST%
+            <span id="StatusBlackNormal">
+                <table><tr><td>%DIR_LIST%</td><td>%BuildOptions%</td></tr></table>
+            </span>
         </span>
+        <div class="StatusBlackNormalSmall" id="MemStats2">%MemStats%</div>
     </div>
 
     <div id="Config" class="tabcontent">
-        <span class="formal_text">
-            <h3>About</h3>
-            <p>Who we are and what we do.</p>
-            %linkiac%
-            <br><br>
-            %BuildOptions%
-        </span>
+
+
+
+
+<form action="/post" method="post" target="hidden-form">
+
+        <div class="rendered-form">
+            <div class="">
+                <h3 class="form_header" access="false" id="control-2455592">Formularz konfiguracyjny:</h3></div>
+            <div class="formbuilder-select form-group field-form-control">
+                <label for="LogOutput" class="formbuilder-select-label">Dodatkowe wyjścia logów<span class="tooltip" tooltip="Dodatkowe wyjścia logu pracy">:</span></label>
+                <select class="form-control" name="LogOutput" multiple="true" id="form-control">
+                    <option value="debugSerial" selected="%debugSerial%" id="debugSerial">Wysyłanie logu do Serial1</option>
+                    <option value="sendlogtomqtt" selected="%sendlogtomqtt%" id="sendlogtomqtt">Wysyłanie logu do MQTT</option>
+                    <option value="WebSocketlog" selected="%WebSocketlog%" id="WebSocketlog">Wysyłanie logu do websocket na stronę</option>
+                </select>
+            </div>
+            <div class="formbuilder-text form-group field-SSID_Name">
+                <label for="SSID_Name" class="formbuilder-text-label">SSID_Name<span class="tooltip" tooltip="SSID_Name">:</span></label>
+                <input type="text" placeholder="%SSID_Name%" class="form-control" name="SSID_Name" access="true" value="%SSID_Name%" maxlength="16" role="1" id="SSID_Name" title="SSID_Name">
+            </div>
+            <div class="formbuilder-text form-group field-SSID_PAssword">
+                <label for="SSID_PAssword" class="formbuilder-text-label">SSID_PAssword<span class="tooltip" tooltip="SSID_PAssword">:</span></label>
+                <input type="password" placeholder="SSID_PAssword" class="form-control" name="SSID_PAssword" access="false" value="%SSID_PAssword%" maxlength="30" id="SSID_PAssword" title="SSID_PAssword">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-2254082">Konfiguracja dla MQTT (jeśli skompilowana):</p>
+            </div>
+            <div class="formbuilder-text form-group field-MQTT_servername">
+                <label for="MQTT_servername" class="formbuilder-text-label">MQTT_servername<span class="tooltip" tooltip="MQTT_servername">:</span></label>
+                <input type="text" placeholder="%MQTT_servername%" class="form-control" name="MQTT_servername" access="false" value="%MQTT_servername%" maxlength="20" id="MQTT_servername" title="MQTT_servername">
+            </div>
+            <div class="formbuilder-number form-group field-MQTT_port_No">
+                <label for="MQTT_port_No" class="formbuilder-number-label">MQTT_port_No<span class="tooltip" tooltip="MQTT_port_No">:</span></label>
+                <input type="number" placeholder="%MQTT_port_No%" class="form-control" name="MQTT_port_No" access="false" value="%MQTT_port_No%" min="1" max="65530" step="1" id="MQTT_port_No" title="MQTT_port_No">
+            </div>
+            <div class="formbuilder-text form-group field-MQTT_username">
+                <label for="MQTT_username" class="formbuilder-text-label">MQTT_username<span class="tooltip" tooltip="MQTT_username">:</span></label>
+                <input type="text" placeholder="%MQTT_username%" class="form-control" name="MQTT_username" access="false" value="%MQTT_username%" maxlength="20" id="MQTT_username" title="MQTT_username">
+            </div>
+            <div class="formbuilder-text form-group field-MQTT_Password_data">
+                <label for="MQTT_Password_data" class="formbuilder-text-label">MQTT_Password_data<span class="tooltip" tooltip="MQTT_Password_data">:</span></label>
+                <input type="password" placeholder="%MQTT_Password_data%" class="form-control" name="MQTT_Password_data" access="false" value="%MQTT_Password_data%" maxlength="20" id="MQTT_Password_data" title="MQTT_Password_data">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-1224137">Konfiguracja do bazy InfluxDB (jeśli skompilowana):</p>
+            </div>
+            <div class="formbuilder-text form-group field-INFLUXDB_URL">
+                <label for="INFLUXDB_URL" class="formbuilder-text-label">INFLUXDB_URL<span class="tooltip" tooltip="INFLUXDB_URL">:</span></label>
+                <input type="text" placeholder="%INFLUXDB_URL%" class="form-control" name="INFLUXDB_URL" access="false" value="%INFLUXDB_URL%" maxlength="20" id="INFLUXDB_URL" title="INFLUXDB_URL">
+            </div>
+            <div class="formbuilder-text form-group field-INFLUXDB_DB_NAME">
+                <label for="INFLUXDB_DB_NAME" class="formbuilder-text-label">INFLUXDB_DB_NAME<span class="tooltip" tooltip="INFLUXDB_DB_NAME">:</span></label>
+                <input type="text" placeholder="%INFLUXDB_DB_NAME%" class="form-control" name="INFLUXDB_DB_NAME" access="false" value="%INFLUXDB_DB_NAME%" maxlength="32" id="INFLUXDB_DB_NAME" title="INFLUXDB_DB_NAME">
+            </div>
+            <div class="formbuilder-text form-group field-influx_measurments">
+                <label for="influx_measurments" class="formbuilder-text-label">Influx Measurments Name<span class="tooltip" tooltip="influx_measurments">:</span></label>
+                <input type="text" placeholder="%influx_measurments%" class="form-control" name="influx_measurments" access="false" value="%influx_measurments%" maxlength="32" id="influx_measurments" title="influx_measurments">
+            </div>
+            <div class="formbuilder-text form-group field-INFLUXDB_USER">
+                <label for="INFLUXDB_USER" class="formbuilder-text-label">INFLUXDB_USER<span class="tooltip" tooltip="INFLUXDB_USER">:</span></label>
+                <input type="text" placeholder="%INFLUXDB_USER%" class="form-control" name="INFLUXDB_USER" access="false" value="%INFLUXDB_USER%" maxlength="20" id="INFLUXDB_USER" title="INFLUXDB_USER">
+            </div>
+            <div class="formbuilder-text form-group field-INFLUXDB_PASSWORD">
+                <label for="INFLUXDB_PASSWORD" class="formbuilder-text-label">INFLUXDB_PASSWORD<span class="tooltip" tooltip="INFLUXDB_PASSWORD">:</span></label>
+                <input type="password" placeholder="%INFLUXDB_PASSWORD%" class="form-control" name="INFLUXDB_PASSWORD" access="false" value="%INFLUXDB_PASSWORD%" maxlength="32" id="INFLUXDB_PASSWORD" title="INFLUXDB_PASSWORD">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-6790748">Konfiguracja odczytu temperatury zewnętrznej NEWS:</p>
+            </div>
+            <div class="formbuilder-text form-group field-NEWS_GET_TOPIC">
+                <label for="NEWS_GET_TOPIC" class="formbuilder-text-label">MQTT Topic Temp NEWS<span class="tooltip" tooltip="MQTT Topic dla temperatury zewnętrznej NEWS (średnia północ,południe,zachód, wschód)">:</span></label>
+                <input type="text" placeholder="%NEWS_GET_TOPIC%" class="form-control" name="NEWS_GET_TOPIC" access="false" value="%NEWS_GET_TOPIC%" maxlength="64" id="NEWS_GET_TOPIC" title="MQTT Topic dla temperatury zewnętrznej NEWS (średnia północ,południe,zachód, wschód)">
+            </div>
+            <div class="formbuilder-text form-group field-NEWStemp_json">
+                <label for="NEWStemp_json" class="formbuilder-text-label">MQTT json attribute for NEWS<span class="tooltip" tooltip="MQTT Atrybut json dla temperatury zewnętrznej NEWS (średnia północ,południe,zachód, wschód)">:</span></label>
+                <input type="text" placeholder="%NEWStemp_json%" class="form-control" name="NEWStemp_json" access="false" value="%NEWStemp_json%" maxlength="64" id="NEWStemp_json" title="MQTT Atrybut json dla temperatury zewnętrznej NEWS (średnia północ,południe,zachód, wschód)">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-8029990">Kotłownia -drugi piec statusy:</p>
+            </div>
+            <div class="formbuilder-text form-group field-COPUMP_GET_TOPIC">
+                <label for="COPUMP_GET_TOPIC" class="formbuilder-text-label">MQTT Topic dla statusu Pomp CO i Wody pieca węglowego<span class="tooltip" tooltip="MQTT Topic dla sprawdzenia czy pompy wody/CO drugiego pieca pracują -gdy tak nie włącza się CO grzanie">:</span></label>
+                <input type="text" placeholder="%COPUMP_GET_TOPIC%" class="form-control" name="COPUMP_GET_TOPIC" access="false" value="%COPUMP_GET_TOPIC%" maxlength="64" id="COPUMP_GET_TOPIC" title="MQTT Topic dla sprawdzenia czy pompy wody/CO drugiego pieca pracują -gdy tak nie włącza się CO grzanie">
+            </div>
+            <div class="formbuilder-text form-group field-COPumpStatus_json">
+                <label for="COPumpStatus_json" class="formbuilder-text-label">MQTT json attribute dla statusu Pompy CO pieca węglowego<span class="tooltip" tooltip="MQTT Atrybut Json dla sprawdzenia czy pompy CO drugiego pieca pracują -gdy tak nie włącza się CO grzanie">:</span></label>
+                <input type="text" placeholder="%COPumpStatus_json%" class="form-control" name="COPumpStatus_json" access="false" value="%COPumpStatus_json%" maxlength="64" id="COPumpStatus_json" title="MQTT Atrybut Json dla sprawdzenia czy pompy CO drugiego pieca pracują -gdy tak nie włącza się CO grzanie">
+            </div>
+            <div class="formbuilder-text form-group field-WaterPumpStatus_json">
+                <label for="WaterPumpStatus_json" class="formbuilder-text-label">MQTT json attribute dla statusu Pompy Wody pieca węglowego<span class="tooltip" tooltip="MQTT Atrybut Json dla sprawdzenia czy pompy Wody drugiego pieca pracują -gdy tak nie włącza się CO grzanie">:</span></label>
+                <input type="text" placeholder="%WaterPumpStatus_json%" class="form-control" name="WaterPumpStatus_json" access="false" value="%WaterPumpStatus_json%" maxlength="64" id="WaterPumpStatus_json" title="MQTT Atrybut Json dla sprawdzenia czy pompy Wody drugiego pieca pracują -gdy tak nie włącza się CO grzanie">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-5382407">Sensory CO PARTER podłogówki:</p>
+            </div>
+            <div class="formbuilder-text form-group field-ROOMS_F1_GET_TOPIC">
+                <label for="ROOMS_F1_GET_TOPIC" class="formbuilder-text-label">MQTT Topic dla czujników CO z parteru<span class="tooltip" tooltip="MQTT Topic dla pobrania średniej temperatury z kondygnacji i maksymalnej temperatury nastawionej jako docelowej">:</span></label>
+                <input type="text" placeholder="%ROOMS_F1_GET_TOPIC%" class="form-control" name="ROOMS_F1_GET_TOPIC" access="false" value="%ROOMS_F1_GET_TOPIC%" maxlength="64" id="ROOMS_F1_GET_TOPIC" title="MQTT Topic dla pobrania średniej temperatury z kondygnacji i maksymalnej temperatury nastawionej jako docelowej">
+            </div>
+            <div class="formbuilder-text form-group field-roomF1temp_json">
+                <label for="roomF1temp_json" class="formbuilder-text-label">MQTT json attribute dla średniej temp. PARTER
+                    <br><span class="tooltip" tooltip="MQTT Topic dla pobrania średniej temperatury z kondygnacji">:</span></label>
+                <input type="text" placeholder="%roomF1temp_json%" class="form-control" name="roomF1temp_json" access="false" value="%roomF1temp_json%" maxlength="64" id="roomF1temp_json" title="MQTT Topic dla pobrania średniej temperatury z kondygnacji">
+            </div>
+            <div class="formbuilder-text form-group field-roomF1tempset_json">
+                <label for="roomF1tempset_json" class="formbuilder-text-label">MQTT json atrybut Temperatury nastawionej PARTER<span class="tooltip" tooltip="MQTT Topic dla pobrania maksymalnej temperatury nastawionej jako docelowej">:</span></label>
+                <input type="text" placeholder="%roomF1tempset_json%" class="form-control" name="roomF1tempset_json" access="false" value="%roomF1tempset_json%" maxlength="64" id="roomF1tempset_json" title="MQTT Topic dla pobrania maksymalnej temperatury nastawionej jako docelowej">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-9701930">Sensory CO PIĘTRO podłogówki:</p>
+            </div>
+            <div class="formbuilder-text form-group field-ROOMS_F2_GET_TOPIC">
+                <label for="ROOMS_F2_GET_TOPIC" class="formbuilder-text-label">MQTT Topic dla czujników CO z piętra<span class="tooltip" tooltip="MQTT Topic dla pobrania średniej temperatury z kondygnacji i maksymalnej temperatury nastawionej jako docelowej">:</span></label>
+                <input type="text" placeholder="%ROOMS_F2_GET_TOPIC%" class="form-control" name="ROOMS_F2_GET_TOPIC" access="false" value="%ROOMS_F2_GET_TOPIC%" maxlength="64" id="ROOMS_F2_GET_TOPIC" title="MQTT Topic dla pobrania średniej temperatury z kondygnacji i maksymalnej temperatury nastawionej jako docelowej">
+            </div>
+            <div class="formbuilder-text form-group field-roomF2temp_json">
+                <label for="roomF2temp_json" class="formbuilder-text-label">MQTT json attribute dla średniej temp. PIĘTRO
+                    <br><span class="tooltip" tooltip="MQTT Topic dla pobrania średniej temperatury z kondygnacji">:</span></label>
+                <input type="text" placeholder="%roomF2temp_json%" class="form-control" name="roomF2temp_json" access="false" value="%roomF2temp_json%" maxlength="64" id="roomF2temp_json" title="MQTT Topic dla pobrania średniej temperatury z kondygnacji">
+            </div>
+            <div class="formbuilder-text form-group field-roomF2tempset_json">
+                <label for="roomF2tempset_json" class="formbuilder-text-label">MQTT json atrybut Temperatury nastawionej PIĘTRO<span class="tooltip" tooltip="MQTT Topic dla pobrania maksymalnej temperatury nastawionej jako docelowej">:</span></label>
+                <input type="text" placeholder="%roomF2tempset_json%" class="form-control" name="roomF2tempset_json" access="false" value="%roomF2tempset_json%" maxlength="64" id="roomF2tempset_json" title="MQTT Topic dla pobrania maksymalnej temperatury nastawionej jako docelowej">
+            </div>
+            <div class="">
+                <p class="form_delimiters" access="false" id="control-5994013"></p>
+            </div>
+            <input type="submit" value="ZAPISZ" class="btn btn-primary" />
+
+
+        </div>
+    </form>
+
+
+
+
+
+
+
+
+
+
     </div>
 
 

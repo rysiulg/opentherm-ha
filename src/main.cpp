@@ -8,20 +8,19 @@
  *************************************************************/
 
 //#include <Arduino.h>
-
 const float InitTemp = 255;
-// ESP8266WebServer server(80);
-#include "declarations.h"
 #include "main.h"
 
 
-
-
-
-
+//***********************************************************************************************************************************************************************************************
+void IRAM_ATTR Handle_Interrupt()
+{
+  OpenTherm.handleInterrupt();
+}
+//***********************************************************************************************************************************************************************************************
 // op = pid(sp, t, t_last, ierr, dt);
 float pid(float sp, float pv, float pv_last, float &ierr, float dt)
-{
+{ //Generate curve heating based on roomtemp/roomtempset
   float KP = 10;
   float KI = 0.02;
 
@@ -48,7 +47,7 @@ float pid(float sp, float pv, float pv_last, float &ierr, float dt)
   log_message(log_chars);
   return op;
 }
-
+//***********************************************************************************************************************************************************************************************
 // This function calculates temperature every second.
 void opentherm_update_data()
 {
@@ -96,8 +95,8 @@ sprintf(log_chars,"Statusy openth: COHEAT: %s, DHW: %s, automodeCO: %s, temp_NEW
 log_message(log_chars);
 //COHeat = false;
 
-  unsigned long response = ot.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
-  OpenThermResponseStatus responseStatus = ot.getLastResponseStatus();
+  unsigned long response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
+  OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
   if (responseStatus != OpenThermResponseStatus::SUCCESS)
   {
     LastboilerResponseError = String(response, HEX);
@@ -105,35 +104,33 @@ log_message(log_chars);
     log_message(log_chars);
   } else
   {
-    ot.setDHWSetpoint(dhwTarget);
-    ot.setBoilerTemperature(op);
+    OpenTherm.setDHWSetpoint(dhwTarget);
+    OpenTherm.setBoilerTemperature(op);
 
-    status_CHActive = ot.isCentralHeatingActive(response);
-    status_WaterActive = ot.isHotWaterActive(response);
+    status_CHActive = OpenTherm.isCentralHeatingActive(response);
+    status_WaterActive = OpenTherm.isHotWaterActive(response);
     bool status_flame_tmp = status_FlameOn;
-    status_FlameOn = ot.isFlameOn(response);
+    status_FlameOn = OpenTherm.isFlameOn(response);
     if (status_flame_tmp != status_FlameOn) {
       if (status_FlameOn) {
         start_flame_time = millis();
-      } else start_flame_time = 0; //After change flame status If flame is on get timer, else reset timer
-      flame_time = 0;
+        start_flame_time_fordisplay = start_flame_time;
+      } else {
+        start_flame_time = 0;
+        start_flame_time_fordisplay = start_flame_time;//After change flame status If flame is on get timer, else reset timer
+      }
     }
-    status_Cooling = ot.isCoolingActive(response);
-    status_Diagnostic = ot.isDiagnostic(response);
-    flame_level = ot.getModulation();
-    tempBoiler = ot.getBoilerTemperature();
-    tempCWU = ot.getDHWTemperature();
-    retTemp = ot.getReturnTemperature();
-    pressure = ot.getPressure();
+    status_Cooling = OpenTherm.isCoolingActive(response);
+    status_Diagnostic = OpenTherm.isDiagnostic(response);
+    flame_level = OpenTherm.getModulation();
+    tempBoiler = OpenTherm.getBoilerTemperature();
+    tempCWU = OpenTherm.getDHWTemperature();
+    retTemp = OpenTherm.getReturnTemperature();
+    pressure = OpenTherm.getPressure();
   }
 
-  status_Fault = ot.isFault(response);
+  status_Fault = OpenTherm.isFault(response);
 
-}
-
-void IRAM_ATTR handleInterrupt()
-{
-  ot.handleInterrupt();
 }
 
 void getTemp()
@@ -158,8 +155,6 @@ void getTemp()
 
 }
 
-
-
 String Boiler_Mode()
 {
   if (automodeCO and heatingEnabled)
@@ -176,8 +171,7 @@ void setup()
 {
 
   MainCommonSetup();
-
-  ot.begin(handleInterrupt);
+  OpenTherm.begin(Handle_Interrupt);
 
   // Init DS18B20 sensor
   sensors.begin();
@@ -185,13 +179,14 @@ void setup()
   sensors.setWaitForConversion(false); // switch to async mode
   dallasTemp = sensors.getTempCByIndex(0);
   if (check_isValidTemp(dallasTemp)) dallasTemp = InitTemp;
+  sprintf(log_chars,"Dallas Temp: %s", String(dallasTemp).c_str());
+  log_message(log_chars);
   //  lastTempSet = -extTempTimeout_ms;
 #ifdef debug
   log_message((char*)F("end setup...."));
   //    SaveConfig();
 #endif
 }
-
 
 void loop()
 {
@@ -201,12 +196,11 @@ void loop()
 
   if ((now - lastUpdate) > statusUpdateInterval_ms)
   {
-
     lastUpdate = now;
     opentherm_update_data(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
   }
 
-  if (status_FlameOn) {
+  if (status_FlameOn) {  //calculate statistics
     unsigned long long nowtime = millis();
     float boiler_power = 0;
     if (retTemp < boiler_50_30_ret) boiler_power = boiler_50_30; else boiler_power = boiler_80_60;
@@ -221,7 +215,6 @@ void loop()
       flame_time_CHTotal += (nowtime - start_flame_time) ;
       flame_used_power_CHTotal += boilerpower * time_to_hour / 1000;
     }
-
     start_flame_time = nowtime;
     flame_used_power += boilerpower * time_to_hour / 1000;
     flame_used_power_kwh += boilerpower * time_to_hour / 1000;
@@ -256,7 +249,7 @@ void loop()
     log_message((char*)F("Korekta temperatury NEWS z braku połaczenia -pomniejszona o 5%"));
   }
 
-  if ((now - lastSaveConfig) > save_config_every)
+  if (((now - lastSaveConfig) > save_config_every) || lastSaveConfig == 0)
   {
     lastSaveConfig = now;
     log_message((char*)F("Saving config to EEPROM memory..."));
@@ -270,6 +263,7 @@ void loop()
   if (check_isValidTemp(dallasTemp)) dallasTemp = InitTemp;
   sprintf(log_chars, "Current temperature 18B20: %s °C ", String(dallasTemp).c_str()); //, tempSource.c_str());
   log_message(log_chars);
+  if (!check_isValidTemp(temp_NEWS) && check_isValidTemp(dallasTemp) && lastNEWSSet == 0) temp_NEWS = dallasTemp;
 
   }
 

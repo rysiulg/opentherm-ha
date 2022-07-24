@@ -1,5 +1,5 @@
 set BINFILE=.pio/build/d1_mini/firmware.bin
-set LOCALPORT=COM5
+set LOCALPORT=COM4
 set OTAPORTx=10.48.18.28
 
 "%USERPROFILE%\.platformio\penv\Scripts\python.exe" "%USERPROFILE%\.platformio\packages\framework-arduinoespressif8266\tools\espota.py" --debug --progress -i %OTAPORT% -f "%BINFILE%"

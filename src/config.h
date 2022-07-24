@@ -13,28 +13,33 @@
 // v1.20 added counting used power
 // v1.21 added influxdb integration
 
+#define PL_lang       //there are some translations.... -but now is not actual
+
 #define debug
-//#define debug1
 //#define debugweb
-#define debugSerial   //send log_message to websocket
-#define loctmp "\0"//_TMP"
-#define me_lokalizacja "BOILER_GAZ" loctmp
+bool debugSerial = true;   //send log_message to websocket
+#define enableWebSocketlog  //send log to websocket AND WEBSOCKET MUST BE ENABLED -this replaces me webserial -files on web to build ... to get it
+//#define enableWebSerial     //not fully implemented
+#define ENABLE_INFLUX        // tobiasschuerg/ESP8266 Influxdb @ ^3.12.0   if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
+//#define enableMQTT        //knolleary/PubSubClient@^2.8  --problem with connected ---
+#define enableMQTTAsync     //Async MQTT   ottowinter/AsyncMqttClient-esphome @ ^0.8.6
+#define enableArduinoOTA
+//#define enableWebUpdate
+#define enableWebSocket      //ESPAsyncWebServer
+//#define enableMESHNETWORK
+#define doubleResDet        //  khoih-prog/ESP_DoubleResetDetector @ ^1.3.1)  check if double reset occurs -if yes stay on OTA ready
+
+
+
+#if defined enableWebSocketlog && not defined enableWebSocket
+#undef enableWebSocketlog
+#endif
+
+#define loctmp "\0"//_TMP"      //appender for temporary name in influx and mqtt
 
 #define MFG "MARM.pl Sp. z o.o."
 
-#define PL_lang
-
 #define hour_s 60*60          //hour in second
-#define boiler_rated_kWh 24
-#define boiler_50_30 20.7     //boiler technical factory set data at working 50st and return 30st
-#define boiler_50_30_ret 31     //boiler technical factory set data at working 50st and return 30st -assume that is that mode if rettemp i under 31degC
-#define boiler_80_60 19.5     //boiler technical factory set data at working 80st and return 60st
-#define ENABLE_INFLUX        //if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
-#define enableMQTT
-
-
-//#define wdtreset
-//#boiler_gas_conversion_to_m3  1
 
 #include "sensivity-config-data.h" //it have definitions of sensivity data
 #include "config-translate.h" //definitions polish/english translate
@@ -82,18 +87,5 @@
 #define sensitive_sizeS "32" //length of ssid,passwd and mqtt needed as string for version check -important 2 letters
 
 
-// Master OpenTherm Shield pins configuration
-const int OT_IN_PIN = D1;  // for Arduino, 4 for ESP8266 (D2), 21 for ESP32
-const int OT_OUT_PIN = D2; // for Arduino, 5 for ESP8266 (D1), 22 for ESP32
-
-// Temperature sensor pin
-const int ROOM_TEMP_SENSOR_PIN = D0; // 0; //for Arduino, 14 for ESP8266 (D5), 18 for ESP32
-
-/*
-   current temperature topics
-   if setter is used - thermostat works with external values, bypassing built-in sensor
-   if no values on setter for more than 1 minute - thermostat falls back to built-in sensor
-*/
-
-
-  //temps from floor1 nad floor2 temp is min of temps and tempset is max set value
+#include "config-localProject.h"
+#include "declarations_for_websync.h"

@@ -19,8 +19,8 @@ p {font-size: 1.4rem;}
 
 .topnav {overflow: hidden;   background-color: #0A1128;}
 
-body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-image: linear-gradient(lightcyan, lightcyan),
-  url("ident.gif");}*/
+body {margin: auto; margin-bottom: 5%; background-color:lightcyan; min-height:100vh;
+  }*/
 
 .content {padding: 1.2rem;}
 
@@ -28,27 +28,23 @@ body {margin: 0; background-color:lightcyan; background-repeat: 1;  background-i
 
 .card {background-color: white;   border-radius: 5%; padding: 3% 3% 3% 3%; box-shadow: 0.1rem 0.1rem 1rem 0.1rem rgba(140,140,140,.5);}
 
-.card-title {font-size: 1.4rem;   font-weight: bold;   color: #4208f2; padding-bottom: 0.2rem; border-radius: 50px;}
+.card-title {font-size: 1.3rem;   font-weight: bold;   color: #4208f2; padding-bottom: 0.2rem; border-radius: 50px;}
 
-.state {font-size: 1.4rem;   font-weight: bold;   color:#092f39;}
+.state {font-size: 1.3rem;   font-weight: bold;   color:#092f39;}
 
-.twoCard {
-  display: flex;
-  }
-  .cardPart {
+.twoCard {  display: flex;  }
+.cardPart {
   width: 100%;
-  padding: 10px;
+  padding: 0.2rem;
   text-align: -webkit-center;
   /* font-size: 1.4rem;
   font-weight: bold; */
   color: #4208f2;
-  padding-bottom: 1rem;
+  padding-bottom: 0.2rem;
   }
-  .cardPart2 {
-  border-left: 1px solid #ccc;
-  }
+  .cardPart2 {  border-left: 1px solid #ccc;  }
 
-  .hidden {display:none}
+.hidden {display:none}
 
 input[type=range] {
   -webkit-appearance: none;
@@ -56,9 +52,7 @@ input[type=range] {
   margin-top: 2.5rem;  /*  High of ballon */
   width: 100%;
 }
-input[type=range]:focus {
-  outline: 453px;
-}
+input[type=range]:focus {  outline: 453px;}
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 1.5rem;
@@ -100,27 +94,27 @@ input[type=range]::-moz-range-thumb {
 
 input[type=range]:disabled {
   /* Disabled Element */
-  opacity: 70%;
+  opacity: 30%;
 }
 
 input[type=range]:disabled::-webkit-slider-runnable-track {
   /* Disabled slider-runnable-track */
-  opacity: 70%;
+  opacity: 30%;
 }
 
 input[type=range]:disabled::-moz-range-track {
     /* Disabled slider-range-track */
-    opacity: 70%;
+    opacity: 30%;
 }
 
 input[type=range]:disabled::-webkit-slider-thumb {
   /* Disabled slider-thumb */
-  opacity: 70%;
+  opacity: 30%;
 }
 
 input[type=range]:disabled::-moz-range-thumb {
   /* Disabled slider-thumb */
-  opacity: 70%;
+  opacity: 30%;
 }
 
 .rangewrap{
@@ -181,14 +175,23 @@ input[type=range]:disabled::-moz-range-thumb {
 .dht-labels{
   font-size:1.2rem;vertical-align:middle;padding-bottom:8px;font-weight: bold;
 }
+#StatusRed {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: bold; color: red; }
+#StatusRedNormal {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: normal; color: red; }
+#StatusBlue {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: bold; color: blue; }
+#StatusDarkRed {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: bold; color: darkred; }
+#StatusOrange {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: bold; color: orange; }
+#StatusGreen {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: normal; color: green; }
+#StatusBlack {font-size:1.2rem;vertical-align:middle;padding-bottom:3px;font-weight: bold; color: black; }
+#StatusBlackNormal {font-size:1.3rem;vertical-align:middle;padding-bottom:3px;font-weight: normal; color: black; }
+#StatusBlackNormalSmall {font-size:1.0rem;vertical-align:middle;padding-bottom:2px;font-weight: normal; color: black; }
+.StatusBlackNormalSmall {font-size:1.0rem;vertical-align:middle;padding-bottom:2px;font-weight: normal; color: black; }
+
 .units_update {
   font-size:1.1rem; font-weight: normal; color: lightseagreen; text-align: right; padding-top:18px; display: inline-block;
 }
 
 /* Tooltip container */
-.tooltip {
-  position: relative;
-  border-bottom: 0px dotted black; /* If you want dots under the hoverable text */
+.tooltip { position: relative; border-bottom: 0px dotted black; /* If you want dots under the hoverable text */
 }
 
 /* Tooltip text */
@@ -220,8 +223,8 @@ input[type=range]:disabled::-moz-range-thumb {
   transform: rotate(0deg);
   top: 100%;
   left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
+  margin-left: -0.5rem;
+  border-width: 0.5rem;
   border-style: solid;
   border-color: #555 transparent transparent transparent;
 }
@@ -231,7 +234,7 @@ input[type=range]:disabled::-moz-range-thumb {
   visibility: visible;
   width: auto;
   position:absolute;
-  bottom: 11rem;
+  bottom: 6.55rem;
   display:inline-flexbox;
   opacity: 0.8;
 }
@@ -239,57 +242,6 @@ input[type=range]:disabled::-moz-range-thumb {
 
 
 
-/* BUTTON*/
-input[type=checkbox] {
-  height: 0;
-  width: 0;
-  visibility: hidden;
-}
-
-label {
-  cursor: pointer;
-  text-indent: -9999px;
-  /*width: 9rem;*/
-  height: 1.65rem;
-  background: #03a9f4;
-  display: block;
-  border-radius: 30px;
-  position: relative;
-  padding-left:10px;color: white;
-  /*transform: rotate(270deg);*/
-}
-
-
-label:after {
-  text-indent: -9999px;
-  content: "";
-  position: absolute;
-  top: 0.35rem;
-  left: 0.35rem;
-  width: 1.4rem;
-  height: 1.0rem;
-  background: #f1f7d7e6;
-  border-radius: 30px;
-  transition: 0.3s;
-}
-
-.BOILMODMODE {
-  visibility: hidden;
-}
-.boilerwww:checked ~ .BOILMODMODE {
-  visibility:visible;
-}
-
-input:checked + label {
-  background: #ff0000;
-  text-indent: 2px;
-  text-align: left;
-}
-
-input:checked + label:after {
-  left: calc(100% - 5px);
-  transform: translateX(-100%);
-}
 
 label:active:after {
   width: 11rem;
@@ -313,8 +265,8 @@ label:active:after {
   border: none;
   outline: none;
   cursor: pointer;
-  padding: 12px 13px;
-  font-size: 1.3rem;
+  padding: 0.8rem 0.9rem;
+  font-size: 1.2rem;
   width: 25%;
   font-variant-caps: petite-caps;
 
@@ -332,7 +284,7 @@ label:active:after {
 
   display: none;
 
-  padding: 5px 20px;
+  padding: 0.5rem 1rem;
   height: 100%;
 }
 
@@ -344,19 +296,25 @@ label:active:after {
 
 
 .stopkawebsite {
-  position: fixed;
+  position:fixed;
+  bottom:0;
   left: 0;
-  bottom: 2px;
+  right: 0;
   width: 100%;
+  padding-top: 0.5%;
   background-color: #000000;
   color: white;
   text-align: center;
+  float:left;
+  display: inline;
+  height:[stopkawebsite];
 }
 
 /* Style the webserial(and add height:100% for full page content) */
 /* The browser window */
 .container {
   border: 3px solid #f1f1f1;
+  padding-top: 00.1rem;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 }
@@ -403,7 +361,175 @@ input[type=text] {
   display: table;
   clear: both;
 }
-input[type=text],  textarea {
+
+
+p {
+  color: black;
+}
+
+
+/* File Table */
+
+.fileTable {border-collapse: collapse; width:300px;}
+.fileTable th, .fileTable td { padding: 5px; border: solid 1px #777; }
+.fileTable th { background-color: lightblue; font-weight: bold;}
+
+
+#whicon {color: white; padding: 0%;}
+
+/*  margin: 1rem 1.5rem;  */
+
+input[type=checkbox] { visibility: hidden; margin: 1rem 1.5rem; }
+.RoundSwitchCheckbox { width: 4.5rem; margin: 1rem 1.5rem; height: 4.5rem; background: rgb(22,22,22);border-radius: 3rem; display: inline-block; box-shadow: 0rem 0rem 1rem rgba(22,22,22,0.9); }
+.RoundSwitchCheckbox label{ -webkit-transition: all .4s ease; -moz-transition: all .4s ease; -o-transition: all .4s ease; -ms-transition: all .4s ease; transition: all .4s ease; }
+.RoundSwitchCheckbox input[type=checkbox] + label {
+  z-index:2;
+  position:absolute;
+  margin-left:-4.0rem;
+  width: 4rem;
+  margin-top: 0.2rem;
+  height:4rem;
+  border-radius: 30rem;
+  /* background-color:white; */
+  /* background-color:whitesmoke; */
+  box-shadow: inset 0rem -0.5rem 1.5rem black,0rem 0rem 0.4rem white,inset 0rem 0.4rem 1.5rem white;
+}
+.RoundSwitchCheckbox input[type=checkbox]:checked + label {
+  z-index:2;
+  position:absolute;
+  /* background-color:green; */
+  box-shadow: inset 0rem -0.5rem 1.5rem white,0rem 0rem 0.5rem black,inset 0rem 0.5rem 1.5rem black;
+}
+.RoundSwitchCheckbox:hover { box-shadow: 0rem 0rem 1.5rem rgb(251, 251, 89); }
+
+.boilerwww + label {margin-top: inherit; margin-left:-3.30rem; background-color:white;}
+.boilerwww:checked + label {margin-top: inherit; background-color: red;}
+.boilermodewww + label {margin-left:-3.30rem; margin-top: inherit; background-color:white;}
+.boilermodewww:checked + label {margin-top: inherit; background-color: yellow;}
+.boilerhwwww + label {margin-left:-3.30rem; margin-top: inherit; background-color:white;}
+.boilerhwwww:checked + label {margin-top: inherit; background-color: blue;}
+.ecoMode + label {margin-left:-3.30rem; margin-top: inherit; background-color:white;}
+.ecoMode:checked + label {margin-top: inherit; background-color: green;}
+#BOILMODMODE {visibility: hidden;}
+.boilerhwwww:checked  >  #BOILMODMODE { visibility:visible; }
+/*
+/* BUTTON*/
+/* input[type=checkbox] {
+  height: 0;
+  width: 0;
+  visibility: hidden;
+} */
+/*
+label {
+  cursor: pointer;
+  text-indent: -9999px;
+  /*width: 9rem;*/
+  /* height: 1.65rem;
+  background: #03a9f4;
+  display: block;
+  border-radius: 30px;
+  position: relative;
+  padding-left:10px;color: white; */
+  /*transform: rotate(270deg);*/
+/* } */ */
+
+
+/* label:after {
+  text-indent: -9999px;
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  width: 1.4rem;
+  height: 1.0rem;
+  background: #f1f7d7e6;
+  border-radius: 30px;
+  transition: 0.3s;
+} */
+
+
+/*
+input:checked + label {
+  background: #ff0000;
+  text-indent: 2px;
+  text-align: left;
+}
+
+input:checked + label:after {
+  left: calc(100% - 5px);
+  transform: translateX(-100%);
+} */ */
+
+
+
+.rounded-input {
+  padding:10px;
+  border-radius:10px;
+}
+
+input:required + span:after {
+  content: "Required";
+}
+input[type=text] , input[type=password], input[type=number] {
+  padding: 2px;
+  margin: 3px 0;
+  border:0;
+  box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+  border-radius:10px;
+  flex: 1;
+  font-size: medium;
+  width: auto;
+}
+input[type=text]:focus , input[type=password], input[type=number] { border-color:#cccccc;	outline: none; flex: 1;}
+
+
+.form-group {
+  display: flex;
+}
+label { flex: 0 0 40%; margin: auto; }
+
+input[type=text]::placeholder { color:lightgrey; }
+
+/* labels of form */
+.formbuilder-text-label , .formbuilder-select-label, .formbuilder-number-label {
+  color: #0d0101;
+  width: 30%;
+  text-align:right;
+  margin-right: 1em;
+  text-align: right;
+  font-size: large;
+  font-weight:bold;
+  /* display:block; */
+}
+
+.form_delimiters, .form_header {
+  color:green;
+  margin-bottom: 0;
+  margin-top: 2px;
+  font-size: large;
+  font-weight: bold;
+}
+
+select {
+  /* // A reset of styles, including removing the default dropdown arrow */
+  appearance: none;
+  /* // Additional resets for further consistency */
+  background-color: transparent;
+  border: none;
+  padding: 0 1em 0 0;
+  margin: 0;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: inherit;
+  line-height: inherit;
+}
+
+select[multiple] {
+  padding-right: 0;
+  height: 7rem;
+}
+textarea, .RemoteCommand, #log {
   width: 100%;
   padding: 5px;
   font-size: 1.4rem;
@@ -421,13 +547,4 @@ input[type=text],  textarea {
   display: inline-block;
   max-height: calc(100vh - 40px);
   height: calc(60vh - 40px);
-}
-
-p {
-  color: black;
-}
-
-.formal_text {
-  color: black;
-
 }

@@ -5,11 +5,13 @@ String LOG_TOPIC = String(BASE_TOPIC) + "/log";
 String WILL_TOPIC = String(BASE_TOPIC) + "/Will";
 String IP_TOPIC = String(BASE_TOPIC) + "/IP";
 String STATS_TOPIC = String(BASE_TOPIC) + "/stats";
+#define WILL_ONLINE "Online"
+#define WILL_OFFLINE "Offline"
 
 
 #define BASE_HA_TOPIC "homeassistant"
 #define ROOM_TEMP "current_remote"
-#define QOS "0"
+#define QOS 0
 #define OT "ot_"
 #define BOILER "boiler"
 #define HOT_WATER "domestic_hot_water"

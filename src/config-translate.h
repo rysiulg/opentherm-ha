@@ -32,7 +32,7 @@
 #define t_day "dni"
 #define t_hour "godz."
 #define t_min "min."
-#define t_sek "sek."
+#define t_sek "s."
 #else
 #define Boiler_And_CO_Temperature "Boiler And CO Temperature"
 #define Set_Temperature_for_CO_heat "Set Temperature for CO heat: "
@@ -67,5 +67,5 @@
 #define t_day "day(s)"
 #define t_hour "hour"
 #define t_min "min."
-#define t_sek "sec."
+#define t_sek "s."
 #endif

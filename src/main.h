@@ -1,13 +1,8 @@
-#include <Arduino.h>
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
 #include <OpenTherm.h>
-// #ifdef ICACHE_RAM_ATTR
-// #undef ICACHE_RAM_ATTR
-// #define ICACHE_RAM_ATTR IRAM_ATTR
-// #endif
-
 
 
 #include <WiFiClient.h>
@@ -21,39 +16,11 @@
 #include "configmqtttopics.h"
 
 
-typedef struct
-{
-  char version[6]; // place to detect if settings actually are written
-  bool heatingEnabled;
-  bool enableHotWater;
-  bool automodeCO;
-  float tempBoilerSet;   //temp boiler set -mainly used in auto mode and for display on www actual temp
-  float roomtempSet;              //romtempsetpoint
-  float cutOffTemp;
-  float op_override;     //boiler tempset on heat mode
-  float dhwTarget;       //hot water temp set
-  float roomtemp;        //now is static sensor so for while save last value
-  float temp_NEWS;
-  char ssid[sensitive_size];
-  char pass[sensitive_size];
-  char mqtt_server[sensitive_size*2];
-  char mqtt_user[sensitive_size];
-  char mqtt_password[sensitive_size];
-  int mqtt_port;
-  char COPUMP_GET_TOPIC[255];  //temperatura outside avg NEWS
-  char NEWS_GET_TOPIC[255];   //pompa CO status
-  char NEWS_GET_TOPIC1[255];   //pompa CO status for 1st temp room sensor
-  char NEWS_GET_TOPIC2[255];   //pompa CO status for 2nd temp room sensor
-} configuration_type;
-
-// with DEFAULT values!
-configuration_type CONFIGURATION;
-
 OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
 DallasTemperature sensors(&oneWire);
-OpenTherm ot(OT_IN_PIN, OT_OUT_PIN);
+OpenTherm OpenTherm(OT_IN_PIN, OT_OUT_PIN);
 
-#define spOverrideTimeout_ms (180 * 1000)
+#define spOverrideTimeout_ms (180 * 1000)               //used in main
 
 const unsigned long //extTempTimeout_ms = 180 * 1000,
                     statusUpdateInterval_ms = 0.9 * 1000,
@@ -66,11 +33,8 @@ const unsigned long //extTempTimeout_ms = 180 * 1000,
 // upper and lower bounds on heater level
 const float noCommandSpOverride = 32; //heating water temperature for fail mode (no external temp provided) for co
 
-unsigned int runNumber = 0, // count of restarts
-             publishhomeassistantconfig = 4,                               // licznik wykonan petli -strat od 0
-             publishhomeassistantconfigdivider = 5;                        // publishhomeassistantconfig % publishhomeassistantconfigdivider -publikacja gdy reszta z dzielenia =0 czyli co te ilosc wykonan petli opoznionej update jest wysylany config
 
-float dhwTarget = 51, // domyslna temperatura docelowa wody uzytkowej
+float dhwTarget = 49.5, // domyslna temperatura docelowa wody uzytkowej
       roomtempSet = 20.5,       // set point roomtemp
       roomtemp = 21,     // current temperature
       roomtemp_last = 0, // prior temperature
@@ -89,9 +53,6 @@ float dhwTarget = 51, // domyslna temperatura docelowa wody uzytkowej
       pressure = 0;
 
 
-String LastboilerResponseError;
-
-
 
 unsigned long ts = 0, new_ts = 0, // timestamp
               lastUpdate = 0,
@@ -103,10 +64,10 @@ unsigned long ts = 0, new_ts = 0, // timestamp
               lastroomtempSet = 0,
               WiFipreviousMillis = 0;
 unsigned long long start_flame_time = 0,    //Flame Starts work
+                   start_flame_time_fordisplay = 0,  //for display on status card flame time
                    flame_time_total = 0,         //total sum of flametime
                    flame_time_waterTotal = 0,
-                   flame_time_CHTotal = 0,
-                   flame_time = 0;         //flame time
+                   flame_time_CHTotal = 0;
 
 double  flame_used_power_kwh = 0,     //f or count powerkWh between samples (boiler rated*flame power) use integer end when div use % do get decimal value
         flame_used_power = 0,         //for count used energy
@@ -125,6 +86,7 @@ bool heatingEnabled = true,
      status_FlameOn =false,
      status_Cooling =false,
      status_Diagnostic =false,
+     WebSocketlog = true,
      ecoMode = true;
 
 
@@ -132,32 +94,41 @@ float floor1_temp = InitTemp, floor2_temp = InitTemp, floor1_tempset = InitTemp,
 
 
 
-void recvMsg(uint8_t *data, size_t len);
-void IRAM_ATTR handleInterrupt();
-void getTemp();
+//main.cpp
+void IRAM_ATTR OT_Handle_Interrupt();
 float pid(float sp, float pv, float pv_last, float &ierr, float dt);
 void opentherm_update_data();
+void getTemp();
 String Boiler_Mode();
-void updateInfluxDB();
-void updateMQTTData();
-void mqtt_callback(char *topic, byte *payload, unsigned int length);
-
-
 void setup();
 void loop();
 
-//websrv_ota
-void starthttpserver();
-String processor(const String var);
-String do_stopkawebsite();
-bool loadConfig();
-void SaveConfig();
+//others.h
+void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
+String get_PlaceholderName(u_int i);            //zestaw nazw z js i css i html dopasowania do liczb do łatwiejszego dopasowania
+void updateDatatoWWW_received(u_int i);         //Received data from web and here are converted values to variables of local
+void updateDatatoWWW();                         //update data in ASS.Value by local variables value before resend to web
 
-void updateDatatoWWW_assignPlaceholdersOnce();
-void updateDatatoWWW_received(u_int i);
+//webserver_ota
+bool loadConfig();
+bool SaveConfig();
+//String addusage_local_values();   //it is on commonfunc defined
+
+
+//mqttinfluxsend
+#ifdef ENABLE_INFLUX
+void updateInfluxDB();      //send data to Influxdb
+#endif
+#if defined enableMQTT || defined enableMQTTAsync
+void updateMQTTData();       //send data to MQTT
+void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);
+void mqttReconnect_subscribe_list();
+#endif
+
+
 
 
 #include "common_functions.h"
-#include "websrv_ota.h"
+#include "load_save_config.h"
 #include "mqttinflux.h"
-#include "other.h"
+#include "update_data2web.h"

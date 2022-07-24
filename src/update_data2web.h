@@ -1,9 +1,9 @@
 //received from webserial
 
-void recvMsg(uint8_t *data, size_t len)
+void RemoteCommandReceived(uint8_t *data, size_t len)
 { // for WebSerial
 #ifndef enableWebSerialorSerial
-  String d = "";
+  String d = "\0";
   for (size_t i = 0; i < len; i++)
   {
     d += char(data[i]);
@@ -12,16 +12,16 @@ void recvMsg(uint8_t *data, size_t len)
   d.toUpperCase();
   log_message((char*)F("------------------------------------------------------------------------------------------------"));
   #ifdef debug
-  sprintf(log_chars, "DirectCommands recvMsg Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
+  sprintf(log_chars, "DirectCommands RemoteCommandReceived Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
   log_message(log_chars);
   #endif
 
   if (d == "RESTART")
   {
     log_message((char*)F("OK. Restarting... by command..."));
-    restart();
+    restart(F("Initiated from Remote Command RESTART..."));
   } else
-  if (d == "SENDLOGTOMQTT sendlogtomqttRECONNECT")
+  if (d == "SENDLOGTOMQTT")
   {
     sendlogtomqtt = !sendlogtomqtt;
     sprintf(log_chars,"Toggle Value sending log to MQTT. Actual Value: %s", String(sendlogtomqtt? "MQTT LOG":"DISABLED").c_str());
@@ -29,7 +29,25 @@ void recvMsg(uint8_t *data, size_t len)
   } else
   if (d == "RECONNECT")
   {
+    log_message((char*)F("OK. Try reconnect mqtt"));
+    #ifdef enableMQTT
     mqttReconnect();
+    #endif
+  } else
+  if (d == "LOAD")
+  {
+    if(SPIFFS.exists(configfile)) {
+      String dane = "\0";
+      File file = SPIFFS.open(configfile,"r");
+      while (file.available()) {
+        dane += (file.readStringUntil('\n'));
+      }
+      file.close();
+
+      sprintf(log_chars, "loaded: %s",String(dane).c_str());
+      log_message(log_chars);
+      loadConfig();
+    }
   } else
   if (d == "ROOMTEMP+")
   {
@@ -62,26 +80,25 @@ void recvMsg(uint8_t *data, size_t len)
   } else
   if (d == "SAVE")
   {
-    sprintf(log_chars, "Saving config to EEPROM memory by command...  CONFIG Size: %s", String(sizeof(CONFIGURATION)).c_str());
+    sprintf(log_chars, "Saving config to EEPROM memory by command... ");
     log_message(log_chars, 0);
     SaveConfig();
   } else
   if (d == "RESET_CONFIG")
   {
-    sprintf(log_chars, "RESET config to DEFAULT VALUES and restart...  CONFIG Size: %s", String(sizeof(CONFIGURATION)).c_str());
+    sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content and restart...  ");
     log_message(log_chars, 0);
     SPIFFS.format();
-    CONFIGURATION.version[0] = 'R';
-    CONFIGURATION.version[1] = 'E';
-    CONFIGURATION.version[2] = 'S';
-    CONFIGURATION.version[3] = 'E';
-    CONFIGURATION.version[4] = 'T';
+    for (u_int i=0 ; i < 100; i++){
+      EEPROM.put(i, "\0");
+    }
+
     SaveConfig();
-    restart();
+    restart(F("Initiated from Remote Command RESET_CONFIG..."));
   } else
   if (d == "RESET_FLAMETOTAL" or d == "RFT")
   {
-    log_message((char*)F("RESET flame Total var to 0..."));
+    log_message((char*)F("RESET flame Total vars and CRT to 0..."));
 
     flame_used_power_kwh = 0;
     flame_time_total = 0;
@@ -89,6 +106,7 @@ void recvMsg(uint8_t *data, size_t len)
     flame_time_waterTotal = 0;
     flame_used_power_CHTotal = 0;
     flame_time_CHTotal = 0;
+    CRTrunNumber = 0;
     SaveConfig();
   } else
   if (d.indexOf("HELP")>=0)
@@ -98,21 +116,27 @@ void recvMsg(uint8_t *data, size_t len)
     d1.trim();
     if (d1.length()==0) {
       log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"));
-      log_message((char*)F("KOMENDY: RECONNECT, SAVE, RESET_CONFIG, RESTART, RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-"));
+      log_message((char*)F("KOMENDY: RECONNECT, SAVE, RESET_CONFIG, RESTART, RESET_FLAMETOTAL, SENDLOGTOMQTT, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-"));
       log_message((char*)F("Dodatkowa pomoc dot. komendy po wpisaniu jej wartości np. HELP SAVE"));
     } else
     {
       if (d.indexOf(F("RECONNECT")) >=0) {
         log_message((char*)F(" RECONNECT   -Dokonuje ponownej próby połączenia z bazami,"));
       } else
+      if (d.indexOf(F("SENDLOGTOMQTT")) >=0) {
+        log_message((char*)F(" SENDLOGTOMQTT   -Wysyła Logi do serwera MQTT w topiku log."));
+      } else
+      if (d.indexOf("LOAD") >=0) {
+        log_message((char*)F(" LOAD    -Wymusza odczyt konfiguracji,"));
+      } else
       if (d.indexOf("SAVE") >=0) {
         log_message((char*)F(" SAVE    -Wymusza zapis konfiguracji,"));
       } else
       if (d.indexOf("RESET_CONFIG") >=0) {
-        log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych,"));
+        log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych wraz z plikami www (konieczne ponowne wgranie index.html),"));
       } else
       if (d.indexOf("RESET_FLAMETOTAL") >=0) {
-        log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh na 0"));
+        log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh i czas oraz CRT na 0"));
       } else
       if (d.indexOf("ROOMTEMP0") >=0) {
         log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"));
@@ -134,7 +158,7 @@ void recvMsg(uint8_t *data, size_t len)
 #endif
 }
 String get_PlaceholderName(u_int i)
-{
+{ //get names by number to match www placeholders
   switch(i) {
     case ASS_uptimedana: return PSTR("uptimedana"); break;
     case ASS_temp_NEWS: return PSTR("temp_NEWS"); break;
@@ -159,13 +183,12 @@ String get_PlaceholderName(u_int i)
     case ASS_ecoMode: return PSTR("ecoMode"); break;
     case ASS_MemStats: return PSTR("MemStats"); break;
     case ASS_opcohi: return PSTR("opcohi"); break;
-
   }
   return "\0";
 }
 
-void updateDatatoWWW_received(u_int i)
-{
+void updateDatatoWWW_received(u_int i) {
+  wdt_reset();
   sprintf(log_chars, "Received data nr: %s", String(i).c_str());
   log_message(log_chars);
   switch (i) {
@@ -254,7 +277,7 @@ void updateDatatoWWW() //default false so if true than update
     if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
     if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
 
-    ASS[ASS_uptimedana].Value = String(uptimedana(0) + "    CRT: <B>" + String(runNumber));
+    ASS[ASS_uptimedana].Value = String(uptimedana(0) + "    CRT: <b>" + String(CRTrunNumber));
     ASS[ASS_temp_NEWS].Value = String(temp_NEWS, decimalPlaces);
     ASS[ASS_tempBoiler].Value = String(tempBoiler, decimalPlaces);
     ASS[ASS_tempBoilerSet].Value = String(tempBoilerSet, decimalPlaces);
@@ -277,51 +300,92 @@ void updateDatatoWWW() //default false so if true than update
 
     ptr = "\0";
     if (status_FlameOn) {
-      ptr += "<i class='fas fa-fire' style='color: red'></i>"; ptr += "<span class='dht-labels'>" + String(Flame_Active_Flame_level) + "</span><B>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></B>";
-      ptr += "<br>";
+      ptr += "<i class='fas fa-fire' id='StatusRed'></i>"; ptr += "<span id='StatusRedNormal'>" + String(Flame_Active_Flame_level) + "</span><b>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></b></br>";
     }
-    if (status_Fault) ptr += "<span class='dht-labels'><B>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!<br></B></span>";
+    if (status_Fault) ptr += "<span id='StatusRed'>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!</span></br>";
     if (heatingEnabled) {
-      ptr += "<span class='dht-labels'><B>" + String(BOILER_HEAT_ON);
+      ptr += "<span is='StatusBlack'>" + String(BOILER_HEAT_ON);
       if (automodeCO) ptr += F(" (AUTO)"); else ptr += F(" (Standard)");
-      ptr += ("<br></B></span>");
+      ptr += ("</span></br>");
     }
-    if (status_CHActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>" + String(BOILER_IS_HEATING) + "<br></B></span></font>";
-    if (enableHotWater) ptr += "<span class='dht-labels'><B>" + String(DHW_HEAT_ON) + "<br></B></span>";
-    if (status_WaterActive) ptr += "<font color=\"red\"><span class='dht-labels'><B>" + String(Boiler_Active_heat_DHW) + "<br></B></span></font>";
-    if (status_Cooling) ptr += "<font color=\"orange\"><span class='dht-labels'><B>" + String(CoolingMode) + "<br></B></span></font>";
-    if (status_Diagnostic) ptr += "<font color=\"darkred\"><span class='dht-labels'><B>" + String(DiagMode) + "<br></B></span></font>";
-    if (CO_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>" + String(Second_Engine_Heating_PompActive_Disable_heat) + "<br></B><br></span></font>";
-    if (Water_PumpWorking) ptr += "<font color=\"blue\"><span class='dht-labels'><B>" + String(Second_Engine_Heating_Water_PompActive) + "<br></B><br></span></font>";
-    if (status_FlameOn) ptr += "<font color=\"green\"><span class='dht-labels'>" + String(Flame_time) + "<B>" + uptimedana(flame_time) + "<br></B><br></span></font>";
+    if (status_CHActive) ptr += "<span id='StatusRed'>" + String(BOILER_IS_HEATING) + "</span></br>";
+    if (enableHotWater) ptr += "<span id='StatusBlack'>" + String(DHW_HEAT_ON) + "</span></br>";
+    if (status_WaterActive) ptr += "<span id='StatusRed'>" + String(Boiler_Active_heat_DHW) + "</span></br>";
+    if (status_Cooling) ptr += "<span id='StatusOrange'>" + String(CoolingMode) + "</span><</br>";
+    if (status_Diagnostic) ptr += "<span id='StatusDarkRed'>" + String(DiagMode) + "</span></br>";
+    if (CO_PumpWorking) ptr += "<span id='StatusBlue'>" + String(Second_Engine_Heating_PompActive_Disable_heat) + "</span>></br>";
+    if (Water_PumpWorking) ptr += "<span id='StatusBlue'>" + String(Second_Engine_Heating_Water_PompActive) + "</span></br>";
+    if (status_FlameOn) ptr += "<span id='StatusGreen'>" + String(Flame_time) + "<b>" + uptimedana(start_flame_time_fordisplay) + "</b></span></br>";
     ASS[ASS_Statusy].Value = String(ptr);
 
     ptr = "\0";
-    ptr += "<p>" + String(Flame_total) + "<B>" + String(flame_used_power_kwh, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_total), true)+"</B>");
-    ptr += "<br>w tym woda: <B>" + String(flame_used_power_waterTotal, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_waterTotal), true)+"</B>");
-    ptr += "<br>w tym CO: <B>" + String(flame_used_power_CHTotal, 4) + "kWh</B>";
-    ptr += String(" : ") + "<B>" + String(uptimedana((flame_time_CHTotal), true)+"</B></p>");
+    ptr += "<p id='StatusBlackNormal'>" + String(Flame_total) + "<b>" + String(flame_used_power_kwh, 4) + "kWh</b>";
+    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_total), true)+"</b>");
+    ptr += "</br>w tym woda: <b>" + String(flame_used_power_waterTotal, 4) + "kWh</b>";
+    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_waterTotal), true)+"</b>");
+    ptr += "</br>w tym CO: <b>" + String(flame_used_power_CHTotal, 4) + "kWh</b>";
+    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_CHTotal), true)+"</b></p>");
     sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
     ASS[ASS_UsedMedia].Value = String(ptr);
 
 
     ptr = "\0";
-    ptr += F("Free mem: <B>");
+    ptr += F("Free mem: <b>");
     ptr += String(getFreeMemory());
-    ptr += F("&percnt;</B>, Heap: <B>");
+    ptr += F("&percnt;</b>, Heap: <b>");
     ptr += formatBytes(ESP.getFreeHeap());
-    ptr += F("</B><br>Wifi: <B>");
+    ptr += F("</b>, Wifi: <b>");
     ptr += String(getWifiQuality());
     ptr += F("&percnt;");
-    #ifdef enableMQTT
-    ptr += F("</B>, Mqtt reconnects: <B>");
-    ptr += mqttReconnects;
+    ptr += F("</b>");
+    #if defined enableMQTT || defined enableMQTTAsync
+    ptr += F("</br>MQTT");
+    #ifdef enableMQTTAsync
+    ptr += F("-Async ");
     #endif
+    ptr += F("status: <b>");
+    ptr += ((mqttclient.connected())?"Połączony":"Rozłączony");
+    ptr += F("</b>");
+    ptr += F(", reconnects: <b>");
+    ptr += mqttReconnects;
+    ptr += F("</b>");
+    #endif
+    if (ESPlastResetReason.length() > 0) {
+      ptr += F("</br>Last reset: '<b>");
+      ptr += ESPlastResetReason;
+      ptr += F("</b>'");
+    }
     ASS[ASS_MemStats].Value = String(ptr);
-
-
 #endif
+}
+
+String local_specific_web_processor_vars(String var) {
+  if (var == "COPUMP_GET_TOPIC") { return String(COPUMP_GET_TOPIC);
+  } else
+  if (var == "COPumpStatus_json") { return String(COPumpStatus_json);
+  } else
+  if (var == "WaterPumpStatus_json") { return String(WaterPumpStatus_json);
+  } else
+  if (var == "ROOMS_F1_GET_TOPIC") { return String(ROOMS_F1_GET_TOPIC);
+  } else
+  if (var == "roomF1temp_json") { return String(roomF1temp_json);
+  } else
+  if (var == "roomF1tempset_json") { return String(roomF1tempset_json);
+  } else
+  if (var == "ROOMS_F2_GET_TOPIC") { return String(ROOMS_F2_GET_TOPIC);
+  } else
+  if (var == "roomF2temp_json") { return String(roomF2temp_json);
+  } else
+  if (var == "roomF2tempset_json") { return String(roomF2tempset_json);
+  } else
+  if (var == "debugSerial") { return String(debugSerial?"true":"false");
+  } else
+  if (var == "sendlogtomqtt") { return String(sendlogtomqtt?"true":"false");
+  } else
+  if (var == "WebSocketlog") { return String(WebSocketlog?"true":"false");
+  } else
+  if (var == "influx_measurments") { return String(influx_measurments);
+  }
+  return "\0";
 }
