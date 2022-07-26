@@ -14,31 +14,36 @@
 // v1.21 added influxdb integration
 
 #define PL_lang       //there are some translations.... -but now is not actual
+//#define loctmp "_TMP"     //appender for temporary name in influx and mqtt to not make trash in testing
 
-#define debug
+
+
+//#define debug
 //#define debugweb
-bool debugSerial = true;   //send log_message to websocket
+#define enableDebug2Serial    //send log_message to websocket
 #define enableWebSocketlog  //send log to websocket AND WEBSOCKET MUST BE ENABLED -this replaces me webserial -files on web to build ... to get it
-//#define enableWebSerial     //not fully implemented
-#define ENABLE_INFLUX        // tobiasschuerg/ESP8266 Influxdb @ ^3.12.0   if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
-//#define enableMQTT        //knolleary/PubSubClient@^2.8  --problem with connected ---
-#define enableMQTTAsync     //Async MQTT   ottowinter/AsyncMqttClient-esphome @ ^0.8.6
 #define enableArduinoOTA
-//#define enableWebUpdate
 #define enableWebSocket      //ESPAsyncWebServer
-//#define enableMESHNETWORK
 #define doubleResDet        //  khoih-prog/ESP_DoubleResetDetector @ ^1.3.1)  check if double reset occurs -if yes stay on OTA ready
+#define ENABLE_INFLUX        // tobiasschuerg/ESP8266 Influxdb @ ^3.12.0   if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
+#define enableMQTTAsync     //Async MQTT   ottowinter/AsyncMqttClient-esphome @ ^0.8.6  -implements also reconnects based by wifi
+//#define enableMQTT        //knolleary/PubSubClient@^2.8  --problem with connected status ---
+//#define enableWebUpdate   //not implemented -not working well
+//#define enableMESHNETWORK
+//#define enableWebSerial     //not fully implemented
 
+#define maxLogSize 220      //max size of chars sending to remote log like webserial, mqtt and websocket
 
 
 #if defined enableWebSocketlog && not defined enableWebSocket
 #undef enableWebSocketlog
 #endif
 
-#define loctmp "\0"//_TMP"      //appender for temporary name in influx and mqtt
 
 #define MFG "MARM.pl Sp. z o.o."
-
+#ifndef loctmp
+#define loctmp "\0"
+#endif
 #define hour_s 60*60          //hour in second
 
 #include "sensivity-config-data.h" //it have definitions of sensivity data

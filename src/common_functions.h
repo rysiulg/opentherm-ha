@@ -125,8 +125,8 @@ void updateDatatoWWW_received(u_int i); //update local var from received val fro
 void updateDatatoWWW();                 //update ASS.Value for websocket
 void mqttReconnect_subscribe_list();    //list of mqtt subscibers
 String local_specific_web_processor_vars(String var);
-String addusage_local_values();
-
+String addusage_local_values_save(int EpromPosition);
+void addusage_local_values_load(String dane, int EpromPosition);
 
 //*********************************************************************************************************************************************
 
@@ -144,8 +144,8 @@ bool starting = true,
      sendlogtomqtt = false,       //Send or not Logging to MQTT Topic
      receivedmqttdata = false,
      receivedwebsocketdata = false;
-#ifdef doubleResDet
-bool DRD = false;                 //if DRD is active
+#ifdef enableDebug2Serial
+bool debugSerial = true;
 #endif
 
 #ifndef ecoModeMaxTemp
@@ -167,7 +167,7 @@ const float ophi = 65,               // upper max heat water
             roomtemphi = 29,         // upper max to set of room temperature
             roomtemplo = 15;         // lower min to set of room temperature
 
-char log_chars[1024];      //for logging buffer to log_message function
+char log_chars[maxLogSize];      //for logging buffer to log_message function
 int temp_NEWS_count = 0;
 unsigned int CRTrunNumber = 0; // count of restarts
 
@@ -393,20 +393,24 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
   #include "configmqtttopics.h"
   String send_string = String(uptimedana(millis(), true, true)) + F(": ") + String(string);
   send_string.trim();
-  if (debugSerial) {
+  #ifdef enableDebug2Serial
+  if (debugSerial == true) {
     Serial.println(send_string);
   }
+  #endif
+  if (send_string.length()> maxLogSize ) send_string[maxLogSize] = '\0';
   #ifdef enableWebSerial
-    if (send_string.length() > 255) send_string[255] = '\0';
     if (starting == false and WebSocketlog) {WebSerial.println(send_string);}
   #endif
+  #ifdef enableWebSocketlog
+  if (!starting and WebSocketlog) notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
+  #endif
   #if defined enableMQTT || defined enableMQTTAsync
-  if (sendlogtomqtt || specialforce == 2) {
+  if (sendlogtomqtt == true) { //|| specialforce == 2) {
     send_string.replace("\"","'");
     send_string.replace("\\","");
     if (mqttclient.connected() && !starting)
     {
-      if (send_string.length() > 256) send_string[255] = '\0';
       #if defined enableMQTTAsync
       uint16_t packetIdSub;
       packetIdSub = mqttclient.publish(String(LOG_TOPIC).c_str(), QOS, mqtt_Retain, send_string.c_str());
@@ -423,9 +427,6 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
       #endif
     }
   }
-  #endif
-  #ifdef enableWebSocketlog
-  if (!starting and WebSocketlog) notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
   #endif
 
 }
@@ -779,12 +780,11 @@ String getIdentyfikator(int x)
 void doubleResetDetect() {
   drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   if (drd->detectDoubleReset()) {
-    DRD = true;
-    Serial.println(F("DRD"));
-    #ifdef enableWebSocket
+    // DRDActiveStatus = true;
+    log_message((char*)F("DRD ActiveStatus"));
+    drd->stop();
     SPIFFS.begin();
     SPIFFS.format();
-    #endif
     SaveConfig();
     WiFi.persistent(true);
     WiFi.disconnect();
@@ -795,17 +795,25 @@ void doubleResetDetect() {
     Setup_DNS();
     #ifdef enableWebUpdate
     SetupWebUpdate();
-    Setup_WebServer();
     webserver.begin();
     #endif
     unsigned long long timerek = 0;
     while (true) {
+      #ifdef enableArduinoOTA
       ArduinoOTA.handle();
-      check_wifi();
       if (millis()-timerek > 5000) { //reduce display time to 5sec
         timerek = millis();
         log_message((char*)F("Waiting for OTA update connection..."));
       }
+      #endif
+      #ifdef enableWebUpdate
+      if (millis()-timerek > 5000) { //reduce display time to 5sec
+        timerek = millis();
+        log_message((char*)F("Waiting for OTA update connection..."));
+      }
+      #endif
+      check_wifi();
+      if (millis() > ( 5 * 60 * 1000)) {delay(500); restart("DRD Restart from loop");}
     }
     #endif
     delay(500);
@@ -831,6 +839,9 @@ void Setup_OTA() {
   //ArduinoOTA.setPassword("admin");
 
   ArduinoOTA.onStart([]() {
+    #ifdef doubleResDet
+    drd->stop();
+    #endif
   #ifdef enableWebSocket
    // Disable client connections
    WebSocket.enable(false);
@@ -997,15 +1008,26 @@ void connectToWifi() {
     } else {
       WiFi.begin(ssid, pass);
     }
+  WiFi.enableSTA(true);
+  WiFi.setAutoReconnect(true);
+  WiFi.setAutoConnect(true);
+  WiFi.persistent(true);
+
 }
 //***********************************************************************************************************************************************************************************************
 void Setup_WiFi() {
   sprintf(log_chars,"SetupWiFi...Connecting to: %s", String(ssid).c_str());
   log_message(log_chars);
-  if (!DRD) {
+  WiFi.setAutoReconnect(false);
+  WiFi.setAutoConnect(false);
+  WiFi.disconnect(true);
+//  if (DRDActiveStatus == false) {
     wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
     wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
-  }
+    // #ifdef enableMQTTAsync
+    // connectToMqtt(); //Sometimes event IPgot ip not fired -maybe faster connection ip than event ?v and this not starts
+    // #endif
+//  }
   #ifndef ESP32
   WiFi.hostname(String(me_lokalizacja).c_str());      //works for esp8266
   #else
@@ -1019,10 +1041,6 @@ void Setup_WiFi() {
 
   connectToWifi();
 
-  WiFi.enableSTA(true);
-  WiFi.setAutoReconnect(true);
-  WiFi.setAutoConnect(true);
-  WiFi.persistent(true);
   sprintf(log_chars,"SSID: %s  PASS: %s", String(ssid).c_str(), String(pass).c_str());
   log_message(log_chars);
 
@@ -1266,7 +1284,7 @@ String web_processor(const String var) {
       #ifdef debugweb
       ptr += F("Build with debugweb flag<br>");
       #endif
-      #ifdef debugSerial
+      #ifdef enableDebug2Serial
       ptr += F("Serial logging and use simple commands is enabled after connecting Serial at ");
       ptr += String(SerialSpeed) + "bps<br>";
       #endif
@@ -1294,8 +1312,12 @@ String web_processor(const String var) {
   if (var == "roomtemplo") { return String(roomtemplo);
   } else
   if (var == "roomtemphi") { return String(roomtemphi);
-
-
+   } else
+  if (var == "debugSerial") { return String(debugSerial ? 1 : 0);
+  } else
+  if (var == "sendlogtomqtt") { return String(sendlogtomqtt ? 1 : 0);
+  } else
+  if (var == "WebSocketlog") { return String(WebSocketlog ? 1 : 0);
   } else
   if (var == "NEWS_GET_TOPIC") { return String(NEWS_GET_TOPIC);
   } else
@@ -1306,6 +1328,7 @@ String web_processor(const String var) {
   } else
   if (var == "SSID_PAssword") { return String(pass);
   } else
+  #if defined enableMQTT || defined enableMQTTAsync
   if (var == "MQTT_servername") { return String(mqtt_server);
   } else
   if (var == "MQTT_port_No") { return String(mqtt_port);
@@ -1314,7 +1337,8 @@ String web_processor(const String var) {
   } else
   if (var == "MQTT_Password_data") { return String(mqtt_password);
   } else
-
+  #endif
+  #ifdef ENABLE_INFLUX
   if (var == "INFLUXDB_URL") { return String(influx_server);
   } else
   if (var == "INFLUXDB_DB_NAME") { return String(influx_database);
@@ -1324,8 +1348,8 @@ String web_processor(const String var) {
   if (var == "INFLUXDB_PASSWORD") { return String(influx_password);
   } else
   if (var == "influx_measurments") { return String(influx_measurments);
-
   } else
+#endif
   if (var == "STATE") { return (digitalRead(LED_BUILTIN) ? "on" : "off");
   } else
   {
@@ -1387,9 +1411,7 @@ String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk 
       toreturn += placeholdername;
       toreturn += F("\":");
       toreturn += F("\"");
-      String tmpStr = ASS[i].Value;
-      tmpStr.replace("\"","'");
-      toreturn += tmpStr;
+      toreturn += ASS[i].Value;
       toreturn += F("\"");
     }
     if (function == ValuesToWSWPforWebProcessor && (placeholdername).indexOf(processorAsk) >= 0 ) return String(ASS[i].Value);
@@ -1432,38 +1454,76 @@ void handleWebSocketMessage_sensors(String message) {
   }
 }
 //***********************************************************************************************************************************************************************************************
-const char edit_html[] = ("<!DOCTYPE html> <html> <head> <title>%ME_TITLE% Uploader</title> <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'> </head> <body> <center> <header> <div class=\"topnav\"> <h1>%ME_TITLE%</h1> </div> <br> <h2>Uploader</h2> </header> <div> <p style=\"text-align: center\">Use this page to upload new files to the ESP.<br/>You can use compressed (deflated) files (files with a .gz extension) to save space and bandwidth.<br/>Existing files will be replaced.</p> <form method=\"post\" enctype=\"multipart/form-data\" style=\"margin: 0px auto 8px auto\" > <input type=\"file\" name=\"Choose file\" accept=\".gz,.html,.ico,.js,.css\"> <input class=\"button\" type=\"submit\" value=\"Upload\" name=\"submit\"> </form> </div> <br><br> %DIR_LIST% </center> </body> </html>");
+const char edit_html[] = ("<!DOCTYPE html> <html> <head> <title>%ME_TITLE% Uploader</title> <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'> </head> <body> <center> <header> <div class=\"topnav\"> <h1>%ME_TITLE%</h1> </div> <br> <h2>Uploader</h2> </header> <div> <p style=\"text-align: center\">Use this page to upload new files to the ESP.<br/>You can use compressed (deflated) files (files with a .gz extension) to save space and bandwidth.<br/>Existing files will be replaced.</p> <form method=\"post\" enctype=\"multipart/form-data\" style=\"margin: 0px auto 8px auto\" > <input type=\"file\" name=\"Choose file\" accept=\".gz,.html,.ico,.js,.css,.cfg\"> <input class=\"button\" type=\"submit\" value=\"Upload\" name=\"submit\"> </form> </div> <br><br> %DIR_LIST% </center> </body> </html>");
+//File: edit.html.gz, Size: 499
+#define edit_html_gz_len 499
+const uint8_t edit_html_gz[] PROGMEM = {
+0x1F, 0x8B, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x55, 0x53, 0x4D, 0x6F, 0xDB, 0x30,
+0x0C, 0xFD, 0x2B, 0x5C, 0x80, 0x20, 0x2D, 0xE0, 0xD8, 0xC9, 0x4E, 0xC3, 0x90, 0xE4, 0xD2, 0xE6,
+0x10, 0xA0, 0xC3, 0x8A, 0x35, 0x3D, 0x14, 0x08, 0x50, 0xD0, 0x16, 0x63, 0x6B, 0x90, 0x25, 0xC1,
+0xA2, 0x9D, 0x64, 0xBF, 0x7E, 0x94, 0x3F, 0xD6, 0xEE, 0xA2, 0x0F, 0x92, 0x7A, 0x8F, 0x8F, 0xA4,
+0x36, 0x5F, 0x1E, 0x7F, 0x3E, 0x1C, 0xDF, 0x9E, 0xF7, 0x50, 0x71, 0x6D, 0x76, 0xB0, 0x99, 0x36,
+0x42, 0x25, 0x1B, 0x6B, 0x36, 0xB4, 0x9B, 0xFF, 0xD8, 0xBF, 0x1F, 0x0F, 0xC7, 0xA7, 0xFD, 0x1C,
+0x5E, 0xBD, 0x71, 0xA8, 0xA8, 0xD9, 0x64, 0x83, 0x0B, 0x36, 0x35, 0x31, 0x42, 0xE1, 0x2C, 0x93,
+0xE5, 0xED, 0xE2, 0xA2, 0x15, 0x57, 0x5B, 0x45, 0x9D, 0x2E, 0x68, 0xD9, 0x5F, 0x12, 0xD0, 0x56,
+0xB3, 0x46, 0xB3, 0x0C, 0x05, 0x1A, 0xDA, 0xAE, 0xD3, 0x55, 0x02, 0x35, 0x5E, 0x75, 0xDD, 0xD6,
+0x9F, 0x4D, 0x6D, 0xA0, 0xA6, 0xBF, 0x63, 0x2E, 0xA6, 0xD5, 0x02, 0x2C, 0xD6, 0xB4, 0x5D, 0x74,
+0x9A, 0x2E, 0xDE, 0x35, 0xBC, 0x10, 0xAA, 0x6C, 0xCC, 0x2A, 0x77, 0xEA, 0x26, 0x5B, 0x21, 0x8C,
+0xD4, 0x8C, 0xC9, 0xF6, 0x07, 0xA5, 0x3B, 0x28, 0x0C, 0x86, 0xB0, 0x3D, 0xCD, 0xD8, 0x79, 0x8B,
+0xDD, 0x69, 0x16, 0xFD, 0xEB, 0x4F, 0x12, 0x04, 0x65, 0x1D, 0xB1, 0x24, 0x36, 0x42, 0xF5, 0xEF,
+0xBF, 0xEE, 0x3E, 0x74, 0xC9, 0x65, 0x64, 0x9A, 0x20, 0x65, 0xF5, 0x10, 0xF8, 0x26, 0x69, 0x09,
+0x2C, 0x5D, 0x79, 0x89, 0x46, 0x97, 0xF6, 0x3B, 0x0C, 0x09, 0x08, 0xC5, 0x6B, 0x20, 0xE0, 0x4A,
+0x07, 0xF0, 0x58, 0xCA, 0xC9, 0x41, 0xDB, 0xC3, 0x81, 0xA5, 0x0B, 0x9C, 0xB5, 0xA1, 0x10, 0x6D,
+0x5C, 0x11, 0xEC, 0x5F, 0x9E, 0x53, 0xE1, 0xCC, 0x76, 0x6F, 0xAE, 0x85, 0x02, 0x6D, 0x54, 0x2D,
+0xC5, 0xAB, 0x7D, 0x43, 0x21, 0x90, 0x82, 0x3B, 0x45, 0x67, 0x83, 0x4C, 0xEA, 0x7E, 0x7C, 0x77,
+0x37, 0x6C, 0x17, 0xCD, 0x15, 0x20, 0xA4, 0xE5, 0x1F, 0x10, 0x7E, 0xB2, 0x41, 0x3B, 0x7B, 0x1F,
+0x41, 0x03, 0x76, 0x04, 0xC1, 0x63, 0x41, 0x80, 0x56, 0x41, 0x2E, 0x4B, 0x5F, 0xF5, 0x81, 0x65,
+0x7F, 0xD5, 0x81, 0xB5, 0x2D, 0x61, 0x42, 0x31, 0x06, 0x72, 0x82, 0x86, 0xBC, 0x91, 0x17, 0x2A,
+0xDD, 0x64, 0x5E, 0xC4, 0x9D, 0x5D, 0x53, 0x83, 0xB4, 0xB1, 0x72, 0x4A, 0x04, 0x7A, 0x17, 0xF8,
+0x34, 0x03, 0xB2, 0x05, 0xDF, 0x7C, 0x54, 0x5C, 0xB7, 0x86, 0xB5, 0xC7, 0x86, 0xB3, 0x18, 0xB8,
+0x54, 0xC8, 0x28, 0xFE, 0xA9, 0x1E, 0x35, 0x36, 0xA5, 0x96, 0x5A, 0xAC, 0xFC, 0x15, 0xB0, 0x95,
+0x8C, 0xBE, 0x8D, 0x07, 0x89, 0x11, 0x6C, 0x6D, 0x7D, 0xCB, 0x30, 0x22, 0xC5, 0x2C, 0xC4, 0xDC,
+0x37, 0xF6, 0x34, 0x7B, 0xA8, 0x9C, 0x13, 0xF5, 0xA3, 0x11, 0x8B, 0x82, 0x3C, 0x8B, 0x59, 0x34,
+0x26, 0x69, 0x9C, 0xC2, 0x24, 0xD5, 0x85, 0x4B, 0xD2, 0xDF, 0x21, 0x49, 0x8B, 0x10, 0x97, 0x73,
+0xD9, 0x77, 0x73, 0x80, 0x9C, 0xDA, 0x9C, 0xB7, 0xCC, 0xCE, 0x0A, 0xC0, 0xC8, 0x11, 0xDA, 0xBC,
+0xD6, 0x51, 0x40, 0x87, 0xA6, 0x8D, 0x86, 0xA1, 0xB3, 0x1F, 0xB4, 0x53, 0x40, 0xEC, 0x72, 0x14,
+0xF4, 0xDF, 0x2C, 0xF4, 0xF3, 0x30, 0x7F, 0x3C, 0xFC, 0x7A, 0x7F, 0x3A, 0xBC, 0x1C, 0xE7, 0xE2,
+0xFA, 0x37, 0x64, 0xD9, 0x38, 0x75, 0x59, 0xFF, 0x43, 0xFE, 0x02, 0xEA, 0xA0, 0x6C, 0x65, 0x38,
+0x03, 0x00, 0x00
+};
 const char success_html[] = "<!DOCTYPE html> <html> <head> Success saved. Please click button to restart for apply new config values";
 //***********************************************************************************************************************************************************************************************
 void Setup_WebServer() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Server",String(me_lokalizacja));
   DefaultHeaders::Instance().addHeader("Title",String(me_lokalizacja));
+  //DefaultHeaders::Instance().addHeader("Content-Encoding","gzip");
+  //webserver.serveStatic("/", SPIFFS, "/").setTemplateProcessor(web_processor); //this prevents page loading
   #ifdef enableWebUpdate
   SetupWebUpdate();
   #endif
 //  webserver.rewrite("/", "/index.html");
 //  webserver.rewrite("/edit.html", "/edit");
 //  webserver.serveStatic("/index.html", SPIFFS, "/index.html");//no cache so can change
-  webserver.on("/" , HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
-  }).setAuthentication("", "");
+    webserver.on("/" , HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
+    }).setAuthentication("", "");
 
-  if (!SPIFFS.exists("/edit.html")) {
+
+  if (!SPIFFS.exists("/index.html")) {
     webserver.rewrite("/", "/edit");
+  }
     webserver.on("/edit" , HTTP_GET, [](AsyncWebServerRequest *request){
+//       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html; charset=utf-8; Content-Encoding; gzip", edit_html, web_processor);
+//       response->addHeader("Content-Encoding", "gzip");
+// //      response->addHeader("Last-Modified", htmlBuildTime);
+//       request->send(response);
       request->send_P(200, "text/html; charset=utf-8",  edit_html, web_processor);
     }).setAuthentication("", "");
-  } else
-  {
-    webserver.on("/edit" , HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/edit.html", "text/html; charset=utf-8",  false, web_processor);
-    }).setAuthentication("", "");
-  }
 
-    webserver.on("/post" , HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/success.html", "text/html; charset=utf-8",  false);
-    }).setAuthentication("", "");
+    // webserver.on("/post" , HTTP_GET, [](AsyncWebServerRequest *request){
+    //   request->send(SPIFFS, "/success.html", "text/html; charset=utf-8",  false);
+    // }).setAuthentication("", "");
 
 
   webserver.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -1473,13 +1533,12 @@ void Setup_WebServer() {
       }else {
           //message = "No message sent PARAM_roomtempset0";
       }    AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "Update value");
-    response->addHeader("Refresh", "1");
+    response->addHeader("Refresh", "2");
     response->addHeader("Location", "/");
     request->send(response);
-  });
+  }).setAuthentication("", "");
 
-    webserver.on("/post", HTTP_POST, [](AsyncWebServerRequest * request)
-  {
+  webserver.on("/post", HTTP_POST, [](AsyncWebServerRequest * request) {
     int paramsNr = request->params(); // number of params (e.g., 1)
     sprintf(log_chars,"HTTP received POST, paramsNr: %s", String(paramsNr).c_str());
     log_message(log_chars);
@@ -1496,60 +1555,29 @@ void Setup_WebServer() {
       if (String(p->name()) == "LogOutput") { postjson += 1; } else { postjson += String(p->value()); }
       postjson += F("\"");
     }
-    postjson += addusage_local_values();
+    postjson += addusage_local_values_save(0);
     postjson += F("}");
-    sprintf(log_chars,"Received POST: %s", postjson.c_str());
+    sprintf(log_chars,"Received POST: %sB", String(postjson.length()).c_str());
     log_message(log_chars);
     if(SPIFFS.exists(configfile)) {SPIFFS.remove(configfile);}
     File file = SPIFFS.open(configfile, "w");
     if (!file){
       log_message((char*)F("Error opening file for write config..."));
-      return;
-    }
+    } else
     if (!file.println(postjson)) {
       log_message((char*)F("File was not written with config"));
-      file.close();
-    } else {
-      file.close();
-      loadConfig();
-      #if defined enableMQTT || defined enableMQTTAsync
-        #ifdef enableMQTTAsync
-        mqttReconnectTimer.detach();
-        #endif
-      mqttclient.disconnect();
-      Setup_Mqtt();
-      #endif
-      #ifdef ENABLE_INFLUX
-      Setup_Influx(); //but i think is only reset apply new settings
-      #endif
     }
-    request->send(200);
-  });
+      file.close();
+      log_message((char*)F("File was saved. Now sending reply to success.html."));
+      loadConfig();
+    request->send(SPIFFS, "/success.html", "text/html; charset=utf-8",  false);
+    // request->send(200);
+  }).setAuthentication("", "");;
 
-  // webserver.on("/edit.html",  HTTP_POST, [&](AsyncWebServerRequest *request) {  // If a POST request is sent to the /edit.html address,
-  //         // the request handler is triggered after the upload has finished...
-  //     // create the response, add header, and send response
-  //     AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/edit.html", "text/plain; charset=utf-8", false, web_processor);
-  //     response->addHeader("Connection", "close");
-  //     request->send(response);
-  //     },
-  //   [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
-  //                 size_t len, bool final) {webhandleFileUpload(request, filename, index, data, len, final);}
-  // ).setAuthentication("", "");
 
-  //webserver.serveStatic("/", SPIFFS, "/").setCacheControl("private, max-age=600");
-
-  // Start a HTTP server with a file read handler and an upload handler
- //     log_message((char*)F("Set cache!"));
-      // Serve a file with no cache so every tile It's downloaded
- //     webserver.serveStatic("/configuration.json", SPIFFS, "/configuration.json","no-cache, no-store, must-revalidate");
-      // Server all other page with long cache so browser chaching they
-      // Comment this line for esp8266
- //     webserver.serveStatic("/", SPIFFS, "/","max-age=31536000");
 
 // run handleUpload function when any file is uploaded
 //  webserver.addHandler(webhandleFileRead);
-//  webserver.addHandler(webhandleFileUpload);
   webserver.onFileUpload(webhandleFileUpload);
   webserver.onNotFound([](AsyncWebServerRequest * request) {        // if someone requests any other file or page, go to function 'handleNotFound'
     log_message((char*)F("On not found"));
@@ -1644,8 +1672,10 @@ void MainCommonSetup()  {
   #ifndef SerialSpeed
   #define SerialSpeed 115200
   #endif
+  #ifdef enableDebug2Serial
   Serial.begin(SerialSpeed);
   Serial.println(F("Starting... MainSetup..."));
+  #endif
   getFreeMemory();
   #ifdef doubleResDet
   // double reset detect from start
@@ -1660,15 +1690,13 @@ void MainCommonSetup()  {
   Setup_FileSystem();
   if (loadConfig())
   {
-    Serial.println(F("Config loaded:"));
+    sprintf(log_chars,"Config loaded. SSID: %s, Pass: %s",String(ssid).c_str(), String(pass).c_str());
+    log_message(log_chars);
   }
   else
   {
-    Serial.println(F("Config not loaded!"));
-    #ifdef enableWebSocket
-    SPIFFS.begin();
+    log_message((char*)F("Config not loaded!"));
     SPIFFS.format();
-    #endif
     SaveConfig(); // overwrite with the default settings
   }
 #if defined enableMQTTAsync
@@ -1686,6 +1714,7 @@ void MainCommonSetup()  {
 #endif                //we have webserial so we can enable it now
   #ifdef enableWebSocket
 
+
   Setup_WebSocket();
   Setup_WebServer();    //new www based on spiff files
   starting = false;
@@ -1696,7 +1725,9 @@ void MainCommonSetup()  {
   #if defined enableMQTT
   Setup_Mqtt();     //for async version move before wifi
   #endif
+  #ifdef ENABLE_INFLUX
   Setup_Influx();
+  #endif
   ESPlastResetReason = get_lastResetReason();
   log_message((char*)ESPlastResetReason.c_str());
   #ifdef enableMESHNETWORK
@@ -1903,12 +1934,19 @@ void mqttReconnect()
 //***********************************************************************************************************************************************************************************************
 void onWifiConnect(const WiFiEventStationModeGotIP& event) {
   log_message((char*)F("WiFi Task: Connected to Wi-Fi."));
-  if (!DRD) connectToMqtt();
+  // if (DRDActiveStatus == false)
+  #ifdef enableMQTTAsync
+  connectToMqtt();
+  #endif
+  // sprintf(log_chars,"Wifi Connect. DRD status: %s", String(DRDActiveStatus?"Active":"Inactive").c_str());
+  // log_message(log_chars);
 }
 //***********************************************************************************************************************************************************************************************
 void onWifiDisconnect(const WiFiEventStationModeDisconnected& event) {
   log_message((char*)F("WiFi Task: Disconnected from Wi-Fi."));
+  #ifdef enableMQTTAsync
   mqttReconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
+  #endif
   wifiReconnectTimer.once(2, connectToWifi);
 }
 //***********************************************************************************************************************************************************************************************
@@ -2322,3 +2360,192 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
   #endif
 }
 #endif
+
+
+#include <EEPROM.h>
+
+// Where in EEPROM?
+#define CONFIG_START 100
+
+// load whats in EEPROM in to the local CONFIGURATION if it is a valid setting
+bool loadConfig() {
+  int EpromPosition = 1;
+  EEPROM.begin(CONFIG_START);  //Size can be anywhere between 4 and 4096 bytes.
+  EEPROM.get(EpromPosition, CRTrunNumber);
+  EpromPosition += sizeof(CRTrunNumber);
+   if (isnan(CRTrunNumber) || (CRTrunNumber + 1) == 0) CRTrunNumber = 0;
+
+  if(SPIFFS.exists(configfile)) {
+    String dane = "\0";
+    File file = SPIFFS.open(configfile,"r");
+    while (file.available()) {
+      dane += (file.readStringUntil('\n'));
+    }
+    file.close();
+
+    // sprintf(log_chars, "loaded config: %s",String(dane).c_str());
+    // log_message(log_chars);
+//    return true;
+    //set to false -no data in config from web save
+    WebSocketlog = false;
+    debugSerial = false;
+    sendlogtomqtt = false;
+    String tmpstrval = "\0";
+//this block is as param from html
+    if (dane.indexOf("WebSocketlog") != -1)          { tmpstrval = getJsonVal(dane, "WebSocketlog"); tmpstrval.replace("\"",""); if (tmpstrval == "1") {WebSocketlog = true;} else {WebSocketlog = false;} }
+    if (dane.indexOf("debugSerial") != -1)           { tmpstrval = getJsonVal(dane, "debugSerial"); tmpstrval.replace("\"",""); if (tmpstrval == "1") { debugSerial = true;} else {debugSerial = false;} }
+    if (dane.indexOf("sendlogtomqtt") != -1)         { tmpstrval = getJsonVal(dane, "sendlogtomqtt"); tmpstrval.replace("\"",""); if (tmpstrval == "1") {sendlogtomqtt = true;} else {sendlogtomqtt = false;} }
+    if (dane.indexOf("SSID_Name") != -1)             { tmpstrval = getJsonVal(dane, "SSID_Name"); tmpstrval.replace("\"",""); strcpy(ssid, tmpstrval.c_str()); }
+    if (dane.indexOf("SSID_PAssword") != -1)         { tmpstrval = getJsonVal(dane, "SSID_PAssword"); tmpstrval.replace("\"",""); strcpy(pass, tmpstrval.c_str()); }
+    #if defined enableMQTT || defined enableMQTTAsync
+    if (dane.indexOf("MQTT_servername") != -1)       { tmpstrval = getJsonVal(dane, "MQTT_servername"); tmpstrval.replace("\"",""); strcpy(mqtt_server, tmpstrval.c_str()); }
+    if (dane.indexOf("MQTT_port_No") != -1)          { tmpstrval = getJsonVal(dane, "MQTT_port_No"); tmpstrval.replace("\"",""); mqtt_port = (int) tmpstrval.toInt(); }
+    if (dane.indexOf("MQTT_username") != -1)         { tmpstrval = getJsonVal(dane, "MQTT_username"); tmpstrval.replace("\"",""); strcpy(mqtt_user, tmpstrval.c_str()); }
+    if (dane.indexOf("MQTT_Password_data") != -1)    { tmpstrval = getJsonVal(dane, "MQTT_Password_data"); tmpstrval.replace("\"",""); strcpy(mqtt_password, tmpstrval.c_str()); }
+    #endif
+    #ifdef ENABLE_INFLUX
+    if (dane.indexOf("INFLUXDB_URL") != -1)          { tmpstrval = getJsonVal(dane, "INFLUXDB_URL"); tmpstrval.replace("\"",""); strcpy(influx_server, tmpstrval.c_str()); }
+    if (dane.indexOf("INFLUXDB_DB_NAME") != -1)      { tmpstrval = getJsonVal(dane, "INFLUXDB_DB_NAME"); tmpstrval.replace("\"",""); strcpy(influx_database, tmpstrval.c_str()); }
+    if (dane.indexOf("INFLUXDB_USER") != -1)         { tmpstrval = getJsonVal(dane, "INFLUXDB_USER"); tmpstrval.replace("\"",""); strcpy(influx_user, tmpstrval.c_str()); }
+    if (dane.indexOf("INFLUXDB_PASSWORD") != -1)     { tmpstrval = getJsonVal(dane, "INFLUXDB_PASSWORD"); tmpstrval.replace("\"",""); strcpy(influx_password, tmpstrval.c_str()); }
+    if (dane.indexOf("influx_measurments") != -1)    { tmpstrval = getJsonVal(dane, "influx_measurments"); tmpstrval.replace("\"",""); strcpy(influx_measurments, tmpstrval.c_str()); }
+    #endif
+    if (dane.indexOf("NEWS_GET_TOPIC") != -1)        { tmpstrval = getJsonVal(dane, "NEWS_GET_TOPIC"); tmpstrval.replace("\"",""); NEWS_GET_TOPIC = tmpstrval; }
+    if (dane.indexOf("NEWStemp_json") != -1)         { tmpstrval = getJsonVal(dane, "NEWStemp_json"); tmpstrval.replace("\"",""); NEWStemp_json = tmpstrval; }
+//this block is as param from html
+//next is appender from function so i use in saveconfig this function to append rest
+// sprintf(log_chars,"LOG: mqtserver: %s:%i, mqtuser: %s, mqtpass: %s, NEWS_GET_TOPIC: %s, NEWStemp_json: %s", String(mqtt_server).c_str(), mqtt_port, String(mqtt_user).c_str(), String(mqtt_password).c_str(), String(NEWS_GET_TOPIC).c_str(),String(NEWStemp_json).c_str());
+// log_message(log_chars);
+
+
+    addusage_local_values_load(dane, EpromPosition);
+
+    u_int CRT = 0;
+    if (dane.indexOf("CRT") != -1) {
+      CRT = (u_int) getJsonVal(dane, "CRT").toInt();
+      if (CRT > CRTrunNumber) CRTrunNumber = CRT;
+    }
+    sprintf(log_chars,"Config loaded. SSID: %s",String(ssid).c_str());
+    log_message(log_chars);
+
+    return true; // return 1 if config loaded
+  }
+  return false; // return 0 if config NOT loaded
+}
+
+
+
+// save the CONFIGURATION in to EEPROM
+bool SaveConfig() {
+  log_message((char*)F("Saving config...........................prepare "));
+  unsigned int runtmp;
+  EEPROM.begin(CONFIG_START);  //Size can be anywhere between 4 and 4096 bytes.
+  int EpromPosition = 1;
+  EEPROM.get(EpromPosition,runtmp);
+  if (runtmp != CRTrunNumber) EEPROM.put(EpromPosition, CRTrunNumber);
+  EpromPosition += sizeof(CRTrunNumber);
+
+  unsigned long long check_l = 0;
+  unsigned long long check_w = 0;
+  if(SPIFFS.exists(configfile)) {
+    String dane = "\0";
+    File file = SPIFFS.open(configfile,"r");
+    while (file.available()) {
+      dane += (file.readStringUntil('\n'));
+    }
+    file.close();
+    if (dane.length() > 0) {
+      for (u_int i = 0; i < dane.length(); i++){
+        check_l += (unsigned long long) dane[i];
+      }
+    //check_l = check_l;  dane.length();
+    }
+  }
+
+    String configSave = F("{\"config\":99");
+//this block is as param from html
+    configSave += F(",\"debugSerial\":");
+    configSave += debugSerial?1:0;
+    configSave += F(",\"WebSocketlog\":");
+    configSave += WebSocketlog?1:0;
+    configSave += F(",\"sendlogtomqtt\":");
+    configSave += sendlogtomqtt?1:0;
+    configSave += ",\"CRT\":";
+    configSave += String(CRTrunNumber);
+    configSave += F(",\"SSID_Name\":\"");
+    configSave += String(ssid);
+    configSave += F("\"");
+    configSave += F(",\"SSID_PAssword\":\"");
+    configSave += String(pass);
+    configSave += F("\"");
+    #if defined enableMQTT || defined enableMQTTAsync
+    configSave += F(",\"MQTT_servername\":\"");
+    configSave += String(mqtt_server);
+    configSave += F("\"");
+    configSave += F(",\"MQTT_port_No\":\"");
+    configSave += String(mqtt_port);
+    configSave += F("\"");
+    configSave += F(",\"MQTT_username\":\"");
+    configSave += String(mqtt_user);
+    configSave += F("\"");
+    configSave += F(",\"MQTT_Password_data\":\"");
+    configSave += String(mqtt_password);
+    configSave += F("\"");
+    #endif
+    #ifdef ENABLE_INFLUX
+    configSave += F(",\"INFLUXDB_URL\":\"");
+    configSave += String(influx_server);
+    configSave += F("\"");
+    configSave += F(",\"INFLUXDB_DB_NAME\":\"");
+    configSave += String(influx_database);
+    configSave += F("\"");
+    configSave += F(",\"INFLUXDB_USER\":\"");
+    configSave += String(influx_user);
+    configSave += F("\"");
+    configSave += F(",\"INFLUXDB_PASSWORD\":\"");
+    configSave += String(influx_password);
+    configSave += F("\"");
+    configSave += F(",\"influx_measurments\":\"");
+    configSave += String(influx_measurments);
+    configSave += F("\"");
+    #endif
+    configSave += F(",\"NEWS_GET_TOPIC\":\"");
+    configSave += String(NEWS_GET_TOPIC);
+    configSave += F("\"");
+    configSave += F(",\"NEWStemp_json\":\"");
+    configSave += String(NEWStemp_json);
+    configSave += F("\"");
+
+
+//this block is as param from html
+//next is appender from function so i use in saveconfig this function to append rest
+    configSave += addusage_local_values_save(EpromPosition);
+    configSave += F("}");
+
+  if (configSave.length() > 0) {
+    for (u_int i=0; i< configSave.length() ; i++){
+      check_w += (unsigned long long) configSave[i];
+    }
+  //check_w = check_w // configSave.length();
+  }
+
+  if (check_w != check_l) {
+    sprintf(log_chars,"Saving config...........................Something changed w/l: %s/%s", String(check_w).c_str(), String(check_l).c_str());
+    log_message(log_chars);
+    if(SPIFFS.exists(configfile)) {SPIFFS.remove(configfile);}
+    File file = SPIFFS.open(configfile, "w");
+    if (!file){
+      log_message((char*)F("Error opening file for write config..."));
+      return false;
+    }
+    if (!file.println(configSave)) {
+      log_message((char*)F("File was not written with config"));
+      file.close();
+      return false;
+    } else {
+      file.close();
+    }
+    return true;
+  }
+  return false;
+}

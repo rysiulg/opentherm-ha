@@ -4,7 +4,7 @@
  * ----------------------------------------------------------------------------
 */
 
-var gateway = `ws://${window.location.hostname}/ws`;
+var gateway = `ws://${window.location.host}/ws`;
 var websocket;
 var programaticallychange = false;
 window.addEventListener('load', onload);
@@ -121,14 +121,14 @@ function onMessage(event) {
             if (document.getElementById(key)!=null) {
                 if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
                     var samesam;
-                    if (parseFloat(document.getElementById("slider"+ key.charAt(key.length-1)).value).toFixed(1) === parseFloat(myObj[key]).toFixed(1)) {
+                    if (parseFloat(document.getElementById("slider"+ key.charAt(key.length-1)).value).toFixed(1) == parseFloat(myObj[key]).toFixed(1)) {
                         samesam=true;
                     } else {
                         samesam=false;
                     }
                     document.getElementById("slider"+ key.charAt(key.length-1)).value = parseFloat(myObj[key]).toFixed(1);
                     document.getElementById("slider"+ key.charAt(key.length-1)).setAttribute('value', myObj[key]);
-                    if (!samesam) document.getElementById("slider"+ key.charAt(key.length-1)).onchange();
+                    if (samesam == false) {document.getElementById("slider"+ key.charAt(key.length-1)).onchange(); console.log("this triggers");}
                 } else
                 if (key.trim() === "boilerhwwww") { //CWU water
     //               console.log(key+" Stan HW: "+myObj[key]);
@@ -235,11 +235,7 @@ function onMessage(event) {
                     document.getElementById(key+"1").innerHTML= myObj[key];
                     document.getElementById(key+"2").innerHTML= myObj[key];
                 } else
-                if (key.trim() === "debugSerial" ||
-                    key.trim() === "sendlogtomqtt" ||
-                    key.trim() === "enableWebSocketlog") {
-                    document.getElementById(key).selected = myObj[key];
-                } else {
+                {
                     document.getElementById(key).innerHTML= myObj[key];   //for everything other match like temps and statuses
                 }
             }

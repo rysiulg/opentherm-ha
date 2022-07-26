@@ -86,9 +86,10 @@ bool heatingEnabled = true,
      status_FlameOn =false,
      status_Cooling =false,
      status_Diagnostic =false,
-     WebSocketlog = true,
      ecoMode = true;
-
+#if defined enableWebSocketlog && defined enableWebSocket
+bool WebSocketlog = true;
+#endif
 
 float floor1_temp = InitTemp, floor2_temp = InitTemp, floor1_tempset = InitTemp, floor2_tempset = InitTemp;
 

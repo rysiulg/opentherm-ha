@@ -416,7 +416,9 @@ void mqtt_callback(char *topicPubSu, byte *payloadPubSu, unsigned int lengthPubS
 #if defined enableMQTT || defined enableMQTTAsync
 void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT) {
   payloadStrFromMQTT.trim();
-  sprintf(log_chars, "MQTT callback Topic: %s, Received message ...: %s", String(topicStrFromMQTT).c_str(), payloadStrFromMQTT.c_str());
+  String TmpToLog ="\0";
+  if (payloadStrFromMQTT.length() > maxLogSize) {TmpToLog = payloadStrFromMQTT; TmpToLog[maxLogSize]='\0';} else {TmpToLog = payloadStrFromMQTT;}
+  sprintf(log_chars, "MQTT callback Topic: %s, Received %sB message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT.length()).c_str(), TmpToLog);
   log_message(log_chars);
   #ifdef debug0xtu //na seriaprint wywale exc28
   sprintf(log_chars, "MQTT callback Topic: %s, Received message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT).c_str());
@@ -665,8 +667,8 @@ void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT) {
         }
       }
 
-#endif
 }
+#endif
 
 
 #if defined enableMQTT || defined enableMQTTAsync

@@ -24,7 +24,9 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   if (d == "SENDLOGTOMQTT")
   {
     sendlogtomqtt = !sendlogtomqtt;
-    sprintf(log_chars,"Toggle Value sending log to MQTT. Actual Value: %s", String(sendlogtomqtt? "MQTT LOG":"DISABLED").c_str());
+    // Serial.print("sendlogtomqtt: ");
+    // Serial.println(sendlogtomqtt);
+    sprintf(log_chars,"Toggle Value sending log to MQTT. Actual Value: %s, %s", String((sendlogtomqtt)? "MQTT LOG" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
     log_message(log_chars);
   } else
   if (d == "RECONNECT")
@@ -43,9 +45,6 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
         dane += (file.readStringUntil('\n'));
       }
       file.close();
-
-      sprintf(log_chars, "loaded: %s",String(dane).c_str());
-      log_message(log_chars);
       loadConfig();
     }
   } else
@@ -325,8 +324,10 @@ void updateDatatoWWW() //default false so if true than update
     ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_waterTotal), true)+"</b>");
     ptr += "</br>w tym CO: <b>" + String(flame_used_power_CHTotal, 4) + "kWh</b>";
     ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_CHTotal), true)+"</b></p>");
+    #ifdef debug
     sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
+    #endif
     ASS[ASS_UsedMedia].Value = String(ptr);
 
 
@@ -378,14 +379,6 @@ String local_specific_web_processor_vars(String var) {
   if (var == "roomF2temp_json") { return String(roomF2temp_json);
   } else
   if (var == "roomF2tempset_json") { return String(roomF2tempset_json);
-  } else
-  if (var == "debugSerial") { return String(debugSerial?"true":"false");
-  } else
-  if (var == "sendlogtomqtt") { return String(sendlogtomqtt?"true":"false");
-  } else
-  if (var == "WebSocketlog") { return String(WebSocketlog?"true":"false");
-  } else
-  if (var == "influx_measurments") { return String(influx_measurments);
   }
   return "\0";
 }

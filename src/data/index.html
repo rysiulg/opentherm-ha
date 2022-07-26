@@ -8,7 +8,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="3600">
     <link rel="icon" type="image/png" href="favicon.ico">
-    <link rel="stylesheet" type="text/css" href="index.css">
+    <link rel="stylesheet" type="text/css" href="index-mini.css" title="base" />
+    <link rel="alternate stylesheet" type="text/css" href="index.css" title="base" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 
 </head>
@@ -110,7 +111,7 @@
                     <sup class="unitsmain">&deg;C</sup>
                 </div>
                 <div class="rangewrap">
-                    <span class="rangevalue">%sliderValue2%</span>
+                    <span class="rangevalue" id="RangeV2">%sliderValue2%</span>
                     <input type="range" class="range" id="slider2" onchange="updateSliderPWM(this)" min=%oplo% max=%ophi% step="0.5" value="%sliderValue2%">
                 </div>
                 <hr><p class="state">Docelowa: <span id="sliderValue2">%sliderValue2%</span> <sup class="units">&deg;C</sup></p>
@@ -142,7 +143,7 @@
                     <sup class="unitsmain">&deg;C</sup>
                 </div>
                 <div class="rangewrap">
-                    <div class="rangevalue">%sliderValue4%</div>
+                    <div class="rangevalue" id="RangeV4">%sliderValue4%</div>
                     <input type="range" class="range" id="slider4" onchange="updateSliderPWM(this)" min=%roomtemplo% max=%roomtemphi% step="0.5" value=%sliderValue4% disabled>
                 </div>
                 <hr><p class="state">Docelowa: <span id="sliderValue4">%sliderValue4%</span> <sup class="units">&deg;C</sup></p>
@@ -156,7 +157,7 @@
                     <span class="tooltiptext">Próg Aktywacji grzania powyżej której nastąpi uruchomienia pieca do ogrzeania CO. Poniżej tej Wartości grzanie CO się nie włączy.</span>
                 </div>
                 <div class="rangewrap">
-                    <span class="rangevalue">%sliderValue3%</span>
+                    <span class="rangevalue" id="RangeV3">%sliderValue3%</span>
                     <input type="range" class="range" id="slider3" onchange="updateSliderPWM(this)" min=%cutofflo% max=%cutoffhi% step="0.5" value=%sliderValue3%>
                 </div>
                 <hr><p class="state">Docelowa: <span id="sliderValue3">%sliderValue3%</span> <sup class="units">&deg;C</sup></p>
