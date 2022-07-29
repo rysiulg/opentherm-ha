@@ -1,161 +1,84 @@
 //received from webserial
 
-void RemoteCommandReceived(uint8_t *data, size_t len)
-{ // for WebSerial
-#ifndef enableWebSerialorSerial
-  String d = "\0";
-  for (size_t i = 0; i < len; i++)
-  {
-    d += char(data[i]);
-  }
-  d.trim();
-  d.toUpperCase();
-  log_message((char*)F("------------------------------------------------------------------------------------------------"));
-  #ifdef debug
-  sprintf(log_chars, "DirectCommands RemoteCommandReceived Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
-  log_message(log_chars);
-  #endif
 
-  if (d == "RESTART")
-  {
-    log_message((char*)F("OK. Restarting... by command..."));
-    restart(F("Initiated from Remote Command RESTART..."));
+String LocalVarsRemoteCommands(String command, size_t gethelp) {
+  if (gethelp == remoteHelperMenuCommand) {
+    return F(", RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-, USEDMEDIA");
   } else
-  if (d == "SENDLOGTOMQTT")
+  if (gethelp == remoteHelperMenu)
   {
-    sendlogtomqtt = !sendlogtomqtt;
-    // Serial.print("sendlogtomqtt: ");
-    // Serial.println(sendlogtomqtt);
-    sprintf(log_chars,"Toggle Value sending log to MQTT. Actual Value: %s, %s", String((sendlogtomqtt)? "MQTT LOG" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
-    log_message(log_chars);
-  } else
-  if (d == "RECONNECT")
-  {
-    log_message((char*)F("OK. Try reconnect mqtt"));
-    #ifdef enableMQTT
-    mqttReconnect();
-    #endif
-  } else
-  if (d == "LOAD")
-  {
-    if(SPIFFS.exists(configfile)) {
-      String dane = "\0";
-      File file = SPIFFS.open(configfile,"r");
-      while (file.available()) {
-        dane += (file.readStringUntil('\n'));
-      }
-      file.close();
-      loadConfig();
-    }
-  } else
-  if (d == "ROOMTEMP+")
-  {
-    float startroomtemp = roomtemp;
-    if (roomtemp < roomtemphi) {
-      roomtemp = roomtemp + 0.5;
-    }
-    tmanual = true;
-    lastTempSet = millis();
-    sprintf(log_chars, "Change ROOMTEMP+ from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
-    log_message(log_chars);
-  } else
-  if (d == "ROOMTEMP-")
-  {
-    float startroomtemp = roomtemp;
-    if (roomtemp > roomtemplo) {
-      roomtemp = roomtemp - 0.5;
-    }
-    lastTempSet = millis();
-    tmanual = true;
-    sprintf(log_chars, "Change ROOMTEMP- from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
-    log_message(log_chars);
-  } else
-  if (d == "ROOMTEMP0")
-  {
-    tmanual = !tmanual;
-    lastTempSet = millis();
-    sprintf(log_chars, "Toggle ROOMTEMP0 from: %s to: %s", String(!tmanual ? "MANUAL" : "AUTO").c_str(), String(tmanual ? "MANUAL" : "AUTO").c_str());
-    log_message(log_chars);
-  } else
-  if (d == "SAVE")
-  {
-    sprintf(log_chars, "Saving config to EEPROM memory by command... ");
-    log_message(log_chars, 0);
-    SaveConfig();
-  } else
-  if (d == "RESET_CONFIG")
-  {
-    sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content and restart...  ");
-    log_message(log_chars, 0);
-    SPIFFS.format();
-    for (u_int i=0 ; i < 100; i++){
-      EEPROM.put(i, "\0");
-    }
-
-    SaveConfig();
-    restart(F("Initiated from Remote Command RESET_CONFIG..."));
-  } else
-  if (d == "RESET_FLAMETOTAL" or d == "RFT")
-  {
-    log_message((char*)F("RESET flame Total vars and CRT to 0..."));
-
-    flame_used_power_kwh = 0;
-    flame_time_total = 0;
-    flame_used_power_waterTotal = 0;
-    flame_time_waterTotal = 0;
-    flame_used_power_CHTotal = 0;
-    flame_time_CHTotal = 0;
-    CRTrunNumber = 0;
-    SaveConfig();
-  } else
-  if (d.indexOf("HELP")>=0)
-  {
-    String d1 = d;
-    d1.replace("HELP","");
-    d1.trim();
-    if (d1.length()==0) {
-      log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"));
-      log_message((char*)F("KOMENDY: RECONNECT, SAVE, RESET_CONFIG, RESTART, RESET_FLAMETOTAL, SENDLOGTOMQTT, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-"));
-      log_message((char*)F("Dodatkowa pomoc dot. komendy po wpisaniu jej wartości np. HELP SAVE"));
+    if (command.indexOf("ROOMTEMP0") >=0) {
+      log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"), logCommandResponse);
     } else
-    {
-      if (d.indexOf(F("RECONNECT")) >=0) {
-        log_message((char*)F(" RECONNECT   -Dokonuje ponownej próby połączenia z bazami,"));
-      } else
-      if (d.indexOf(F("SENDLOGTOMQTT")) >=0) {
-        log_message((char*)F(" SENDLOGTOMQTT   -Wysyła Logi do serwera MQTT w topiku log."));
-      } else
-      if (d.indexOf("LOAD") >=0) {
-        log_message((char*)F(" LOAD    -Wymusza odczyt konfiguracji,"));
-      } else
-      if (d.indexOf("SAVE") >=0) {
-        log_message((char*)F(" SAVE    -Wymusza zapis konfiguracji,"));
-      } else
-      if (d.indexOf("RESET_CONFIG") >=0) {
-        log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych wraz z plikami www (konieczne ponowne wgranie index.html),"));
-      } else
-      if (d.indexOf("RESET_FLAMETOTAL") >=0) {
-        log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh i czas oraz CRT na 0"));
-      } else
-      if (d.indexOf("ROOMTEMP0") >=0) {
-        log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"));
-      } else
-      if (d.indexOf("ROOMTEMP+") >=0) {
-        log_message((char*)F(" ROOMTEMP+  -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,"));
-      } else
-      if (d.indexOf("ROOMTEMP-") >=0) {
-        log_message((char*)F(" ROOMTEMP-  -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,"));
-      } else
-      if (d.indexOf("RESTART") >=0) {
-        log_message((char*)F(" RESTART  -Uruchamia ponownie układ,"));
-      }
-    }
+    if (command.indexOf("ROOMTEMP+") >=0) {
+      log_message((char*)F(" ROOMTEMP+  -Zwiększa wartość temperatury z pokoju o 0,5 stopnia,"), logCommandResponse);
+    } else
+    if (command.indexOf("ROOMTEMP-") >=0) {
+      log_message((char*)F(" ROOMTEMP-  -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,"), logCommandResponse);
+    } else
+    if (command.indexOf("RESET_FLAMETOTAL") >=0) {
+      log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh i czas oraz CRT na 0"), logCommandResponse);
+    } else
+    return F("OK");
   } else
-  log_message((char*)F("Unknown command received from serial or webserial input."));
-  log_message((char*)F("------------------------------------------------------------------------------------------------"));
+  if (gethelp == remoteHelperCommand)
+  {
+    if (command == "USEDMEDIA")
+    {
+      String ptrS = F("Used Media: ");
+      ptrS += String(Flame_total) + ": " + String(flame_used_power_kwh) + "kWh,    " + uptimedana((flame_time_total), true) + "\n";
+      ptrS += "   w tym woda: " + String(flame_used_power_waterTotal) + "kWh,     " + String(uptimedana((flame_time_waterTotal), true) + "\n");
+      ptrS += "   w tym CO:   " + String(flame_used_power_CHTotal) + "kWh,      " + String(uptimedana((flame_time_CHTotal), true)+"\n");
+      log_message((char*)ptrS.c_str(), logCommandResponse);
+    } else
+    if (command == "ROOMTEMP+")
+    {
+      float startroomtemp = roomtemp;
+      if (roomtemp < roomtemphi) {
+        roomtemp = roomtemp + 0.5;
+      }
+      tmanual = true;
+      lastTempSet = millis();
+      sprintf(log_chars, "Change ROOMTEMP+ from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
+      log_message(log_chars, logCommandResponse);
+    } else
+    if (command == "ROOMTEMP-")
+    {
+      float startroomtemp = roomtemp;
+      if (roomtemp > roomtemplo) {
+        roomtemp = roomtemp - 0.5;
+      }
+      lastTempSet = millis();
+      tmanual = true;
+      sprintf(log_chars, "Change ROOMTEMP- from: %s to: %s", String(startroomtemp).c_str(), String(roomtemp).c_str());
+      log_message(log_chars);
+    } else
+    if (command == "ROOMTEMP0")
+    {
+      tmanual = !tmanual;
+      lastTempSet = millis();
+      sprintf(log_chars, "Toggle ROOMTEMP0 from: %s to: %s", String(!tmanual ? "MANUAL" : "AUTO").c_str(), String(tmanual ? "MANUAL" : "AUTO").c_str());
+      log_message(log_chars, logCommandResponse);
+    } else
+    if (command == "RESET_FLAMETOTAL" or command == "RFT")
+    {
+      log_message((char*)F("RESET flame Total vars and CRT to 0..."), logCommandResponse);
 
-#endif
+      flame_used_power_kwh = 0;
+      flame_time_total = 0;
+      flame_used_power_waterTotal = 0;
+      flame_time_waterTotal = 0;
+      flame_used_power_CHTotal = 0;
+      flame_time_CHTotal = 0;
+      CRTrunNumber = 0;
+      SaveConfig();
+    }
+    return F("OK");
+  }
+  return F("Unknown command");
 }
+
+
 String get_PlaceholderName(u_int i)
 { //get names by number to match www placeholders
   switch(i) {

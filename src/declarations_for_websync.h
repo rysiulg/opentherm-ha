@@ -35,3 +35,8 @@
 #define ecoModeDisabledMaxTemp 60
 #define wwwstatus_on "on"
 #define wwwstatus_off "off"
+#define logStandard 0               //standard log send
+#define logCommandResponse 1        //send response to websocket after received command
+#define remoteHelperMenu 0          //werbserial -remote commands helper: get menu help
+#define remoteHelperMenuCommand 1   //werbserial -remote commands helper: get menucommand line
+#define remoteHelperCommand 2       //werbserial -remote commands helper: run command

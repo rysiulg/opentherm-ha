@@ -3,6 +3,12 @@
 //Nice Info about ESP: https://tttapa.github.io/ESP8266/Chap01%20-%20ESP8266.html
 
 #define ATOMIC_FS_UPDATE   //For uploading compressed filesystems, the application must be built with ATOMIC_FS_UPDATE defined because, otherwise, eboot will not be involved in writing the filesystem.
+#define CONFIG_FREERTOS_UNICORE
+#define CONFIG_ASYNC_TCP_RUNNING_CORE 1
+#ifndef SSE_MAX_QUEUED_MESSAGES
+#define SSE_MAX_QUEUED_MESSAGES 32
+#endif
+
 #include <Arduino.h>
 
 #define wwwport 80
@@ -127,6 +133,7 @@ void mqttReconnect_subscribe_list();    //list of mqtt subscibers
 String local_specific_web_processor_vars(String var);
 String addusage_local_values_save(int EpromPosition);
 void addusage_local_values_load(String dane, int EpromPosition);
+String LocalVarsRemoteCommands(String command, size_t gethelp); //get local data for remotecommands like help menu, items in menu and commands torun
 
 //*********************************************************************************************************************************************
 
@@ -141,12 +148,14 @@ unsigned long
               lastWifiRetryTimer = 0;
 
 bool starting = true,
-     sendlogtomqtt = false,       //Send or not Logging to MQTT Topic
      receivedmqttdata = false,
      receivedwebsocketdata = false;
 #ifdef enableDebug2Serial
 bool debugSerial = true;
 #endif
+#if defined enableMQTT || defined enableMQTTAsync
+bool sendlogtomqtt = false;       //Send or not Logging to MQTT Topic
+#endif //#if defined enableMQTT || defined enableMQTTAsync
 
 #ifndef ecoModeMaxTemp
   #define ecoModeMaxTemp 39       //economical low temperature heating known as condensation heat
@@ -259,6 +268,7 @@ void Setup_WiFi();
 void Setup_Influx();
 #endif
 void Setup_DNS();
+String getFSDir (String path);    //default path="/"
 void Setup_FileSystem();
 #ifdef enableWebSocket
 void Setup_WebSocket();
@@ -313,7 +323,9 @@ void connectToMqtt();
 #if defined enableMQTT || defined enableMQTTAsync
 void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass, String unitClass, String stateClass, String HAicon, const String payloadvalue_startend_val, const String payloadON, const String payloadOFF);
 #endif //enableMQTTAsync
-
+bool loadConfig();
+bool SaveConfig();
+void RemoteCommandReceived(uint8_t *data, size_t len);
 
 
 
@@ -385,7 +397,7 @@ bool check_isValidTemp(float temptmp)
 
 }
 //***********************************************************************************************************************************************************************************************
-void log_message(char* string, u_int specialforce = 0)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
+void log_message(char* string, u_int specialforce = logStandard)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
 {
   // macros from DateTime.h
 /* Useful Constants */
@@ -419,7 +431,8 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
   send_string_ch = toCharPointer(String("{\"log\":\""+String(send_string)+"\"}"));
 
   #ifdef enableWebSocketlog
-  if (!starting and WebSocketlog) notifyClients(String("{\"log\":\""+String(send_string)+"\"}"));
+  if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(String("{\"log\":\""+String(send_string)+"\"}"));
+
   #endif
 
   #if defined enableMQTT || defined enableMQTTAsync
@@ -1117,19 +1130,26 @@ void Setup_DNS() {
   MDNS.addService("http", "tcp", 80);
 }
 //***********************************************************************************************************************************************************************************************
+String getFSDir (String path = "/")
+{
+  String directory = "\0";
+  Dir dir = SPIFFS.openDir(path);
+  while (dir.next()) {                      // List the file system contents
+  String fileName = dir.fileName();
+  size_t fileSize = dir.fileSize();
+  sprintf(log_chars, "Actual direcory list:\n  FS File: %s, size: %s", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
+  directory += String(log_chars);
+  }
+  return directory;
+}
+//***********************************************************************************************************************************************************************************************
 void Setup_FileSystem() {// Start the FSand list all contents
   SPIFFS.begin();                             // Start the SPI Flash File System (SPIFFS)
+  #ifndef debug
+  log_message((char*)F("FS started."));
+  #else
   log_message((char*)F("FS started. Contents:"));
-  #ifdef debug
-  {
-    Dir dir = SPIFFS.openDir("/");
-    while (dir.next()) {                      // List the file system contents
-      String fileName = dir.fileName();
-      size_t fileSize = dir.fileSize();
-      sprintf(log_chars, "  FS File: %s, size: %s", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
-      log_message(log_chars);
-    }
-  }
+    log_message(getFSDir().c_str());
   #endif
 }
 //***********************************************************************************************************************************************************************************************
@@ -1529,11 +1549,15 @@ void Setup_WebServer() {
   #endif
 //  webserver.rewrite("/", "/index.html");
 //  webserver.rewrite("/edit.html", "/edit");
-//  webserver.serveStatic("/index.html", SPIFFS, "/index.html");//no cache so can change
-    webserver.on("/" , HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
-    }).setAuthentication("", "");
+     webserver.on("/" , HTTP_GET, [](AsyncWebServerRequest *request){
+         request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
+     }).setAuthentication("", "");
 
+  webserver.serveStatic("/", SPIFFS, "/index.html")
+      .setDefaultFile("index.html")
+      .setCacheControl("max-age=600")
+      .setTemplateProcessor(web_processor)
+      .setAuthentication("\0", "\0");//no cache so can change
 
   if (!SPIFFS.exists("/index.html")) {
     webserver.rewrite("/", "/edit");
@@ -1549,6 +1573,7 @@ void Setup_WebServer() {
     // webserver.on("/post" , HTTP_GET, [](AsyncWebServerRequest *request){
     //   request->send(SPIFFS, "/success.html", "text/html; charset=utf-8",  false);
     // }).setAuthentication("", "");
+
 
 
   webserver.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -1854,9 +1879,8 @@ void MainCommonLoop()
     String test = Serial.readString();
     data = (u_int8_t *)test.c_str();
     RemoteCommandReceived(data, (size_t)(test.length() ));
-    #ifdef debug
-    log_message((char*)F("MainLoop: Received SerialData"));
-    #endif
+    log_message((char*)F("----------------------------MainLoop: Received SerialData command --------------------------------"), logCommandResponse);
+
     //free(data);
   }
 
@@ -2490,7 +2514,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
 }
 #endif
 
-
+//***********************************************************************************************************************************************************************************************
 #include <EEPROM.h>
 
 // Where in EEPROM?
@@ -2508,7 +2532,7 @@ bool loadConfig() {
     String dane = "\0";
     File file = SPIFFS.open(configfile,"r");
     while (file.available()) {
-      dane += (file.readStringUntil('\n'));
+      dane += String(file.read());
     }
     file.close();
 
@@ -2561,9 +2585,7 @@ bool loadConfig() {
   }
   return false; // return 0 if config NOT loaded
 }
-
-
-
+//***********************************************************************************************************************************************************************************************
 // save the CONFIGURATION in to EEPROM
 bool SaveConfig() {
   log_message((char*)F("Saving config...........................prepare "));
@@ -2580,7 +2602,7 @@ bool SaveConfig() {
     String dane = "\0";
     File file = SPIFFS.open(configfile,"r");
     while (file.available()) {
-      dane += (file.readStringUntil('\n'));
+      dane += String(file.read());
     }
     file.close();
     if (dane.length() > 0) {
@@ -2678,3 +2700,239 @@ bool SaveConfig() {
   }
   return false;
 }
+//***********************************************************************************************************************************************************************************************
+void RemoteCommandReceived(uint8_t *data, size_t len)
+{ // for WebSerial
+#ifndef enableWebSerialorSerial
+  String d = "\0";
+  for (size_t i = 0; i < len; i++)
+  {
+    d += char(data[i]);
+  }
+  d.trim();
+  String d_oryg = d;
+  d.toUpperCase();
+  log_message((char*)F("------------------------ REMOTE COMMAND RECEIVED START ------------------------------------------------------------------------"), logCommandResponse);
+  #ifdef debug
+  sprintf(log_chars, "DirectCommands RemoteCommandReceived Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
+  log_message(log_chars, logCommandResponse);
+  #endif
+
+  if (d.indexOf("HELP")>=0)
+  {
+    String d1 = d;
+    d1.replace("HELP","");
+    d1.trim();
+    if (d1.length()==0) {
+      log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"), logCommandResponse);
+      String commands = F("KOMENDY: ");
+      commands += F("RESTART, LOAD, SAVE, DIR, DEL filename");
+      #ifdef enableDebug2Serial
+      commands += F(", SENDLOGTOSERIAL");
+      #endif //enableDebug2Serial
+      #if defined enableWebSocketlog && defined enableWebSocket
+      commands += F(", SENDLOGTOWEBSOCKET");
+      #endif //defined enableWebSocketlog && defined enableWebSocket
+      #if defined enableMQTT || defined enableMQTTAsync
+      commands += F(", SENDLOGTOMQTT");
+      #endif  //#if defined enableMQTT || defined enableMQTTAsync
+      commands += F(", RESET_CONFIG");
+      #ifdef enableMQTT
+      commands += F(", RECONNECTMQTT");
+      #endif //enableMQTT
+      commands += LocalVarsRemoteCommands(d, remoteHelperMenu);
+      log_message((char*)commands.c_str(), logCommandResponse);
+      log_message((char*)F("Dodatkowa pomoc dot. komendy po wpisaniu jej wartości np. HELP SAVE"), logCommandResponse);
+    } else
+    {
+      if (d.indexOf("RESTART") >=0) {
+        log_message((char*)F(" RESTART  -Uruchamia ponownie układ,"), logCommandResponse);
+      } else
+      if (d.indexOf("LOAD") >=0) {
+        log_message((char*)F(" LOAD    -Wymusza odczyt konfiguracji,"), logCommandResponse);
+      } else
+      if (d.indexOf("SAVE") >=0) {
+        log_message((char*)F(" SAVE    -Wymusza zapis konfiguracji,"), logCommandResponse);
+      } else
+      if (d.indexOf("RESET_CONFIG") >=0) {
+        log_message((char*)F(" RESET_CONFIG    -UWAGA!!!! Resetuje konfigurację do wartości domyślnych wraz z plikami www (konieczne ponowne wgranie index.html),"), logCommandResponse);
+      } else
+      #ifdef enableMQTT
+      if (d.indexOf(F("RECONNECTMQTT")) >=0) {
+        log_message((char*)F(" RECONNECTMQTT   -Dokonuje ponownej próby połączenia z bazami mqtt,"), logCommandResponse);
+      } else
+      #endif
+      #if defined enableWebSocketlog && defined enableWebSocket
+      if (d.indexOf(F("SENDLOGTOWEBSOCKET")) >=0) {
+        log_message((char*)F(" SENDLOGTOWEBSOCKET   -Wysyła Logi do serwera Websocket."), logCommandResponse);
+      } else
+      #endif  //defined enableWebSocketlog && defined enableWebSocket
+      #ifdef enableDebug2Serial
+      if (d.indexOf(F("SENDLOGTOSERIAL")) >=0) {
+        log_message((char*)F(" SENDLOGTOSERIAL   -Wysyła Logi do portu szeregowego COM."), logCommandResponse);
+      } else
+      #endif   //enableDebug2Serial
+      #if defined enableMQTT || defined enableMQTTAsync
+      if (d.indexOf(F("SENDLOGTOMQTT")) >=0) {
+        log_message((char*)F(" SENDLOGTOMQTT   -Wysyła Logi do serwera MQTT w topiku log."), logCommandResponse);
+      } else
+      #endif //#if defined enableMQTT || defined enableMQTTAsync
+      {
+      String x = LocalVarsRemoteCommands(d, remoteHelperMenu);
+      }
+    }
+  } else
+  if (d == "RESTART")
+  {
+    log_message((char*)F("OK. Restarting... by command..."), logCommandResponse);
+    restart(F("Initiated from Remote Command RESTART..."));
+  } else
+  if (d == "DIR")
+  {
+      log_message((char*)getFSDir().c_str(), logCommandResponse);
+  } else
+  if (d.indexOf("DEL")==0)
+  {
+    d_oryg.substring(4);
+    d_oryg.trim();
+    d.replace("DEL","");
+    d.trim();
+    if (d.length()>0)
+    {
+      if(SPIFFS.exists("/"+d_oryg)) {
+        SPIFFS.remove("/"+d_oryg);
+        sprintf(log_chars," Filename %s is removed.\n%s", d_oryg.c_str(), getFSDir().c_str());
+        log_message(log_chars, logCommandResponse);
+      } else {
+        sprintf(log_chars,"Filename %s doesn't exist.\n%s", d_oryg.c_str(), getFSDir().c_str());
+        log_message(log_chars, logCommandResponse);
+      }
+      if (d_oryg == configfile) {
+        SaveConfig();
+        sprintf(log_chars,"Filename %s is essential !!!. So I've created new one.\n%s", d_oryg.c_str(), getFSDir().c_str());
+      }
+    }
+  } else
+  #if defined enableWebSocketlog && defined enableWebSocket
+  if (d.indexOf("SENDLOGTOWEBSOCKET") == 0)
+  {
+    sprintf(log_chars, "Actual State of sending WebSocket log: %s, %s", String(WebSocketlog ? "ENABLED" : "DISABLED").c_str(), String(WebSocketlog).c_str());
+    log_message(log_chars, logCommandResponse);
+    d.replace("SENDLOGTOWEBSOCKET","");
+    d.trim();
+    if (d.length()>0)
+    {
+      if (d=="YES" || d=="ON" || d=="1" || d == "START") {
+        WebSocketlog = true;
+        sprintf(log_chars,"CHANGE State of sending WebSocket log: %s, %s", String(WebSocketlog ? "ENABLED" : "DISABLED").c_str(), String(WebSocketlog).c_str());
+      }
+      else
+        if (d=="NO" || d=="OFF" || d=="0" || d == "STOP") {
+        WebSocketlog = false;
+        sprintf(log_chars,"CHANGE State of sending WebSocket log: %s, %s", String(WebSocketlog ? "ENABLED" : "DISABLED").c_str(), String(WebSocketlog).c_str());
+      } else {
+        sprintf(log_chars, "uknown value %s", d.c_str());
+      }
+      log_message(log_chars, logCommandResponse);
+
+    }
+  } else
+  #endif
+  #if defined enableMQTT || defined enableMQTTAsync
+  if (d.indexOf("SENDLOGTOMQTT") == 0)
+  {
+    sprintf(log_chars,"Actual State of sending MQTT Log: %s, %s", String(sendlogtomqtt ? "ENABLED" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
+    log_message(log_chars, logCommandResponse);
+    d.replace("SENDLOGTOMQTT","");
+    d.trim();
+    if (d.length()>0)
+    {
+      if (d=="YES" || d=="ON" || d=="1" || d == "START") {
+        sendlogtomqtt = true;
+        sprintf(log_chars,"CHANGE State of sending MQTT Log: %s, %s", String(sendlogtomqtt ? "ENABLED" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
+      }
+      else
+        if (d=="NO" || d=="OFF" || d=="0" || d == "STOP") {
+        sendlogtomqtt = false;
+        sprintf(log_chars,"CHANGE State of sending MQTT Log: %s, %s", String(sendlogtomqtt ? "ENABLED" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
+      } else {
+        sprintf(log_chars, "uknown value %s", d.c_str());
+      }
+      log_message(log_chars, logCommandResponse);
+
+    }
+  } else
+  #endif //#if defined enableMQTT || defined enableMQTTAsync
+  #ifdef enableDebug2Serial
+  if (d.indexOf("SENDLOGTOSERIAL") == 0)
+  {
+    sprintf(log_chars,"Actual State of sending Serial log: %s, %s", String(debugSerial ? "ENABLED" : "DISABLED").c_str(), String(debugSerial).c_str());
+    log_message(log_chars, logCommandResponse);
+    d.replace("SENDLOGTOSERIAL","");
+    d.trim();
+    if (d.length()>0)
+    {
+      if (d=="YES" || d=="ON" || d=="1" || d == "START") {
+        debugSerial = true;
+        sprintf(log_chars,"CHANGE State of sending Serial log: %s, %s", String(debugSerial ? "ENABLED" : "DISABLED").c_str(), String(debugSerial).c_str());
+      }
+      else
+        if (d=="NO" || d=="OFF" || d=="0" || d == "STOP") {
+        debugSerial = false;
+        sprintf(log_chars,"CHANGE State of sending Serial log: %s, %s", String(debugSerial ? "ENABLED" : "DISABLED").c_str(), String(debugSerial).c_str());
+      } else {
+        sprintf(log_chars, "uknown value %s", d.c_str());
+      }
+      log_message(log_chars, logCommandResponse);
+
+    }
+  } else
+  #endif
+    #ifdef enableMQTT
+  if (d == "RECONNECTMQTT")
+  {
+    log_message((char*)F("OK. Try reconnect mqtt"), logCommandResponse);
+    mqttReconnect();
+  } else
+    #endif
+  if (d == "LOAD")
+  {
+    if(SPIFFS.exists(configfile)) {
+      String dane = "\0";
+      File file = SPIFFS.open(configfile,"r");
+      while (file.available()) {
+        dane += (file.readStringUntil('\n'));
+      }
+      file.close();
+      loadConfig();
+    }
+  } else
+  if (d == "SAVE")
+  {
+    sprintf(log_chars, "Saving config to EEPROM memory by command... ");
+    log_message(log_chars, logCommandResponse);
+    SaveConfig();
+  } else
+  if (d == "RESET_CONFIG")
+  {
+    sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content and restart...  ");
+    log_message(log_chars, logCommandResponse);
+    SPIFFS.format();
+    for (u_int i=0 ; i < 100; i++){
+      EEPROM.put(i, "\0");
+    }
+
+    SaveConfig();
+    restart(F("Initiated from Remote Command RESET_CONFIG..."));
+  } else
+  if (LocalVarsRemoteCommands(d, remoteHelperCommand).length() > 0)
+  { //get local specific values
+  } else
+  {
+    log_message((char*)F("Unknown command received from serial or webserial input."), logCommandResponse);
+  }
+  log_message((char*)F("------------------------ REMOTE COMMAND RECEIVED END ------------------------------------------------------------------------"), logCommandResponse);
+
+#endif
+}
+//***********************************************************************************************************************************************************************************************
