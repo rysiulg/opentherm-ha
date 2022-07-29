@@ -2593,7 +2593,9 @@ bool SaveConfig() {
   EEPROM.begin(CONFIG_START);  //Size can be anywhere between 4 and 4096 bytes.
   int EpromPosition = 1;
   EEPROM.get(EpromPosition,runtmp);
-  if (runtmp != CRTrunNumber) EEPROM.put(EpromPosition, CRTrunNumber);
+  if (runtmp != CRTrunNumber) {
+    EEPROM.put(EpromPosition, CRTrunNumber);
+    log_message((char*)F("SaveConfig. Saved new CRT number in EPROM"));
   EpromPosition += sizeof(CRTrunNumber);
 
   unsigned long long check_l = 0;
