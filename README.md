@@ -12,9 +12,24 @@ Gets from mqtt broker
 - temperature of NEWS (north, west south east averange temperature)
 - state of working carbon heat co pump works -it disables hest to co
 
+Built in similar interface like webserial, but on same websocket. autoscroll is on when slider is on bottom -in other case autoscroll in terminal is off ;) -it' is also possible to send some commands -i've done in 2 parts one is common for other modules ans other is for local project to be compatible with other projects ;)
+
+Change to AsyncMQTT -by #define switch is possible to back to pubsync MQTT
+added also #defined switch to be able on or off some module like arduino ota, influxdb etc.
 
 ToDo:
+Add histeresa to Boiler water and mayby for CO..
+Add corrections to enable webupdate from bin file -but ota works well and stable for now ;)
 
+
+Current UI on websockets:
+![image](https://user-images.githubusercontent.com/43485433/181820262-eaf279d3-0c87-48ce-b40b-ad6cefd17992.png)
+![image](https://user-images.githubusercontent.com/43485433/181820317-a8519c1e-bae6-4f34-b11b-0f3a53a329cb.png)
+![image](https://user-images.githubusercontent.com/43485433/181820373-9adaea90-f17e-4662-b60c-108d9ff11c45.png)
+![image](https://user-images.githubusercontent.com/43485433/181820418-b664e8b6-7f90-4370-8e3b-90f9d31ea199.png)
+for me it's working only local, remotelly over my VPN ;)
+
+Old UI:
 ![image](https://user-images.githubusercontent.com/43485433/164272781-76c3ceb3-d773-43dc-bf9c-7fe399e58799.png)
 
 HomeAssistaNT:
