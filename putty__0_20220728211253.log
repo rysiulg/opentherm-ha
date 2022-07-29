@@ -1,0 +1,785 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2022.07.28 21:12:54 =~=~=~=~=~=~=~=~=~=~=~=
+00:06:10.352: MainLoop: ArduinoOTA
+00:06:10.356: Update Data to www
+00:06:10.365: stats: Uptime: 6min. 10s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:10.371: Update_OpenTherm_data
+00:06:10.374: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:11.955: MainLoop: ArduinoOTA
+00:06:11.960: Update_OpenTherm_data
+00:06:11.963: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:13.558: MainLoop: ArduinoOTA
+00:06:13.563: Update Data to www
+00:06:13.571: stats: Uptime: 6min. 13s.  ## Free memory: 49% 16.31kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:13.576: Update_OpenTherm_data
+00:06:13.580: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:13.732: !!!!!!MQTT: Publish received.
+00:06:13.737: !!!!!!MQTT: Publish received.
+00:06:13.740: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-63,"CRT":50,"uptime":652628,"CO0_outside_temperature_North": 15.06,"CO0_outside_temperature_East": 16.44,"CO0_outside_temperature_West": 18.13,"CO0_outside_temperature_South": 17.50,"CO0_outside_temperature_Averange": 16.78,"CO0_boilerroom_temperature_CO": 20.56,"CO0_boilerroom_temperature_Water": 20.81,"CO0_boilerroom_temperature": 24.20,"CO0_boilerroom_pressure": 993,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 37.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+00:06:13.791: NEWS temp  updated from MQTT to: 16.78
+00:06:13.900: !!!!!!MQTT: Publish received.
+00:06:13.903: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+00:06:13.912: Wood/coax CO Pump Status  to:  Disabled
+00:06:13.916: Wood/coax Water Pump Status  to:  Disabled
+00:06:14.367: !!!!!!MQTT: Publish received.
+00:06:14.371: !!!!!!MQTT: Publish received.
+00:06:14.375: MQTT callback Topic: FLOORH1/sensor/room/attributes, Received 807B message ...: {"rssi":-84,"HallSensor1":70,"CRT":683,"FL1_room_temperature_1": 21.94,"FL1_room_temperature_setpoint_1": 21.00,"FL1_room_temperature_2": 22.69,"FL1_room_temperature_setpoint_2": 21.00,"FL1_room_temperature_4": 23.62,"FL1_room_temperature_setpoint_4": 22.00,"FL1_room_temperature_5": 27.30,"FL1_room_temperature_setpoint_5": 20.50,"FL1_room_temperature_6": 23.44,"FL1_room_temperature_setpoint_6": 22.50,"FL1_room_temperature_9": 23.38,"FL1_room_temperature_setpoint_9": 27.00,"FL1_room_temperature_10": 23.75,"FL1_room_temperature_setpoint_10": 20.50,"FL1_room_temperature_12": 23.31,"FL1_room_temperature_13": 30.06,"FL1_room_temperature_0": 21.94,"FL1_room_temperature_setpoint_0": 22.50,"FL1_room_temperature_0_DHT_Temp": 29.50,"FL1_room_humidity_0_DHT_Humid": 43.70,"FL1_room_pumpstate_0_pumpstate": 0}
+00:06:14.449: Floor1temp  set to: 21.94
+00:06:14.454: Floor1temp  Setpoint set to: 22.50
+00:06:15.262: MainLoop: ArduinoOTA
+00:06:15.267: Update MQTT and influxDB. lastUpdatemqtt: 00:05:45.125 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+00:06:15.270: Sending data to MQTT ...
+00:06:15.282: Update_OpenTherm_data
+00:06:15.287: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:16.865: MainLoop: ArduinoOTA
+00:06:16.870: Update Data to www
+00:06:16.878: stats: Uptime: 6min. 16s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:16.882: Update_OpenTherm_data
+00:06:16.886: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:18.469: MainLoop: ArduinoOTA
+00:06:18.474: Update_OpenTherm_data
+00:06:18.477: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:20.071: MainLoop: ArduinoOTA
+00:06:20.077: Update Data to www
+00:06:20.085: stats: Uptime: 6min. 20s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:20.090: Update_OpenTherm_data
+00:06:20.094: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:21.674: MainLoop: ArduinoOTA
+00:06:21.679: Update_OpenTherm_data
+00:06:21.682: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:23.278: MainLoop: ArduinoOTA
+00:06:23.282: Update Data to www
+00:06:23.290: stats: Uptime: 6min. 23s.  ## Free memory: 53% 17.62kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:23.295: Update_OpenTherm_data
+00:06:23.299: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:24.881: MainLoop: ArduinoOTA
+00:06:24.886: Update_OpenTherm_data
+00:06:24.889: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:26.485: MainLoop: ArduinoOTA
+00:06:26.489: Update Data to www
+00:06:26.497: stats: Uptime: 6min. 26s.  ## Free memory: 49% 16.32kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:26.503: Update_OpenTherm_data
+00:06:26.506: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:28.087: MainLoop: ArduinoOTA
+00:06:28.092: Update_OpenTherm_data
+00:06:28.095: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:29.690: MainLoop: ArduinoOTA
+00:06:29.695: Update Data to www
+00:06:29.703: stats: Uptime: 6min. 29s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:29.709: Update_OpenTherm_data
+00:06:29.713: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:31.293: MainLoop: ArduinoOTA
+00:06:31.298: Update_OpenTherm_data
+00:06:31.302: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:32.896: MainLoop: ArduinoOTA
+00:06:32.901: Update Data to www
+00:06:32.909: stats: Uptime: 6min. 32s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+00:06:32.914: Update_OpenTherm_data
+00:06:32.917: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:34.500: MainLoop: ArduinoOTA
+00:06:34.505: Update_OpenTherm_data
+00:06:34.509: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:36.103: MainLoop: ArduinoOTA
+00:06:36.107: Update Data to www
+00:06:36.115: stats: Uptime: 6min. 36s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:36.121: Update_OpenTherm_data
+00:06:36.124: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:37.706: MainLoop: ArduinoOTA
+00:06:37.711: Update_OpenTherm_data
+00:06:37.715: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:39.309: MainLoop: ArduinoOTA
+00:06:39.314: Update Data to www
+00:06:39.322: stats: Uptime: 6min. 39s.  ## Free memory: 53% 17.63kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:06:39.327: Update_OpenTherm_data
+00:06:39.331: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:40.912: MainLoop: ArduinoOTA
+00:06:40.917: Update_OpenTherm_data
+00:06:40.921: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:06:42.516: MainLoop: ArduinoOTA
+00:06:42.521: Update Data to www
+00:06:42.529: stats: Uptime: 6min. 42s. /22.50, roomtemp: 22.19/23.50
+tes ## 1.063: MainLoop: ArduinoOTA
+00:13:01.067: Update Data to www
+00:13:01.075: stats: Uptime: 13min. 1s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:01.080: Update_OpenTherm_data
+00:13:01.083: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:02.666: MainLoop: ArduinoOTA
+00:13:02.671: Update_OpenTherm_data
+00:13:02.674: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:04.270: MainLoop: ArduinoOTA
+00:13:04.274: Update Data to www
+00:13:04.282: stats: Uptime: 13min. 4s.  ## Free memory: 52% 17.56kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:04.287: Update_OpenTherm_data
+00:13:04.291: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:05.872: MainLoop: ArduinoOTA
+00:13:05.877: Update_OpenTherm_data
+00:13:05.880: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:07.475: MainLoop: ArduinoOTA
+00:13:07.480: Update Data to www
+00:13:07.488: stats: Uptime: 13min. 7s.  ## Free memory: 52% 17.57kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:07.493: Update_OpenTherm_data
+00:13:07.496: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:09.078: MainLoop: ArduinoOTA
+00:13:09.083: Update_OpenTherm_data
+00:13:09.087: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:10.681: MainLoop: ArduinoOTA
+00:13:10.686: Update Data to www
+00:13:10.694: stats: Uptime: 13min. 10s.  ## Free memory: 48% 16.23kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:10.700: Update_OpenTherm_data
+00:13:10.703: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:12.285: MainLoop: ArduinoOTA
+00:13:12.290: Update_OpenTherm_data
+00:13:12.294: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:13.888: MainLoop: ArduinoOTA
+00:13:13.893: Update Data to www
+00:13:13.901: stats: Uptime: 13min. 13s.  ## Free memory: 51% 17.05kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:13.907: Update_OpenTherm_data
+00:13:13.910: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:15.491: MainLoop: ArduinoOTA
+00:13:15.496: Update_OpenTherm_data
+00:13:15.499: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:17.094: MainLoop: ArduinoOTA
+00:13:17.099: Update Data to www
+00:13:17.107: stats: Uptime: 13min. 17s.  ## Free memory: 51% 17.05kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:17.112: Update_OpenTherm_data
+00:13:17.115: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:18.697: MainLoop: ArduinoOTA
+00:13:18.703: Update_OpenTherm_data
+00:13:18.706: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:20.301: MainLoop: ArduinoOTA
+00:13:20.306: Update Data to www
+00:13:20.314: stats: Uptime: 13min. 20s.  ## Free memory: 51% 17.13kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:20.318: Update_OpenTherm_data
+00:13:20.322: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:21.904: MainLoop: ArduinoOTA
+00:13:21.909: Update MQTT and influxDB. lastUpdatemqtt: 00:12:20.989 receivedmqttdata: 0 mqttUpdateInterval_ms: 60000
+00:13:21.911: Sending data to MQTT ...
+00:13:21.979: Update_OpenTherm_data
+00:13:21.986: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:22.247: !!!!!!MQTT: Publish received.
+00:13:22.252: !!!!!!MQTT: Publish received.
+00:13:22.255: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-64,"CRT":50,"uptime":653054,"CO0_outside_temperature_North": 14.94,"CO0_outside_temperature_East": 16.31,"CO0_outside_temperature_West": 17.88,"CO0_outside_temperature_South": 17.38,"CO0_outside_temperature_Averange": 16.63,"CO0_boilerroom_temperature_CO": 20.56,"CO0_boilerroom_temperature_Water": 20.81,"CO0_boilerroom_temperature": 24.20,"CO0_boilerroom_pressure": 993,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 37.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+00:13:22.306: NEWS temp  updated from MQTT to: 16.63
+00:13:22.595: !!!!!!MQTT: Publish received.
+00:13:22.599: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+00:13:22.608: Wood/coax CO Pump Status  to:  Disabled
+00:13:22.612: Wood/coax Water Pump Status  to:  Disabled
+00:13:23.607: MainLoop: ArduinoOTA
+00:13:23.612: Update Data to www
+00:13:23.620: stats: Uptime: 13min. 23s.  ## Free memory: 48% 16.23kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:23.625: Update_OpenTherm_data
+00:13:23.628: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:25.210: MainLoop: ArduinoOTA
+00:13:25.215: Update_OpenTherm_data
+00:13:25.218: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:26.813: MainLoop: ArduinoOTA
+00:13:26.818: Update Data to www
+00:13:26.826: stats: Uptime: 13min. 26s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:26.831: Update_OpenTherm_data
+00:13:26.834: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:28.416: MainLoop: ArduinoOTA
+00:13:28.423: Update_OpenTherm_data
+00:13:28.426: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:30.020: MainLoop: ArduinoOTA
+00:13:30.024: Update Data to www
+00:13:30.032: stats: Uptime: 13min. 30s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:30.037: Update_OpenTherm_data
+00:13:30.040: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:31.623: MainLoop: ArduinoOTA
+00:13:31.628: Update_OpenTherm_data
+00:13:31.631: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:33.226: MainLoop: ArduinoOTA
+00:13:33.232: Update Data to www
+00:13:33.240: stats: Uptime: 13min. 33s.  ## Free memory: 52% 17.40kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:33.245: Update_OpenTherm_data
+00:13:33.249: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:34.829: MainLoop: ArduinoOTA
+00:13:34.834: Update_OpenTherm_data
+00:13:34.837: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:36.432: MainLoop: ArduinoOTA
+00:13:36.437: Update Data to www
+00:13:36.445: stats: Uptime: 13min. 36s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:36.451: Update_OpenTherm_data
+00:13:36.454: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:38.035: MainLoop: ArduinoOTA
+00:13:38.041: Update_OpenTherm_data
+00:13:38.044: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:39.639: MainLoop: ArduinoOTA
+00:13:39.644: Update Data to www
+00:13:39.652: stats: Uptime: 13min. 39s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:39.657: Update_OpenTherm_data
+00:13:39.660: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:41.242: MainLoop: ArduinoOTA
+00:13:41.247: Update_OpenTherm_data
+00:13:41.250: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:42.845: MainLoop: ArduinoOTA
+00:13:42.849: Update Data to www
+00:13:42.857: stats: Uptime: 13min. 42s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:42.863: Update_OpenTherm_data
+00:13:42.867: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:44.448: MainLoop: ArduinoOTA
+00:13:44.453: Update_OpenTherm_data
+00:13:44.456: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:46.051: MainLoop: ArduinoOTA
+00:13:46.056: Update Data to www
+00:13:46.064: stats: Uptime: 13min. 46s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:46.069: Update_OpenTherm_data
+00:13:46.073: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:47.654: MainLoop: ArduinoOTA
+00:13:47.659: Update_OpenTherm_data
+00:13:47.663: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:49.258: MainLoop: ArduinoOTA
+00:13:49.262: Update Data to www
+00:13:49.270: stats: Uptime: 13min. 49s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:49.275: Update_OpenTherm_data
+00:13:49.278: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:50.861: MainLoop: ArduinoOTA
+00:13:50.866: Update_OpenTherm_data
+00:13:50.869: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:52.464: MainLoop: ArduinoOTA
+00:13:52.468: Update Data to www
+00:13:52.476: stats: Uptime: 13min. 52s.  ## Free memory: 52% 17.55kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:13:52.481: Update_OpenTherm_data
+00:13:52.485: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:13:54.067: MainLoop: ArduinoOTA
+00:13:54.072: Update_OpenTherm_data
+00:13:54.075: Geemps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:19:55.881: MainLoop: ArduinoOTA
+00:19:55.886: Update Data to www
+00:19:55.894: stats: Uptime: 19min. 55s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:19:55.899: Update_OpenTherm_data
+00:19:55.902: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:19:57.453: !!!!!!MQTT: Publish received.
+00:19:57.466: !!!!!!MQTT: Publish received.
+00:19:57.469: MQTT callback Topic: FLOORH1/sensor/room/attributes, Received 807B message ...: {"rssi":-85,"HallSensor1":65,"CRT":683,"FL1_room_temperature_1": 21.94,"FL1_room_temperature_setpoint_1": 21.00,"FL1_room_temperature_2": 22.69,"FL1_room_temperature_setpoint_2": 21.00,"FL1_room_temperature_4": 24.00,"FL1_room_temperature_setpoint_4": 22.00,"FL1_room_temperature_5": 27.40,"FL1_room_temperature_setpoint_5": 20.50,"FL1_room_temperature_6": 23.44,"FL1_room_temperature_setpoint_6": 22.50,"FL1_room_temperature_9": 23.44,"FL1_room_temperature_setpoint_9": 27.00,"FL1_room_temperature_10": 23.75,"FL1_room_temperature_setpoint_10": 20.50,"FL1_room_temperature_12": 23.38,"FL1_room_temperature_13": 30.06,"FL1_room_temperature_0": 21.94,"FL1_room_temperature_setpoint_0": 22.50,"FL1_room_temperature_0_DHT_Temp": 29.50,"FL1_room_humidity_0_DHT_Humid": 43.70,"FL1_room_pumpstate_0_pumpstate": 0}
+00:19:57.543: Floor1temp  set to: 21.94
+00:19:57.549: Floor1temp  Setpoint set to: 22.50
+00:19:57.561: MainLoop: ArduinoOTA
+00:19:57.565: Update MQTT and influxDB. lastUpdatemqtt: 00:19:23.739 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+00:19:57.568: Sending data to MQTT ...
+00:19:57.580: Update_OpenTherm_data
+00:19:57.584: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:19:59.188: MainLoop: ArduinoOTA
+00:19:59.193: Update Data to www
+00:19:59.201: stats: Uptime: 19min. 59s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:19:59.206: Update_OpenTherm_data
+00:19:59.210: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:00.791: MainLoop: ArduinoOTA
+00:20:00.796: Update_OpenTherm_data
+00:20:00.799: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:02.394: MainLoop: ArduinoOTA
+00:20:02.399: Update Data to www
+00:20:02.407: stats: Uptime: 20min. 2s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:20:02.413: Update_OpenTherm_data
+00:20:02.416: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:03.997: MainLoop: ArduinoOTA
+00:20:04.002: Update_OpenTherm_data
+00:20:04.005: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:05.600: MainLoop: ArduinoOTA
+00:20:05.605: Update Data to www
+00:20:05.613: stats: Uptime: 20min. 5s.  ## Free memory: 48% 16.19kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:20:05.618: Update_OpenTherm_data
+00:20:05.622: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:07.203: MainLoop: ArduinoOTA
+00:20:07.209: Update_OpenTherm_data
+00:20:07.212: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:08.807: MainLoop: ArduinoOTA
+00:20:08.811: Update Data to www
+00:20:08.819: stats: Uptime: 20min. 8s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:20:08.825: Update_OpenTherm_data
+00:20:08.828: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:10.410: MainLoop: ArduinoOTA
+00:20:10.415: Update_OpenTherm_data
+00:20:10.419: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:12.013: MainLoop: ArduinoOTA
+00:20:12.018: Update Data to www
+00:20:12.026: stats: Uptime: 20min. 12s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:20:12.031: Update_OpenTherm_data
+00:20:12.034: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:13.617: MainLoop: ArduinoOTA
+00:20:13.622: Update_OpenTherm_data
+00:20:13.625: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:15.219: MainLoop: ArduinoOTA
+00:20:15.224: Update Data to www
+00:20:15.232: stats: Uptime: 20min. 15s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:20:15.237: Update_OpenTherm_data
+00:20:15.241: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:16.823: MainLoop: ArduinoOTA
+00:20:16.828: Update_OpenTherm_data
+00:20:16.831: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:18.426: MainLoop: ArduinoOTA
+00:20:18.432: Update Data to www
+00:20:18.440: stats: Uptime: 20min. 18s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:20:18.445: Update_OpenTherm_data
+00:20:18.448: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:20.029: MainLoop: ArduinoOTA
+00:20:20.034: Update_OpenTherm_data
+00:20:20.037: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:21.632: MainLoop: ArduinoOTA
+00:20:21.636: Update Data to www
+00:20:21.644: stats: Uptime: 20min. 21s.  ## Free memory: 48% 16.18kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:20:21.650: Update_OpenTherm_data
+00:20:21.653: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:23.235: MainLoop: ArduinoOTA
+00:20:23.242: Update_OpenTherm_data
+00:20:23.245: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:24.009: !!!!!!MQTT: Publish received.
+00:20:24.015: !!!!!!MQTT: Publish received.
+00:20:24.018: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-66,"CRT":50,"uptime":653477,"CO0_outside_temperature_North": 14.88,"CO0_outside_temperature_East": 16.13,"CO0_outside_temperature_West": 17.75,"CO0_outside_temperature_South": 17.25,"CO0_outside_temperature_Averange": 16.50,"CO0_boilerroom_temperature_CO": 20.56,"CO0_boilerroom_temperature_Water": 20.81,"CO0_boilerroom_temperature": 24.20,"CO0_boilerroom_pressure": 993,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 14.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+00:20:24.069: NEWS temp  updated from MQTT to: 16.50
+00:20:24.217: !!!!!!MQTT: Publish received.
+00:20:24.220: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+00:20:24.229: Wood/coax CO Pump Status  to:  Disabled
+00:20:24.233: Wood/coax Water Pump Status  to:  Disabled
+00:20:24.692: !!!!!!MQTT: Publish received.
+00:20:24.698: !!!!!!MQTT: Publish received.
+00:20:24.701: MQTT callback Topic: FLOORH1/sensor/room/attributes, Received 807B message ...: {"rssi":-86,"HallSensor1":65,"CRT":683,"FL1_room_temperature_1": 21.94,"FL1_room_temperature_setpoint_1": 21.00,"FL1_room_temperature_2": 22.69,"FL1_room_temperature_setpoint_2": 21.00,"FL1_room_temperature_4": 24.00,"FL1_room_temperature_setpoint_4": 22.00,"FL1_room_temperature_5": 27.40,"FL1_room_temperature_setpoint_5": 20.50,"FL1_room_temperature_6": 23.44,"FL1_room_temperature_setpoint_6": 22.50,"FL1_room_temperature_9": 23.44,"FL1_room_temperature_setpoint_9": 27.00,"FL1_room_temperature_10": 23.75,"FL1_room_temperature_setpoint_10": 20.50,"FL1_room_temperature_12": 23.38,"FL1_room_temperature_13": 30.06,"FL1_room_temperature_0": 21.94,"FL1_room_temperature_setpoint_0": 22.50,"FL1_room_temperature_0_DHT_Temp": 29.50,"FL1_room_humidity_0_DHT_Humid": 43.70,"FL1_room_pumpstate_0_pumpstate": 0}
+00:20:24.775: Floor1temp  set to: 21.94
+00:20:24.781: Floor1temp  Setpoint set to: 22.50
+00:20:25.039: MainLoop: ArduinoOTA
+00:20:25.045: Update Data to www
+00:20:25.053: stats: Uptime: 20min. 25s.  ## Free memory: 46% 15.27kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:20:25.058: Update MQTT and influxDB. lastUpdatemqtt: 00:19:57.566 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+00:20:25.065: Sending data to MQTT ...
+00:20:25.135: Update_OpenTherm_data
+00:20:25.145: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:26.742: MainLoop: ArduinoOTA
+00:20:26.747: Update_OpenTherm_data
+00:20:26.750: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:28.345: MainLoop: ArduinoOTA
+00:20:28.350: Update Data to www
+00:20:28.358: stats: Uptime: 20min. 28s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+00:20:28.363: Update_OpenTherm_data
+00:20:28.366: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:20:29.949: MainLoop: ArduinoOTA
+00:20:29.954: Update_OpenTherm_data
+00:20:29.957: Get Temps: floor2_temp: 22.44/24.500
+00:26:53.523: Update_OpenTherm_data
+00:26:53.527: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:26:55.109: MainLoop: ArduinoOTA
+00:26:55.114: Update_OpenTherm_data
+00:26:55.117: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:26:56.712: MainLoop: ArduinoOTA
+00:26:56.717: Update Data to www
+00:26:56.725: stats: Uptime: 26min. 56s.  ## Free memory: 48% 16.03kB bytes ## Wifi: 84% ## Mqtt reconnects: 0
+00:26:56.730: Update_OpenTherm_data
+00:26:56.733: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:26:58.315: MainLoop: ArduinoOTA
+00:26:58.320: Update_OpenTherm_data
+00:26:58.324: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:26:59.919: MainLoop: ArduinoOTA
+00:26:59.924: Update Data to www
+00:26:59.932: stats: Uptime: 26min. 59s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 84% ## Mqtt reconnects: 0
+00:26:59.937: Update_OpenTherm_data
+00:26:59.940: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:01.522: MainLoop: ArduinoOTA
+00:27:01.526: Update_OpenTherm_data
+00:27:01.530: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:03.125: MainLoop: ArduinoOTA
+00:27:03.129: Update Data to www
+00:27:03.137: stats: Uptime: 27min. 3s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 84% ## Mqtt reconnects: 0
+00:27:03.142: Update_OpenTherm_data
+00:27:03.146: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:04.728: MainLoop: ArduinoOTA
+00:27:04.733: Update_OpenTherm_data
+00:27:04.736: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:06.331: MainLoop: ArduinoOTA
+00:27:06.336: Update Data to www
+00:27:06.344: stats: Uptime: 27min. 6s.  ## Free memory: 52% 17.50kB bytes ## Wifi: 82% ## Mqtt reconnects: 0
+00:27:06.349: Update_OpenTherm_data
+00:27:06.352: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:07.935: MainLoop: ArduinoOTA
+00:27:07.940: Update_OpenTherm_data
+00:27:07.944: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:09.537: MainLoop: ArduinoOTA
+00:27:09.542: Update Data to www
+00:27:09.550: stats: Uptime: 27min. 9s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:27:09.555: Update_OpenTherm_data
+00:27:09.559: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:11.141: MainLoop: ArduinoOTA
+00:27:11.146: Update_OpenTherm_data
+00:27:11.149: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:12.744: MainLoop: ArduinoOTA
+00:27:12.749: Update Data to www
+00:27:12.757: stats: Uptime: 27min. 12s.  ## Free memory: 47% 15.70kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:27:12.761: Update_OpenTherm_data
+00:27:12.765: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:14.347: MainLoop: ArduinoOTA
+00:27:14.352: Update_OpenTherm_data
+00:27:14.355: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:15.951: MainLoop: ArduinoOTA
+00:27:15.956: Update Data to www
+00:27:15.964: stats: Uptime: 27min. 15s.  ## Free memory: 51% 17.23kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:27:15.969: Update_OpenTherm_data
+00:27:15.972: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:17.553: MainLoop: ArduinoOTA
+00:27:17.559: Update_OpenTherm_data
+00:27:17.563: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:19.156: MainLoop: ArduinoOTA
+00:27:19.161: Update Data to www
+00:27:19.169: stats: Uptime: 27min. 19s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 80% ## Mqtt reconnects: 0
+00:27:19.174: Update_OpenTherm_data
+00:27:19.177: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:20.760: MainLoop: ArduinoOTA
+00:27:20.765: Update_OpenTherm_data
+00:27:20.769: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:22.363: MainLoop: ArduinoOTA
+00:27:22.369: Update Data to www
+00:27:22.377: stats: Uptime: 27min. 22s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+00:27:22.383: Update_OpenTherm_data
+00:27:22.386: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:23.967: MainLoop: ArduinoOTA
+00:27:23.972: Update_OpenTherm_data
+00:27:23.975: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:25.569: MainLoop: ArduinoOTA
+00:27:25.574: Update Data to www
+00:27:25.582: stats: Uptime: 27min. 25s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:27:25.587: Update_OpenTherm_data
+00:27:25.591: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:27.172: MainLoop: ArduinoOTA
+00:27:27.177: Update_OpenTherm_data
+00:27:27.180: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:28.776: MainLoop: ArduinoOTA
+00:27:28.780: Update Data to www
+00:27:28.788: stats: Uptime: 27min. 28s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:27:28.793: Update_OpenTherm_data
+00:27:28.796: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:27:30.379: MainLoop: ArduinoOTA
+00:27:30.384: Update MQTT and influxDB. lastUpdatemqtt: 00:26:29.465 receivedmqttdata: 0 mqttUpdateInterval_ms: 60000
+00:27:30.386: Sending data to MQTT ...
+00:27:30.398: Update_OpenTherm_data
+00:27:30.402: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roate_OpenTherm_data
+00:33:25.602: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:27.183: MainLoop: ArduinoOTA
+00:33:27.188: Update_OpenTherm_data
+00:33:27.192: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:28.786: MainLoop: ArduinoOTA
+00:33:28.791: Update Data to www
+00:33:28.799: stats: Uptime: 33min. 28s.  ## Free memory: 48% 16.18kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:28.804: Update_OpenTherm_data
+00:33:28.808: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:30.390: MainLoop: ArduinoOTA
+00:33:30.396: Update_OpenTherm_data
+00:33:30.399: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:31.993: MainLoop: ArduinoOTA
+00:33:31.998: Update Data to www
+00:33:32.006: stats: Uptime: 33min. 32s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:32.012: Update MQTT and influxDB. lastUpdatemqtt: 00:32:30.998 receivedmqttdata: 0 mqttUpdateInterval_ms: 60000
+00:33:32.018: Sending data to MQTT ...
+00:33:32.090: Update_OpenTherm_data
+00:33:32.097: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:33.207: !!!!!!MQTT: Publish received.
+00:33:33.213: !!!!!!MQTT: Publish received.
+00:33:33.216: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-65,"CRT":50,"uptime":654266,"CO0_outside_temperature_North": 14.56,"CO0_outside_temperature_East": 15.94,"CO0_outside_temperature_West": 17.56,"CO0_outside_temperature_South": 17.06,"CO0_outside_temperature_Averange": 16.28,"CO0_boilerroom_temperature_CO": 20.56,"CO0_boilerroom_temperature_Water": 20.88,"CO0_boilerroom_temperature": 24.10,"CO0_boilerroom_pressure": 994,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 14.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+00:33:33.267: NEWS temp  updated from MQTT to: 16.28
+00:33:33.334: !!!!!!MQTT: Publish received.
+00:33:33.338: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+00:33:33.347: Wood/coax CO Pump Status  to:  Disabled
+00:33:33.351: Wood/coax Water Pump Status  to:  Disabled
+00:33:33.697: MainLoop: ArduinoOTA
+00:33:33.702: Update_OpenTherm_data
+00:33:33.705: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:35.299: MainLoop: ArduinoOTA
+00:33:35.304: Update Data to www
+00:33:35.312: stats: Uptime: 33min. 35s.  ## Free memory: 52% 17.34kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:35.319: Update_OpenTherm_data
+00:33:35.323: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:36.903: MainLoop: ArduinoOTA
+00:33:36.907: Update_OpenTherm_data
+00:33:36.911: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:38.506: MainLoop: ArduinoOTA
+00:33:38.510: Update Data to www
+00:33:38.518: stats: Uptime: 33min. 38s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:33:38.524: Update_OpenTherm_data
+00:33:38.527: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:40.109: MainLoop: ArduinoOTA
+00:33:40.114: Update_OpenTherm_data
+00:33:40.117: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:41.713: MainLoop: ArduinoOTA
+00:33:41.717: Update Data to www
+00:33:41.725: stats: Uptime: 33min. 41s.  ## Free memory: 50% 16.83kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:41.730: Update_OpenTherm_data
+00:33:41.734: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:43.315: MainLoop: ArduinoOTA
+00:33:43.321: Update_OpenTherm_data
+00:33:43.324: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:44.918: MainLoop: ArduinoOTA
+00:33:44.923: Update Data to www
+00:33:44.931: stats: Uptime: 33min. 44s.  ## Free memory: 52% 17.33kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:44.936: Update_OpenTherm_data
+00:33:44.939: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:46.521: MainLoop: ArduinoOTA
+00:33:46.526: Update_OpenTherm_data
+00:33:46.530: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:48.124: MainLoop: ArduinoOTA
+00:33:48.129: Update Data to www
+00:33:48.137: stats: Uptime: 33min. 48s.  ## Free memory: 51% 16.98kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:48.142: Update_OpenTherm_data
+00:33:48.146: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:49.729: MainLoop: ArduinoOTA
+00:33:49.734: Update_OpenTherm_data
+00:33:49.737: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:51.331: MainLoop: ArduinoOTA
+00:33:51.336: Update Data to www
+00:33:51.343: stats: Uptime: 33min. 51s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:51.348: Update_OpenTherm_data
+00:33:51.352: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:52.934: MainLoop: ArduinoOTA
+00:33:52.940: Update_OpenTherm_data
+00:33:52.943: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:54.537: MainLoop: ArduinoOTA
+00:33:54.542: Update Data to www
+00:33:54.550: stats: Uptime: 33min. 54s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:54.555: Update_OpenTherm_data
+00:33:54.558: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:56.140: MainLoop: ArduinoOTA
+00:33:56.145: Update_OpenTherm_data
+00:33:56.148: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:57.744: MainLoop: ArduinoOTA
+00:33:57.749: Update Data to www
+00:33:57.757: stats: Uptime: 33min. 57s.  ## Free memory: 49% 16.33kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:33:57.762: Update_OpenTherm_data
+00:33:57.766: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:33:59.347: MainLoop: ArduinoOTA
+00:33:59.352: Update_OpenTherm_data
+00:33:59.355: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:00.950: MainLoop: ArduinoOTA
+00:34:00.955: Update Data to www
+00:34:00.963: stats: Uptime: 34min.  ## Free memory: 52% 17.51kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:34:00.968: Update_OpenTherm_data
+00:34:00.971: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:02.553: MainLoop: ArduinoOTA
+00:34:02.558: Update_OpenTherm_data
+00:34:02.561: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:04.156: MainLoop: ArduinoOTA
+00:34:04.161: Update Data to www
+00:34:04.169: stats: Uptime: 34min. 4s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:34:04.174: Update_OpenTherm_data
+00:34:04.177: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:05.760: MainLoop: ArduinoOTA
+00:34:05.766: Update_OpenTherm_data
+00:34:05.769: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:07.363: MainLoop: ArduinoOTA
+00:34:07.368: Update Data to www
+00:34:07.376: stats: Uptime: 34min. 7s.  ## Free memory: 51% 17.24kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:34:07.381: Update_OpenTherm_data
+00:34:07.384: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:08.966: MainLoop: ArduinoOTA
+00:34:08.971: Update_OpenTherm_data
+00:34:08.974: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:10.569: MainLoop: ArduinoOTA
+00:34:10.574: Update Data to www
+00:34:10.582: stats: Uptime: 34min. 10s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:34:10.586: Update_OpenTherm_data
+00:34:10.589: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:12.172: MainLoop: ArduinoOTA
+00:34:12.179: Update_OpenTherm_data
+00:34:12.182: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:13.776: MainLoop: ArduinoOTA
+00:34:13.781: Update Data to www
+00:34:13.789: stats: Uptime: 34min. 13s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:34:13.794: Update_OpenTherm_data
+00:34:13.797: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:15.379: MainLoop: ArduinoOTA
+00:34:15.384: Update_OpenTherm_data
+00:34:15.387: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:16.982: MainLoop: ArduinoOTA
+00:34:16.987: Update Data to www
+00:34:16.995: stats: Uptime: 34min. 16s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:34:17.000: Update_OpenTherm_data
+00:34:17.004: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:34:18.585: MainLoop: ArduinoOTA
+00:34:18.590: Update_OpenTherm_dherm_data
+00:40:47.662: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:49.257: MainLoop: ArduinoOTA
+00:40:49.262: Update Data to www
+00:40:49.270: stats: Uptime: 40min. 49s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:40:49.275: Update_OpenTherm_data
+00:40:49.278: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:50.860: MainLoop: ArduinoOTA
+00:40:50.866: Update_OpenTherm_data
+00:40:50.869: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:52.463: MainLoop: ArduinoOTA
+00:40:52.468: Update Data to www
+00:40:52.476: stats: Uptime: 40min. 52s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:40:52.481: Update_OpenTherm_data
+00:40:52.484: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:54.066: MainLoop: ArduinoOTA
+00:40:54.071: Update_OpenTherm_data
+00:40:54.075: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:55.669: MainLoop: ArduinoOTA
+00:40:55.674: Update Data to www
+00:40:55.682: stats: Uptime: 40min. 55s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:40:55.687: Update_OpenTherm_data
+00:40:55.691: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:57.273: MainLoop: ArduinoOTA
+00:40:57.278: Update_OpenTherm_data
+00:40:57.281: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:40:58.876: MainLoop: ArduinoOTA
+00:40:58.880: Update Data to www
+00:40:58.888: stats: Uptime: 40min. 58s.  ## Free memory: 49% 16.33kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:40:58.893: Update_OpenTherm_data
+00:40:58.897: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:00.479: MainLoop: ArduinoOTA
+00:41:00.484: Update_OpenTherm_data
+00:41:00.487: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:02.082: MainLoop: ArduinoOTA
+00:41:02.087: Update Data to www
+00:41:02.095: stats: Uptime: 41min. 2s.  ## Free memory: 48% 16.19kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:02.102: Update_OpenTherm_data
+00:41:02.106: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:03.685: MainLoop: ArduinoOTA
+00:41:03.690: Update_OpenTherm_data
+00:41:03.693: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:05.289: MainLoop: ArduinoOTA
+00:41:05.293: Update Data to www
+00:41:05.301: stats: Uptime: 41min. 5s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:05.307: Update_OpenTherm_data
+00:41:05.310: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:06.892: MainLoop: ArduinoOTA
+00:41:06.898: Update_OpenTherm_data
+00:41:06.901: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:08.495: MainLoop: ArduinoOTA
+00:41:08.499: Update Data to www
+00:41:08.507: stats: Uptime: 41min. 8s.  ## Free memory: 52% 17.50kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:08.512: Update_OpenTherm_data
+00:41:08.516: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:10.098: MainLoop: ArduinoOTA
+00:41:10.103: Update_OpenTherm_data
+00:41:10.106: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:11.701: MainLoop: ArduinoOTA
+00:41:11.705: Update Data to www
+00:41:11.714: stats: Uptime: 41min. 11s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:41:11.721: Update_OpenTherm_data
+00:41:11.725: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:13.304: MainLoop: ArduinoOTA
+00:41:13.309: Update_OpenTherm_data
+00:41:13.313: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:14.907: MainLoop: ArduinoOTA
+00:41:14.912: Update Data to www
+00:41:14.920: stats: Uptime: 41min. 14s.  ## Free memory: 50% 16.69kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+00:41:14.926: Update_OpenTherm_data
+00:41:14.929: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:16.511: MainLoop: ArduinoOTA
+00:41:16.516: Update_OpenTherm_data
+00:41:16.519: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:18.114: MainLoop: ArduinoOTA
+00:41:18.118: Update Data to www
+00:41:18.126: stats: Uptime: 41min. 18s.  ## Free memory: 52% 17.38kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:18.131: Update_OpenTherm_data
+00:41:18.135: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:19.717: MainLoop: ArduinoOTA
+00:41:19.722: Update_OpenTherm_data
+00:41:19.725: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:21.320: MainLoop: ArduinoOTA
+00:41:21.325: Update Data to www
+00:41:21.333: stats: Uptime: 41min. 21s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:21.339: Update_OpenTherm_data
+00:41:21.343: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:22.923: MainLoop: ArduinoOTA
+00:41:22.928: Update_OpenTherm_data
+00:41:22.932: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:24.526: MainLoop: ArduinoOTA
+00:41:24.531: Update Data to www
+00:41:24.539: stats: Uptime: 41min. 24s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:41:24.545: Update_OpenTherm_data
+00:41:24.549: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:26.129: MainLoop: ArduinoOTA
+00:41:26.135: Update_OpenTherm_data
+00:41:26.138: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:27.733: MainLoop: ArduinoOTA
+00:41:27.737: Update Data to www
+00:41:27.745: stats: Uptime: 41min. 27s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:41:27.750: Update_OpenTherm_data
+00:41:27.754: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:29.336: MainLoop: ArduinoOTA
+00:41:29.342: Update_OpenTherm_data
+00:41:29.345: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:30.939: MainLoop: ArduinoOTA
+00:41:30.944: Update Data to www
+00:41:30.952: stats: Uptime: 41min. 30s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:30.957: Update_OpenTherm_data
+00:41:30.960: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:32.542: MainLoop: ArduinoOTA
+00:41:32.547: Update_OpenTherm_data
+00:41:32.550: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:41:34.145: MainLoop: ArduinoOTA
+00:41:34.150: Update Data to www
+00:41:34.158: stats: Uptime: 41min. 34s.  ## Free memory: 52% 17.49kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:41:34.164: Update_OpenTherm_data
+00:41:34.167: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemate_OpenTherm_data
+00:47:50.511: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:47:52.092: MainLoop: ArduinoOTA
+00:47:52.099: Update_OpenTherm_data
+00:47:52.102: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:47:53.695: MainLoop: ArduinoOTA
+00:47:53.700: Update Data to www
+00:47:53.708: stats: Uptime: 47min. 53s.  ## Free memory: 52% 17.48kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:47:53.714: Update_OpenTherm_data
+00:47:53.718: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:47:55.298: MainLoop: ArduinoOTA
+00:47:55.303: Update_OpenTherm_data
+00:47:55.307: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:47:56.902: MainLoop: ArduinoOTA
+00:47:56.906: Update Data to www
+00:47:56.914: stats: Uptime: 47min. 56s.  ## Free memory: 51% 16.98kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:47:56.921: Update_OpenTherm_data
+00:47:56.925: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:47:58.505: MainLoop: ArduinoOTA
+00:47:58.510: Update_OpenTherm_data
+00:47:58.513: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:48:00.108: MainLoop: ArduinoOTA
+00:48:00.113: Update Data to www
+00:48:00.121: stats: Uptime: 48min.  ## Free memory: 52% 17.51kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:48:00.126: Update_OpenTherm_data
+00:48:00.130: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:48:01.711: MainLoop: ArduinoOTA
+00:48:01.716: Update_OpenTherm_data
+00:48:01.720: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:48:03.314: MainLoop: ArduinoOTA
+00:48:03.319: Update Data to www
+00:48:03.327: stats: Uptime: 48min. 3s.  ## Free memory: 52% 17.50kB bytes ## Wifi: 76% ## Mqtt reconnects: 0
+00:48:03.332: Update_OpenTherm_data
+00:48:03.335: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.94/22.50, roomtemp: 22.19/23.50
+00:48:03.408: !!!!!!MQTT: Publish received.
+00:48:03.412: !!!!!!MQTT: Publish received.
+00:48:03.416: MQTT callback Topic: FLOORH1/sensor/room/attributes, Received 807B message ...: {"rssi":-86,"HallSensor1":66,"CRT":683,"FL1_room_temperature_1": 21.87,"FL1_room_temperature_setpoint_1": 21.00,"FL1_room_temperature_2": 22.69,"FL1_room_temperature_setpoint_2": 21.00,"FL1_room_temperature_4": 24.25,"FL1_room_temperature_setpoint_4": 22.00,"FL1_room_temperature_5": 27.40,"FL1_room_temperature_setpoint_5": 20.50,"FL1_room_temperature_6": 23.44,"FL1_room_temperature_setpoint_6": 22.50,"FL1_room_temperature_9": 23.44,"FL1_room_temperature_setpoint_9": 27.00,"FL1_room_temperature_10": 23.69,"FL1_room_temperature_setpoint_10": 20.50,"FL1_room_temperature_12": 23.44,"FL1_room_temperature_13": 30.00,"FL1_room_temperature_0": 21.87,"FL1_room_temperature_setpoint_0": 22.50,"FL1_room_temperature_0_DHT_Temp": 29.40,"FL1_room_humidity_0_DHT_Humid": 43.50,"FL1_room_pumpstate_0_pumpstate": 0}
+00:48:03.490: Floor1temp  set to: 21.87
+00:48:03.495: Floor1temp  Setpoint set to: 22.50
+00:48:04.917: MainLoop: ArduinoOTA
+00:48:04.923: Update MQTT and influxDB. lastUpdatemqtt: 00:47:31.174 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+00:48:04.925: Sending data to MQTT ...
+00:48:04.993: Update_OpenTherm_data
+00:48:04.997: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.87/22.50, roomtemp: 22.16/23.50
+00:48:06.621: MainLoop: ArduinoOTA
+00:48:06.625: Update Data to www
+00:48:06.633: stats: Uptime: 48min. 6s.  ## Free memory: 52% 17.51kB bytes ## Wifi: 74% ## Mqtt reconnects: 0
+00:48:06.639: Update_OpenTherm_data
+00:48:06.642: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.87/22.50, roomtemp: 22.16/23.50
+00:48:08.224: MainLoop: ArduinoOTA
+00:48:08.229: Update_OpenTherm_data
+00:48:08.232: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.87/22.50, roomtemp: 22.16/23.50
+00:48:09.827: MainLoop: ArduinoOTA
+00:48:09.832: Update Data to www
+636/836544 bytes).  41%
+00:52:53.654: Update in progress (Total 341172/836544 bytes).  41%
+00:52:53.661: Update in progress (Total 341708/836544 bytes).  41%
+00:52:53.708: Update in progress (Total 342780/836544 bytes).  41%
+00:52:53.717: Update in progress (Total 343852/836544 bytes).  41%
+00:52:53.793: Update in progress (Total 345996/836544 bytes).  41%
+00:52:53.807: Update in progress (Total 348140/836544 bytes).  42%
+00:52:53.939: Update in progress (Total 350284/836544 bytes).  42%
+00:52:54.012: Update in progress (Total 351892/836544 bytes).  42%
+00:52:54.075: Update in progress (Total 354036/836544 bytes).  42%
+00:52:54.318: Update in progress (Total 355108/836544 bytes).  42%
+00:52:54.342: Update in progress (Total 356180/836544 bytes).  43%
+00:52:54.401: Update in progress (Total 358324/836544 bytes).  43%
+00:52:54.455: Update in progress (Total 359932/836544 bytes).  43%
+00:52:54.518: Update in progress (Total 362076/836544 bytes).  43%
+00:52:54.526: Update in progress (Total 362612/836544 bytes).  43%
+00:52:54.541: Update in progress (Total 363684/836544 bytes).  43%
+00:52:54.548: Update in progress (Total 364220/836544 bytes).  44%
+00:52:54.636: Update in progress (Total 366364/836544 bytes).  44%
+00:52:54.782: Update in progress (Total 366900/836544 bytes).  44%
+00:52:54.813: Update in progress (Total 367972/836544 bytes).  44%
+00:52:54.828: Update in progress (Total 368508/836544 bytes).  44%
+00:52:54.907: Update in progress (Total 370652/836544 

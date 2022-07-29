@@ -192,26 +192,26 @@ void updateDatatoWWW_received(u_int i) {
   log_message(log_chars);
   switch (i) {
     case ASS_tempBoilerSet:
-      tempBoilerSet = PayloadtoValidFloat(ASS[ASS_tempBoilerSet].Value, true, oplo, ophi);
+      tempBoilerSet = PayloadtoValidFloat(String(ASS[ASS_tempBoilerSet].Value), true, oplo, ophi);
       break;
     case ASS_dhwTarget:
-      dhwTarget = PayloadtoValidFloat(ASS[ASS_dhwTarget].Value, true, oplo, ophi);
+      dhwTarget = PayloadtoValidFloat(String(ASS[ASS_dhwTarget].Value), true, oplo, ophi);
       break;
     case ASS_cutOffTemp:
-      cutOffTemp = PayloadtoValidFloat(ASS[ASS_cutOffTemp].Value, true, cutofflo, cutoffhi);
+      cutOffTemp = PayloadtoValidFloat(String(ASS[ASS_cutOffTemp].Value), true, cutofflo, cutoffhi);
       lastcutOffTempSet = millis();
       break;
     case ASS_roomtempSet:
-        roomtempSet = PayloadtoValidFloat(ASS[ASS_roomtempSet].Value, true, roomtemplo, roomtemphi);
+        roomtempSet = PayloadtoValidFloat(String(ASS[ASS_roomtempSet].Value), true, roomtemplo, roomtemphi);
       break;
     case ASS_AutoMode:
-      if (PayloadStatus(ASS[ASS_AutoMode].Value, false)) {
+      if (PayloadStatus(String(ASS[ASS_AutoMode].Value), false)) {
         automodeCO = false;
         receivedmqttdata = true;
         //sprintf(log_chars, "CO mode: %s", ASS[ASS_AutoMode].Value.c_str());
         //log_message(log_chars);
       } else
-      if (PayloadStatus(ASS[ASS_AutoMode].Value, true)) {
+      if (PayloadStatus(String(ASS[ASS_AutoMode].Value), true)) {
         if (heatingEnabled) {
           automodeCO = true;
           receivedmqttdata = true;
@@ -224,9 +224,9 @@ void updateDatatoWWW_received(u_int i) {
       }
       break;
     case ASS_EnableHeatingCO:
-      if (PayloadStatus(ASS[ASS_EnableHeatingCO].Value, true)) {
+      if (PayloadStatus(String(ASS[ASS_EnableHeatingCO].Value), true)) {
         heatingEnabled = true;
-      } else if (PayloadStatus(ASS[ASS_EnableHeatingCO].Value, false)) {
+      } else if (PayloadStatus(String(ASS[ASS_EnableHeatingCO].Value), false)) {
         heatingEnabled = false;
       } else
       {
@@ -235,10 +235,10 @@ void updateDatatoWWW_received(u_int i) {
       }
       break;
     case ASS_ecoMode:
-      if (PayloadStatus(ASS[ASS_ecoMode].Value, true)) {
+      if (PayloadStatus(String(ASS[ASS_ecoMode].Value), true)) {
         ecoMode = true;
         opcohi = ecohi;
-      } else if (PayloadStatus(ASS[ASS_ecoMode].Value, false)) {
+      } else if (PayloadStatus(String(ASS[ASS_ecoMode].Value), false)) {
         ecoMode = false;
         opcohi = opcohistatic;
       } else
@@ -249,9 +249,9 @@ void updateDatatoWWW_received(u_int i) {
       if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
       break;
       case ASS_EnableHotWater:
-      if (PayloadStatus(ASS[ASS_EnableHotWater].Value, true)) {
+      if (PayloadStatus(String(ASS[ASS_EnableHotWater].Value), true)) {
         enableHotWater = true;
-      } else if (PayloadStatus(ASS[ASS_EnableHotWater].Value, false)) {
+      } else if (PayloadStatus(String(ASS[ASS_EnableHotWater].Value), false)) {
         enableHotWater = false;
       } else
       {
@@ -262,6 +262,7 @@ void updateDatatoWWW_received(u_int i) {
   }
 }
 
+
 void updateDatatoWWW() //default false so if true than update
 {
   wdt_reset();
@@ -270,94 +271,68 @@ void updateDatatoWWW() //default false so if true than update
 #ifdef enableWebSocket
   //if (receivedwebsocketdata and dont_send_after_sync) return;
   //String dana = {"DHWTemp",DHW_Temp}
-  String ptr = "\0";
+  String ptrS = "\0";
 
   //tempBoilerSet
     if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
     if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
 
-    ASS[ASS_uptimedana].Value = String(uptimedana(0) + "    CRT: <b>" + String(CRTrunNumber));
-    ASS[ASS_temp_NEWS].Value = String(temp_NEWS, decimalPlaces);
-    ASS[ASS_tempBoiler].Value = String(tempBoiler, decimalPlaces);
-    ASS[ASS_tempBoilerSet].Value = String(tempBoilerSet, decimalPlaces);
-    ASS[ASS_retTemp].Value = String(retTemp, decimalPlaces);
-    ASS[ASS_tempCWU].Value = String(tempCWU, decimalPlaces);
-    ASS[ASS_dhwTarget].Value = String(dhwTarget, decimalPlaces);
-    ASS[ASS_cutOffTemp].Value = String(cutOffTemp, decimalPlaces);
-    ASS[ASS_roomtemp].Value = String(roomtemp, decimalPlaces);
-    ASS[ASS_roomtempSet].Value = String(roomtempSet, decimalPlaces);
-    ASS[ASS_lastNEWSSet].Value = String(uptimedana(lastNEWSSet));
-    ASS[ASS_AutoMode].Value = String(automodeCO ? "on" : "off");
-    ASS[ASS_EnableHotWater].Value = String(enableHotWater ? "on" : "off");
-    ASS[ASS_statusCHActive].Value = String(status_CHActive ? "on" : "off");
-    ASS[ASS_statusWaterActive].Value = String(status_WaterActive ? "on" : "off");
-    ASS[ASS_statusFlameOn].Value = String(status_FlameOn ? "on" : "off");
-    ASS[ASS_statusFault].Value = String(status_Fault ? "on" : "off");
-    ASS[ASS_EnableHeatingCO].Value = String(heatingEnabled ? "on" : "off");
-    ASS[ASS_opcohi].Value = String(opcohi, decimalPlaces);
-    ASS[ASS_ecoMode].Value = String(ecoMode ? "on" : "off");
+    SaveAssValue(ASS_lastNEWSSet,         uptimedana(lastNEWSSet) );
+    SaveAssValue(ASS_temp_NEWS,           String(temp_NEWS, decimalPlaces) );
+    SaveAssValue(ASS_tempBoiler,          String(tempBoiler, decimalPlaces) );
+    SaveAssValue(ASS_tempBoilerSet,       String(tempBoilerSet, decimalPlaces) );
+    SaveAssValue(ASS_retTemp,             String(retTemp, decimalPlaces) );
+    SaveAssValue(ASS_tempCWU,             String(tempCWU, decimalPlaces) );
+    SaveAssValue(ASS_dhwTarget,           String(dhwTarget, decimalPlaces) );
+    SaveAssValue(ASS_cutOffTemp,          String(cutOffTemp, decimalPlaces) );
+    SaveAssValue(ASS_roomtemp,            String(roomtemp, decimalPlaces) );
+    SaveAssValue(ASS_roomtempSet,         String(roomtempSet, decimalPlaces) );
+    SaveAssValue(ASS_opcohi,              String(opcohi, decimalPlaces) );
+    SaveAssValue(ASS_AutoMode,            automodeCO ? "on" : "off" );
+    SaveAssValue(ASS_EnableHotWater,      enableHotWater ? "on" : "off" );
+    SaveAssValue(ASS_statusCHActive,      status_CHActive ? "on" : "off" );
+    SaveAssValue(ASS_statusWaterActive,   status_WaterActive ? "on" : "off" );
+    SaveAssValue(ASS_statusFlameOn,       status_FlameOn ? "on" : "off" );
+    SaveAssValue(ASS_statusFault,         status_Fault ? "on" : "off" );
+    SaveAssValue(ASS_EnableHeatingCO,     heatingEnabled ? "on" : "off" );
+    SaveAssValue(ASS_ecoMode,             ecoMode ? "on" : "off" );
 
-    ptr = "\0";
+    ptrS = "\0";
     if (status_FlameOn) {
-      ptr += "<i class='fas fa-fire' id='StatusRed'></i>"; ptr += "<span id='StatusRedNormal'>" + String(Flame_Active_Flame_level) + "</span><b>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></b></br>";
+      ptrS += "<i class='fas fa-fire' id='StatusRed'></i>"; ptrS += "<span id='StatusRedNormal'>" + String(Flame_Active_Flame_level) + "</span><b>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></b></br>";
     }
-    if (status_Fault) ptr += "<span id='StatusRed'>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!</span></br>";
+    if (status_Fault) ptrS += "<span id='StatusRed'>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!</span></br>";
     if (heatingEnabled) {
-      ptr += "<span is='StatusBlack'>" + String(BOILER_HEAT_ON);
-      if (automodeCO) ptr += F(" (AUTO)"); else ptr += F(" (Standard)");
-      ptr += ("</span></br>");
+      ptrS += "<span is='StatusBlack'>" + String(BOILER_HEAT_ON);
+      if (automodeCO) ptrS += F(" (AUTO)"); else ptrS += F(" (Standard)");
+      ptrS += ("</span></br>");
     }
-    if (status_CHActive) ptr += "<span id='StatusRed'>" + String(BOILER_IS_HEATING) + "</span></br>";
-    if (enableHotWater) ptr += "<span id='StatusBlack'>" + String(DHW_HEAT_ON) + "</span></br>";
-    if (status_WaterActive) ptr += "<span id='StatusRed'>" + String(Boiler_Active_heat_DHW) + "</span></br>";
-    if (status_Cooling) ptr += "<span id='StatusOrange'>" + String(CoolingMode) + "</span><</br>";
-    if (status_Diagnostic) ptr += "<span id='StatusDarkRed'>" + String(DiagMode) + "</span></br>";
-    if (CO_PumpWorking) ptr += "<span id='StatusBlue'>" + String(Second_Engine_Heating_PompActive_Disable_heat) + "</span>></br>";
-    if (Water_PumpWorking) ptr += "<span id='StatusBlue'>" + String(Second_Engine_Heating_Water_PompActive) + "</span></br>";
-    if (status_FlameOn) ptr += "<span id='StatusGreen'>" + String(Flame_time) + "<b>" + uptimedana(start_flame_time_fordisplay) + "</b></span></br>";
-    ASS[ASS_Statusy].Value = String(ptr);
+    if (status_CHActive) ptrS += "<span id='StatusRed'>" + String(BOILER_IS_HEATING) + "</span></br>";
+    if (enableHotWater) ptrS += "<span id='StatusBlack'>" + String(DHW_HEAT_ON) + "</span></br>";
+    if (status_WaterActive) ptrS += "<span id='StatusRed'>" + String(Boiler_Active_heat_DHW) + "</span></br>";
+    if (status_Cooling) ptrS += "<span id='StatusOrange'>" + String(CoolingMode) + "</span><</br>";
+    if (status_Diagnostic) ptrS += "<span id='StatusDarkRed'>" + String(DiagMode) + "</span></br>";
+    if (CO_PumpWorking) ptrS += "<span id='StatusBlue'>" + String(Second_Engine_Heating_PompActive_Disable_heat) + "</span>></br>";
+    if (Water_PumpWorking) ptrS += "<span id='StatusBlue'>" + String(Second_Engine_Heating_Water_PompActive) + "</span></br>";
+    if (status_FlameOn) ptrS += "<span id='StatusGreen'>" + String(Flame_time) + "<b>" + uptimedana(start_flame_time_fordisplay) + "</b></span></br>";
+//    ASS[ASS_Statusy].Value = toCharPointer(String(ptrS));
+    //strcpy(ASS[ASS_Statusy].Value, toCharPointer(ptrS) );
+    SaveAssValue(ASS_Statusy, ptrS );
 
-    ptr = "\0";
-    ptr += "<p id='StatusBlackNormal'>" + String(Flame_total) + "<b>" + String(flame_used_power_kwh, 4) + "kWh</b>";
-    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_total), true)+"</b>");
-    ptr += "</br>w tym woda: <b>" + String(flame_used_power_waterTotal, 4) + "kWh</b>";
-    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_waterTotal), true)+"</b>");
-    ptr += "</br>w tym CO: <b>" + String(flame_used_power_CHTotal, 4) + "kWh</b>";
-    ptr += String(" : ") + "<b>" + String(uptimedana((flame_time_CHTotal), true)+"</b></p>");
+    ptrS = "\0";
+    ptrS += "<p id='StatusBlackNormal'>" + String(Flame_total) + "<b>" + String(flame_used_power_kwh, 4) + "kWh</b>";
+    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_total), true)+"</b>");
+    ptrS += "</br>w tym woda: <b>" + String(flame_used_power_waterTotal, 4) + "kWh</b>";
+    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_waterTotal), true)+"</b>");
+    ptrS += "</br>w tym CO: <b>" + String(flame_used_power_CHTotal, 4) + "kWh</b>";
+    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_CHTotal), true)+"</b></p>");
+// //    ASS[ASS_UsedMedia].Value = toCharPointer(String(ptrS));
+//     strcpy(ASS[ASS_UsedMedia].Value, toCharPointer( ptrS) );
+    SaveAssValue(ASS_UsedMedia, ptrS );
     #ifdef debug
     sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
     #endif
-    ASS[ASS_UsedMedia].Value = String(ptr);
-
-
-    ptr = "\0";
-    ptr += F("Free mem: <b>");
-    ptr += String(getFreeMemory());
-    ptr += F("&percnt;</b>, Heap: <b>");
-    ptr += formatBytes(ESP.getFreeHeap());
-    ptr += F("</b>, Wifi: <b>");
-    ptr += String(getWifiQuality());
-    ptr += F("&percnt;");
-    ptr += F("</b>");
-    #if defined enableMQTT || defined enableMQTTAsync
-    ptr += F("</br>MQTT");
-    #ifdef enableMQTTAsync
-    ptr += F("-Async ");
-    #endif
-    ptr += F("status: <b>");
-    ptr += ((mqttclient.connected())?"Połączony":"Rozłączony");
-    ptr += F("</b>");
-    ptr += F(", reconnects: <b>");
-    ptr += mqttReconnects;
-    ptr += F("</b>");
-    #endif
-    if (ESPlastResetReason.length() > 0) {
-      ptr += F("</br>Last reset: '<b>");
-      ptr += ESPlastResetReason;
-      ptr += F("</b>'");
-    }
-    ASS[ASS_MemStats].Value = String(ptr);
 #endif
 }
 

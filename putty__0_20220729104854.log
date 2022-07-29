@@ -1,0 +1,422 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2022.07.29 10:48:54 =~=~=~=~=~=~=~=~=~=~=~=
+06:37:33.365: MainLoop: ArduinoOTA
+06:37:33.370: Update Data to www
+06:37:33.499: Connected to InfluxDB: http://ha.marm:8086
+06:37:33.503: stats: Uptime: 6godz. 37min. 33s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:33.509: Update_OpenTherm_data
+06:37:33.513: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:35.168: MainLoop: ArduinoOTA
+06:37:35.172: Update_OpenTherm_data
+06:37:35.176: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:36.772: MainLoop: ArduinoOTA
+06:37:36.777: Update Data to www
+06:37:36.810: Connected to InfluxDB: http://ha.marm:8086
+06:37:36.814: stats: Uptime: 6godz. 37min. 36s.  ## Free memory: 44% 14.29kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:36.820: Update_OpenTherm_data
+06:37:36.826: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:38.476: MainLoop: ArduinoOTA
+06:37:38.479: Update_OpenTherm_data
+06:37:38.483: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:39.824: !!!!!!MQTT: Publish received.
+06:37:39.830: !!!!!!MQTT: Publish received.
+06:37:39.833: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-66,"CRT":50,"uptime":701592,"CO0_outside_temperature_North": 25.06,"CO0_outside_temperature_East": 29.38,"CO0_outside_temperature_West": 20.69,"CO0_outside_temperature_South": 28.44,"CO0_outside_temperature_Averange": 25.89,"CO0_boilerroom_temperature_CO": 20.06,"CO0_boilerroom_temperature_Water": 19.94,"CO0_boilerroom_temperature": 24.00,"CO0_boilerroom_pressure": 994,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 67.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+06:37:39.885: NEWS temp  updated from MQTT to: 25.89
+06:37:40.085: MainLoop: ArduinoOTA
+06:37:40.092: Update Data to www
+06:37:40.134: !!!!!!MQTT: Publish received.
+06:37:40.137: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+06:37:40.147: Wood/coax CO Pump Status  to:  Disabled
+06:37:40.151: Wood/coax Water Pump Status  to:  Disabled
+06:37:40.181: Connected to InfluxDB: http://ha.marm:8086
+06:37:40.185: stats: Uptime: 6godz. 37min. 40s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:40.191: Update MQTT and influxDB. lastUpdatemqtt: 06:36:40.255 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+06:37:40.198: Sending data to InfluxDB ...
+06:37:40.212: Writing to InfluxDB:
+06:37:40.434: Sending data to MQTT ...
+06:37:40.450: Update_OpenTherm_data
+06:37:40.454: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:42.082: MainLoop: ArduinoOTA
+06:37:42.086: Update_OpenTherm_data
+06:37:42.090: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:43.685: MainLoop: ArduinoOTA
+06:37:43.690: Update Data to www
+06:37:43.729: Connected to InfluxDB: http://ha.marm:8086
+06:37:43.734: stats: Uptime: 6godz. 37min. 43s.  ## Free memory: 44% 14.08kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:43.739: Update_OpenTherm_data
+06:37:43.744: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:45.388: MainLoop: ArduinoOTA
+06:37:45.392: Update_OpenTherm_data
+06:37:45.396: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:46.991: MainLoop: ArduinoOTA
+06:37:46.997: Update Data to www
+06:37:47.030: Connected to InfluxDB: http://ha.marm:8086
+06:37:47.034: stats: Uptime: 6godz. 37min. 47s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:47.040: Update_OpenTherm_data
+06:37:47.044: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:48.695: MainLoop: ArduinoOTA
+06:37:48.699: Update_OpenTherm_data
+06:37:48.702: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:50.298: MainLoop: ArduinoOTA
+06:37:50.303: Update Data to www
+06:37:50.346: Connected to InfluxDB: http://ha.marm:8086
+06:37:50.351: stats: Uptime: 6godz. 37min. 50s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:50.356: Update_OpenTherm_data
+06:37:50.361: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:52.001: MainLoop: ArduinoOTA
+06:37:52.005: Update_OpenTherm_data
+06:37:52.009: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:53.604: MainLoop: ArduinoOTA
+06:37:53.610: Update Data to www
+06:37:53.645: Connected to InfluxDB: http://ha.marm:8086
+06:37:53.649: stats: Uptime: 6godz. 37min. 53s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:53.655: Update_OpenTherm_data
+06:37:53.660: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:55.308: MainLoop: ArduinoOTA
+06:37:55.311: Update_OpenTherm_data
+06:37:55.315: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:56.911: MainLoop: ArduinoOTA
+06:37:56.916: Update Data to www
+06:37:56.950: Connected to InfluxDB: http://ha.marm:8086
+06:37:56.954: stats: Uptime: 6godz. 37min. 56s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:37:56.960: Update_OpenTherm_data
+06:37:56.964: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:37:58.614: MainLoop: ArduinoOTA
+06:37:58.618: Update_OpenTherm_data
+06:37:58.621: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:00.217: MainLoop: ArduinoOTA
+06:38:00.222: Update Data to www
+06:38:00.256: Connected to InfluxDB: http://ha.marm:8086
+06:38:00.260: stats: Uptime: 6godz. 38min.  ## Free memory: 48% 15.40kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:00.266: Update_OpenTherm_data
+06:38:00.271: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:01.920: MainLoop: ArduinoOTA
+06:38:01.924: Update_OpenTherm_data
+06:38:01.928: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:03.524: MainLoop: ArduinoOTA
+06:38:03.530: Update Data to www
+06:38:03.566: Connected to InfluxDB: http://ha.marm:8086
+06:38:03.571: stats: Uptime: 6godz. 38min. 3s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:03.576: Update_OpenTherm_data
+06:38:03.581: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:05.227: MainLoop: ArduinoOTA
+06:38:05.230: Update_OpenTherm_data
+06:38:05.234: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:06.830: MainLoop: ArduinoOTA
+06:38:06.835: Update Data to www
+06:38:06.884: Connected to InfluxDB: http://ha.marm:8086
+06:38:06.888: stats: Uptime: 6godz. 38min. 6s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:06.894: Update_OpenTherm_data
+06:38:06.898: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:08.534: MainLoop: ArduinoOTA
+06:38:08.538: Update_OpenTherm_data
+06:38:08.542: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:10.136: MainLoop: ArduinoOTA
+06:38:10.141: Update Data to www
+06:38:10.179: Connected to InfluxDB: http://ha.marm:8086
+06:38:10.184: stats: Uptime: 6godz. 38min. 10s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:10.189: Update_OpenTherm_data
+06:38:10.194: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:11.840: MainLoop: ArduinoOTA
+06:38:11.843: Update_OpenTherm_data
+06:38:11.847: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.56/22.50, roomtemp: 22.00/23.50
+06:38:12.623: !!!!!!MQTT: Publish received.
+06:38:12.631: !!!!!!MQTT: Publish received.
+06:38:12.635: MQTT callback Topic: FLOORH1/sensor/room/attributes, Received 807B message ...: {"rssi":-84,"HallSensor1":69,"CRT":683,"FL1_room_temperature_1": 21.62,"FL1_room_temperature_setpoint_1": 21.00,"FL1_room_temperature_2": 22.13,"FL1_room_temperature_setpoint_2": 21.00,"FL1_room_temperature_4": 22.81,"FL1_room_temperature_setpoint_4": 22.00,"FL1_room_temperature_5": 26.90,"FL1_room_temperature_setpoint_5": 20.50,"FL1_room_temperature_6": 23.06,"FL1_room_temperature_setpoint_6": 22.50,"FL1_room_temperature_9": 22.69,"FL1_room_temperature_setpoint_9": 27.00,"FL1_room_temperature_10": 23.12,"FL1_room_temperature_setpoint_10": 20.50,"FL1_room_temperature_12": 22.81,"FL1_room_temperature_13": 29.87,"FL1_room_temperature_0": 21.62,"FL1_room_temperature_setpoint_0": 22.50,"FL1_room_temperature_0_DHT_Temp": 29.30,"FL1_room_humidity_0_DHT_Humid": 39.00,"FL1_room_pumpstate_0_pumpstate": 0}
+06:38:12.709: Floor1temp  set to: 21.62
+06:38:12.716: Floor1temp  Setpoint set to: 22.50
+06:38:13.544: MainLoop: ArduinoOTA
+06:38:13.549: Update Data to www
+06:38:13.585: Connected to InfluxDB: http://ha.marm:8086
+06:38:13.589: stats: Uptime: 6godz. 38min. 13s.  ## Free memory: 48% 15.35kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:13.596: Update MQTT and influxDB. lastUpdatemqtt: 06:37:40.197 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+06:38:13.603: Sending data to InfluxDB ...
+06:38:13.616: Writing to InfluxDB:
+06:38:13.959: Sending data to MQTT ...
+06:38:13.975: Update_OpenTherm_data
+06:38:13.979: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:15.647: MainLoop: ArduinoOTA
+06:38:15.655: Update Data to www
+06:38:15.691: Connected to InfluxDB: http://ha.marm:8086
+06:38:15.695: stats: Uptime: 6godz. 38min. 15s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:15.701: Update_OpenTherm_data
+06:38:15.705: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:17.350: MainLoop: ArduinoOTA
+06:38:17.354: Update_OpenTherm_data
+06:38:17.358: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:18.953: MainLoop: ArduinoOTA
+06:38:18.959: Update Data to www
+06:38:18.994: Connected to InfluxDB: http://ha.marm:8086
+06:38:18.999: stats: Uptime: 6godz. 38min. 18s.  ## Free memory: 48% 15.40kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:19.004: Update_OpenTherm_data
+06:38:19.013: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:20.656: MainLoop: ArduinoOTA
+06:38:20.660: Update_OpenTherm_data
+06:38:20.664: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:22.260: MainLoop: ArduinoOTA
+06:38:22.265: Update Data to www
+06:38:22.335: Connected to InfluxDB: http://ha.marm:8086
+06:38:22.340: stats: Uptime: 6godz. 38min. 22s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:22.345: Update_OpenTherm_data
+06:38:22.349: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:23.963: MainLoop: ArduinoOTA
+06:38:23.966: Update_OpenTherm_data
+06:38:23.970: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:25.567: MainLoop: ArduinoOTA
+06:38:25.572: Update Data to www
+06:38:25.608: Connected to InfluxDB: http://ha.marm:8086
+06:38:25.613: stats: Uptime: 6godz. 38min. 25s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:25.618: Update_OpenTherm_data
+06:38:25.623: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:27.269: MainLoop: ArduinoOTA
+06:38:27.273: Update_OpenTherm_data
+06:38:27.277: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:28.872: MainLoop: ArduinoOTA
+06:38:28.878: Update Data to www
+06:38:28.989: Connected to InfluxDB: http://ha.marm:8086
+06:38:28.993: stats: Uptime: 6godz. 38min. 28s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:28.999: Update_OpenTherm_data
+06:38:29.003: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:30.676: MainLoop: ArduinoOTA
+06:38:30.680: Update_OpenTherm_data
+06:38:30.684: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:32.279: MainLoop: ArduinoOTA
+06:38:32.284: Update Data to www
+06:38:32.319: Connected to InfluxDB: http://ha.marm:8086
+06:38:32.323: stats: Uptime: 6godz. 38min. 32s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:32.329: Update_OpenTherm_data
+06:38:32.333: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:33.982: MainLoop: ArduinoOTA
+06:38:33.986: Update_OpenTherm_data
+06:38:33.990: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:35.586: MainLoop: ArduinoOTA
+06:38:35.591: Update Data to www
+06:38:35.652: Connected to InfluxDB: http://ha.marm:8086
+06:38:35.656: stats: Uptime: 6godz. 38min. 35s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:35.662: Update_OpenTherm_data
+06:38:35.666: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:37.288: MainLoop: ArduinoOTA
+06:38:37.292: Update_OpenTherm_data
+06:38:37.296: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:38.892: MainLoop: ArduinoOTA
+06:38:38.897: Update Data to www
+06:38:38.932: Connected to InfluxDB: http://ha.marm:8086
+06:38:38.936: stats: Uptime: 6godz. 38min. 38s.  ## Free memory: 48% 15.40kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:38.942: Update_OpenTherm_data
+06:38:38.946: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:40.596: MainLoop: ArduinoOTA
+06:38:40.600: Update_OpenTherm_data
+06:38:40.603: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:42.032: !!!!!!MQTT: Publish received.
+06:38:42.037: !!!!!!MQTT: Publish received.
+06:38:42.041: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-65,"CRT":50,"uptime":701652,"CO0_outside_temperature_North": 25.06,"CO0_outside_temperature_East": 29.38,"CO0_outside_temperature_West": 20.69,"CO0_outside_temperature_South": 28.44,"CO0_outside_temperature_Averange": 25.89,"CO0_boilerroom_temperature_CO": 20.06,"CO0_boilerroom_temperature_Water": 19.94,"CO0_boilerroom_temperature": 24.00,"CO0_boilerroom_pressure": 994,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 67.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+06:38:42.092: NEWS temp  updated from MQTT to: 25.89
+06:38:42.198: MainLoop: ArduinoOTA
+06:38:42.204: Update Data to www
+06:38:42.295: !!!!!!MQTT: Publish received.
+06:38:42.299: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+06:38:42.308: Wood/coax CO Pump Status  to:  Disabled
+06:38:42.312: Wood/coax Water Pump Status  to:  Disabled
+06:38:42.344: Connected to InfluxDB: http://ha.marm:8086
+06:38:42.348: stats: Uptime: 6godz. 38min. 42s.  ## Free memory: 45% 14.59kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:42.354: Update MQTT and influxDB. lastUpdatemqtt: 06:38:13.601 receivedmqttdata: 1 mqttUpdateInterval_ms: 60000
+06:38:42.361: Sending data to InfluxDB ...
+06:38:42.375: Writing to InfluxDB:
+06:38:42.616: Sending data to MQTT ...
+06:38:42.632: Update_OpenTherm_data
+06:38:42.636: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:44.302: MainLoop: ArduinoOTA
+06:38:44.308: Update Data to www
+06:38:44.536: Connected to InfluxDB: http://ha.marm:8086
+06:38:44.540: stats: Uptime: 6godz. 38min. 44s.  ## Free memory: 47% 15.23kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:44.546: Update_OpenTherm_data
+06:38:44.551: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:46.206: MainLoop: ArduinoOTA
+06:38:46.209: Update_OpenTherm_data
+06:38:46.213: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:47.809: MainLoop: ArduinoOTA
+06:38:47.814: Update Data to www
+06:38:47.848: Connected to InfluxDB: http://ha.marm:8086
+06:38:47.852: stats: Uptime: 6godz. 38min. 47s.  ## Free memory: 44% 14.08kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:47.858: Update_OpenTherm_data
+06:38:47.862: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:49.512: MainLoop: ArduinoOTA
+06:38:49.516: Update_OpenTherm_data
+06:38:49.520: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:51.115: MainLoop: ArduinoOTA
+06:38:51.121: Update Data to www
+06:38:51.191: Connected to InfluxDB: http://ha.marm:8086
+06:38:51.195: stats: Uptime: 6godz. 38min. 51s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:51.201: Update_OpenTherm_data
+06:38:51.205: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:52.819: MainLoop: ArduinoOTA
+06:38:52.822: Update_OpenTherm_data
+06:38:52.826: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:54.422: MainLoop: ArduinoOTA
+06:38:54.427: Update Data to www
+06:38:54.463: Connected to InfluxDB: http://ha.marm:8086
+06:38:54.467: stats: Uptime: 6godz. 38min. 54s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:54.473: Update_OpenTherm_data
+06:38:54.477: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:56.125: MainLoop: ArduinoOTA
+06:38:56.129: Update_OpenTherm_data
+06:38:56.133: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:57.728: MainLoop: ArduinoOTA
+06:38:57.734: Update Data to www
+06:38:57.850: Connected to InfluxDB: http://ha.marm:8086
+06:38:57.855: stats: Uptime: 6godz. 38min. 57s.  ## Free memory: 44% 14.09kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:38:57.860: Update_OpenTherm_data
+06:38:57.865: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:38:59.532: MainLoop: ArduinoOTA
+06:38:59.535: Update_OpenTherm_data
+06:38:59.539: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:01.135: MainLoop: ArduinoOTA
+06:39:01.140: Update Data to www
+06:39:01.175: Connected to InfluxDB: http://ha.marm:8086
+06:39:01.180: stats: Uptime: 6godz. 39min. 1s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:01.185: Update_OpenTherm_data
+06:39:01.189: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:02.838: MainLoop: ArduinoOTA
+06:39:02.842: Update_OpenTherm_data
+06:39:02.846: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:04.441: MainLoop: ArduinoOTA
+06:39:04.446: Update Data to www
+06:39:04.514: Connected to InfluxDB: http://ha.marm:8086
+06:39:04.518: stats: Uptime: 6godz. 39min. 4s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:04.524: Update_OpenTherm_data
+06:39:04.528: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:06.145: MainLoop: ArduinoOTA
+06:39:06.148: Update_OpenTherm_data
+06:39:06.152: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:07.747: MainLoop: ArduinoOTA
+06:39:07.753: Update Data to www
+06:39:07.789: Connected to InfluxDB: http://ha.marm:8086
+06:39:07.794: stats: Uptime: 6godz. 39min. 7s.  ## Free memory: 44% 14.08kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:07.799: Update_OpenTherm_data
+06:39:07.804: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:09.451: MainLoop: ArduinoOTA
+06:39:09.455: Update_OpenTherm_data
+06:39:09.459: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:11.054: MainLoop: ArduinoOTA
+06:39:11.060: Update Data to www
+06:39:11.183: Connected to InfluxDB: http://ha.marm:8086
+06:39:11.187: stats: Uptime: 6godz. 39min. 11s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:11.193: Update_OpenTherm_data
+06:39:11.197: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:12.857: MainLoop: ArduinoOTA
+06:39:12.861: Update_OpenTherm_data
+06:39:12.865: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:14.460: MainLoop: ArduinoOTA
+06:39:14.466: Update Data to www
+06:39:14.500: Connected to InfluxDB: http://ha.marm:8086
+06:39:14.504: stats: Uptime: 6godz. 39min. 14s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:14.510: Update_OpenTherm_data
+06:39:14.516: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:16.164: MainLoop: ArduinoOTA
+06:39:16.168: Update_OpenTherm_data
+06:39:16.172: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:17.767: MainLoop: ArduinoOTA
+06:39:17.772: Update Data to www
+06:39:17.830: Connected to InfluxDB: http://ha.marm:8086
+06:39:17.834: stats: Uptime: 6godz. 39min. 17s.  ## Free memory: 44% 14.08kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:17.840: Update_OpenTherm_data
+06:39:17.844: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:19.470: MainLoop: ArduinoOTA
+06:39:19.474: Update_OpenTherm_data
+06:39:19.478: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:21.073: MainLoop: ArduinoOTA
+06:39:21.079: Update Data to www
+06:39:21.114: Connected to InfluxDB: http://ha.marm:8086
+06:39:21.118: stats: Uptime: 6godz. 39min. 21s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:21.124: Update_OpenTherm_data
+06:39:21.129: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:22.776: MainLoop: ArduinoOTA
+06:39:22.780: Update_OpenTherm_data
+06:39:22.784: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:24.380: MainLoop: ArduinoOTA
+06:39:24.385: Update Data to www
+06:39:24.490: Connected to InfluxDB: http://ha.marm:8086
+06:39:24.494: stats: Uptime: 6godz. 39min. 24s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:24.500: Update_OpenTherm_data
+06:39:24.504: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:26.083: MainLoop: ArduinoOTA
+06:39:26.087: Update_OpenTherm_data
+06:39:26.090: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:27.687: MainLoop: ArduinoOTA
+06:39:27.692: Update Data to www
+06:39:27.729: Connected to InfluxDB: http://ha.marm:8086
+06:39:27.734: stats: Uptime: 6godz. 39min. 27s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:27.739: Update_OpenTherm_data
+06:39:27.744: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:29.389: MainLoop: ArduinoOTA
+06:39:29.393: Update_OpenTherm_data
+06:39:29.397: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:30.992: MainLoop: ArduinoOTA
+06:39:30.998: Update Data to www
+06:39:31.151: Connected to InfluxDB: http://ha.marm:8086
+06:39:31.155: stats: Uptime: 6godz. 39min. 31s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:31.161: Update_OpenTherm_data
+06:39:31.166: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:32.796: MainLoop: ArduinoOTA
+06:39:32.799: Update_OpenTherm_data
+06:39:32.803: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:34.399: MainLoop: ArduinoOTA
+06:39:34.404: Update Data to www
+06:39:34.439: Connected to InfluxDB: http://ha.marm:8086
+06:39:34.443: stats: Uptime: 6godz. 39min. 34s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:34.449: Update_OpenTherm_data
+06:39:34.453: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:36.102: MainLoop: ArduinoOTA
+06:39:36.106: Update_OpenTherm_data
+06:39:36.110: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:37.706: MainLoop: ArduinoOTA
+06:39:37.711: Update Data to www
+06:39:37.813: Connected to InfluxDB: http://ha.marm:8086
+06:39:37.817: stats: Uptime: 6godz. 39min. 37s.  ## Free memory: 44% 14.08kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:37.823: Update_OpenTherm_data
+06:39:37.827: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:39.409: MainLoop: ArduinoOTA
+06:39:39.413: Update_OpenTherm_data
+06:39:39.416: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:41.012: MainLoop: ArduinoOTA
+06:39:41.017: Update Data to www
+06:39:41.054: Connected to InfluxDB: http://ha.marm:8086
+06:39:41.058: stats: Uptime: 6godz. 39min. 41s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:41.064: Update_OpenTherm_data
+06:39:41.068: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:42.642: !!!!!!MQTT: Publish received.
+06:39:42.648: !!!!!!MQTT: Publish received.
+06:39:42.651: MQTT callback Topic: COWoda0/sensor/boilerroom/attributes, Received 550B message ...: {"rssi":-66,"CRT":50,"uptime":701713,"CO0_outside_temperature_North": 24.88,"CO0_outside_temperature_East": 29.06,"CO0_outside_temperature_West": 20.69,"CO0_outside_temperature_South": 28.38,"CO0_outside_temperature_Averange": 25.75,"CO0_boilerroom_temperature_CO": 20.13,"CO0_boilerroom_temperature_Water": 19.88,"CO0_boilerroom_temperature": 24.00,"CO0_boilerroom_pressure": 994,"CO0_boilerroom_high": 0.00,"CO0_boilerroom_highreal": 0.00,"CO0_boilerroom_gasCO": 67.00,"CO0_boilerroom_pump1Water_Energy": 0.01,"CO0_boilerroom_pump2CO_Energy": 0.01}
+06:39:42.703: NEWS temp  updated from MQTT to: 25.75
+06:39:42.716: MainLoop: ArduinoOTA
+06:39:42.720: Update MQTT and influxDB. lastUpdatemqtt: 06:38:42.360 receivedmqttdata: 0 mqttUpdateInterval_ms: 60000
+06:39:42.723: Sending data to InfluxDB ...
+06:39:42.736: Writing to InfluxDB:
+06:39:42.855: !!!!!!MQTT: Publish received.
+06:39:42.859: MQTT callback Topic: COWoda0/switch/boilerroom/attributes, Received 77B message ...: {"CRT":50,"CO0_boilerroom_pump1Water": "OFF","CO0_boilerroom_pump2CO": "OFF"}
+06:39:42.868: Wood/coax CO Pump Status  to:  Disabled
+06:39:42.872: Wood/coax Water Pump Status  to:  Disabled
+06:39:43.055: Sending data to MQTT ...
+06:39:43.071: Update_OpenTherm_data
+06:39:43.077: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:44.720: MainLoop: ArduinoOTA
+06:39:44.725: Update Data to www
+06:39:44.761: Connected to InfluxDB: http://ha.marm:8086
+06:39:44.766: stats: Uptime: 6godz. 39min. 44s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:44.771: Update_OpenTherm_data
+06:39:44.775: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:46.422: MainLoop: ArduinoOTA
+06:39:46.426: Update_OpenTherm_data
+06:39:46.430: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:48.025: MainLoop: ArduinoOTA
+06:39:48.031: Update Data to www
+06:39:48.065: Connected to InfluxDB: http://ha.marm:8086
+06:39:48.069: stats: Uptime: 6godz. 39min. 48s.  ## Free memory: 48% 15.39kB bytes ## Wifi: 78% ## Mqtt reconnects: 0
+06:39:48.075: Update_OpenTherm_data
+06:39:48.080: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:49.730: MainLoop: ArduinoOTA
+06:39:49.734: Update_OpenTherm_data
+06:39:49.738: Get Temps: floor2_temp: 22.44/24.50, floor1_temp: 21.62/22.50, roomtemp: 22.03/23.50
+06:39:51.332: MainLoop: ArduinoOTA
+06:39:51.337: Update Data to www
+06:39:51.372: Connected to InfluxDB: http://ha.marm:8086
+06:39:51.376: stats: Uptime: 6godz. 39min. 51s.  ## Free memory: 48% 1

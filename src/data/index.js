@@ -91,7 +91,7 @@ function updateSliderPWM(element) {
 }
 
 function onMessage(event) {
-//    console.log(event.data);
+    //console.log(event.data);
     var logtopic = "\"log\":";
     if ((event.data).toString().indexOf(logtopic) !== -1)
     {   var key = "log";
@@ -106,6 +106,7 @@ function onMessage(event) {
         }
     } else
     {
+        //console.log(event.data);
         try {
             var myObj = JSON.parse(event.data);
         } catch (error) {

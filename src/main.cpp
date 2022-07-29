@@ -90,27 +90,49 @@ void opentherm_update_data()
       roomtemp_last = roomtemp;
     }
   }
-
+#ifdef debug
 sprintf(log_chars,"Statusy openth: COHEAT: %s, DHW: %s, automodeCO: %s, temp_NEWS: %s", String(COHeat?"chodzi":"stoi").c_str(), String(enableHotWater?"chodzi":"stoi").c_str(), String(automodeCO?"ON":"stoi").c_str(), String(temp_NEWS).c_str());
 log_message(log_chars);
+#endif
 //COHeat = false;
 
   unsigned long response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
   OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
+  #ifdef debug
+  log_message((char*)F("Processed Opentherm and get response"));
+  #endif
   if (responseStatus != OpenThermResponseStatus::SUCCESS)
   {
     LastboilerResponseError = String(response, HEX);
-    sprintf(log_chars, "!!!!!!!!!!!Error: Invalid boiler response %s", LastboilerResponseError.c_str());
+    sprintf(log_chars, "!!!!!!!!!!!Error: Invalid boiler response Error: %s", LastboilerResponseError.c_str());
     log_message(log_chars);
   } else
   {
+    #ifdef debug
+    log_message((char*)F("Set statuses from dhwTarget"));
+    #endif
     OpenTherm.setDHWSetpoint(dhwTarget);
+    #ifdef debug
+    log_message((char*)F("Set statuses from op"));
+    #endif
     OpenTherm.setBoilerTemperature(op);
 
+    #ifdef debug
+    log_message((char*)F("Set statuses from opentherm"));
+    #endif
     status_CHActive = OpenTherm.isCentralHeatingActive(response);
+    #ifdef debug
+    log_message((char*)F("Set statuses from isCentralHeatingActive"));
+    #endif
     status_WaterActive = OpenTherm.isHotWaterActive(response);
+    #ifdef debug
+    log_message((char*)F("Set statuses from isHotWaterActive"));
+    #endif
     bool status_flame_tmp = status_FlameOn;
     status_FlameOn = OpenTherm.isFlameOn(response);
+    #ifdef debug
+    log_message((char*)F("Set statuses from isFlameOn"));
+    #endif
     if (status_flame_tmp != status_FlameOn) {
       if (status_FlameOn) {
         start_flame_time = millis();
@@ -121,16 +143,42 @@ log_message(log_chars);
       }
     }
     status_Cooling = OpenTherm.isCoolingActive(response);
+    #ifdef debug
+    log_message((char*)F("Set statuses from isCoolingActive"));
+    #endif
     status_Diagnostic = OpenTherm.isDiagnostic(response);
+    #ifdef debug
+    log_message((char*)F("Set statuses from isDiagnostic"));
+    #endif
     flame_level = OpenTherm.getModulation();
+    #ifdef debug
+    log_message((char*)F("Set statuses from getModulation"));
+    #endif
     tempBoiler = OpenTherm.getBoilerTemperature();
+    #ifdef debug
+    log_message((char*)F("Set statuses from getBoilerTemperature"));
+    #endif
     tempCWU = OpenTherm.getDHWTemperature();
+    #ifdef debug
+    log_message((char*)F("Set statuses from getDHWTemperature"));
+    #endif
     retTemp = OpenTherm.getReturnTemperature();
+    #ifdef debug
+    log_message((char*)F("Set statuses from getReturnTemperature"));
+    #endif
     pressure = OpenTherm.getPressure();
+    #ifdef debug
+    log_message((char*)F("Set statuses from getPressure"));
+    #endif
+    #ifdef debug
+    log_message((char*)F("Set statuses from opentherm"));
+    #endif
   }
 
   status_Fault = OpenTherm.isFault(response);
-
+  #ifdef debug
+  log_message((char*)F("Set fault status from opentherm"));
+  #endif
 }
 
 void getTemp()

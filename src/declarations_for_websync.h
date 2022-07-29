@@ -1,8 +1,9 @@
 
 
-#define ASS_temp_NEWS  0      // avg temperatura outside -getting this from mqtt topic as averange from 4 sensors North West East South
-#define ASS_retTemp  1        //Return temperature
-#define ASS_tempBoiler 2
+//defined in common_functions 0,1
+#define ASS_uptimedana 0
+#define ASS_Statusy 1
+#define ASS_temp_NEWS  2      // avg temperatura outside -getting this from mqtt topic as averange from 4 sensors North West East South
 #define ASS_tempBoilerSet 3     // boiler tempset on heat modetemp boiler set -mainly used in auto mode and for display on www actual temp
 #define ASS_tempCWU 4           //hot water temp
 #define ASS_dhwTarget 5         //hot water temp set
@@ -17,8 +18,8 @@
 #define ASS_statusFlameOn 14
 #define ASS_statusFault 15
 #define ASS_lastNEWSSet 16      //last time NEWS get updated from mqtt
-#define ASS_uptimedana 17
-#define ASS_Statusy 18
+#define ASS_retTemp  17        //Return temperature
+#define ASS_tempBoiler 18
 #define ASS_UsedMedia 19           //Statistical data of used media
 #define ASS_MemStats 20
 #define ASS_ecoMode 21          //tryb pracy kondensacyjny -eco -temp grzania CO max 40st

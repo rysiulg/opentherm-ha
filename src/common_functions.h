@@ -22,7 +22,7 @@
     #include <Update.h>
   #endif //enableWebUpdate
   #include <AsyncTCP.h>
-  #include <AsyncUDP.h>
+//  #include <AsyncUDP.h>
   #include <ESPmDNS.h>
   #include <AsyncDNSServer.h>
   #include "esp_task_wdt.h"
@@ -59,11 +59,11 @@
 
 #ifdef ENABLE_INFLUX
   #ifdef ESP32
-    #include <HTTPClient.h>
-    #include <InfluxDbClient.h>
+   // #include <HTTPClient.h>
+    #include <InfluxDb.h>
   #else
-    #include <ESP8266HTTPClient.h>
-    #include <InfluxDbClient.h>
+    //#include <ESP8266HTTPClient.h>
+    #include <InfluxDb.h>
   #endif
 #endif
 
@@ -215,6 +215,12 @@ char influx_measurments[sensitive_size] = InfluxMeasurments;
 #endif //enableMQTTAsync
 
 
+#ifndef ASS_uptimedana
+#define ASS_uptimedana 0
+#endif
+#ifndef ASS_Statusy
+#define ASS_Statusy 1
+#endif
 
 //common_functions.h
 String get_lastResetReason();
@@ -269,6 +275,9 @@ void handleWebSocketMessage_sensors(String message);
 void Setup_WebServer();
 void webhandleNotFound(AsyncWebServerRequest *request);
 void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+char* toCharPointer (String ptrS);
+void SaveAssValue(uint8_t ASSV, String source_str);
+void updateDatatoWWW_common();
 void MainCommonSetup();
 void MainCommonLoop();
 #if defined enableMQTT || defined enableMQTTAsync
@@ -393,31 +402,39 @@ void log_message(char* string, u_int specialforce = 0)  //         log_message((
   #include "configmqtttopics.h"
   String send_string = String(uptimedana(millis(), true, true)) + F(": ") + String(string);
   send_string.trim();
+
+  //Send to serial port COM
   #ifdef enableDebug2Serial
   if (debugSerial == true) {
     Serial.println(send_string);
   }
   #endif
-  if (send_string.length()> maxLogSize ) send_string[maxLogSize] = '\0';
+
+//  if (send_string.length()> maxLogSize ) send_string[maxLogSize] = '\0';
+//abandoned webserial
   #ifdef enableWebSerial
     if (starting == false and WebSocketlog) {WebSerial.println(send_string);}
   #endif
+  char* send_string_ch;
+  send_string_ch = toCharPointer(String("{\"log\":\""+String(send_string)+"\"}"));
+
   #ifdef enableWebSocketlog
-  if (!starting and WebSocketlog) notifyClients(String("{\"log\":\""+String(send_string)+"\"}").c_str());
+  if (!starting and WebSocketlog) notifyClients(String("{\"log\":\""+String(send_string)+"\"}"));
   #endif
+
   #if defined enableMQTT || defined enableMQTTAsync
   if (sendlogtomqtt == true) { //|| specialforce == 2) {
-    send_string.replace("\"","'");
-    send_string.replace("\\","");
+    // send_string.replace("\"","'");
+    // send_string.replace("\\","");
     if (mqttclient.connected() && !starting)
     {
       #if defined enableMQTTAsync
       uint16_t packetIdSub;
-      packetIdSub = mqttclient.publish(String(LOG_TOPIC).c_str(), QOS, mqtt_Retain, send_string.c_str());
+      packetIdSub = mqttclient.publish(String(LOG_TOPIC).c_str(), QOS, mqtt_Retain, send_string_ch);
       if (packetIdSub == 0) packetIdSub = 0;
       #endif
       #if defined enableMQTT
-      if (!mqttclient.publish(String(LOG_TOPIC).c_str(), send_string.c_str())) {
+      if (!mqttclient.publish(String(LOG_TOPIC).c_str(), send_string_ch)) {
         mqttclient.disconnect();
         Serial.print(millis());
         Serial.print(F(": "));
@@ -1362,8 +1379,10 @@ String web_processor(const String var) {
 }
 //***********************************************************************************************************************************************************************************************
 bool webhandleFileRead(AsyncWebServerRequest *request, String path) {
-  sprintf(log_chars,"handleFileRead: %s", path.c_str());
+  #ifdef debug
+  sprintf(log_chars,"webhandleFileRead: %s", path.c_str());
   log_message(log_chars);
+  #endif
 
   // if (!request->authenticate(www_username, www_password)) {
   //     Serial.print(F("NOT AUTHENTICATE!"));
@@ -1380,18 +1399,22 @@ bool webhandleFileRead(AsyncWebServerRequest *request, String path) {
       path += F(".gz");                                     // Use the compressed version
       gzipped = true;
     }
+
     AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path, contentType);
+    //request->send(SPIFFS, "/index.html", "text/html; charset=utf-8",  false, web_processor);
+    //AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path, contentType,  false, web_processor); //there was problem with css and js files i think and also will be problem with gz html ;(
+
     if (gzipped){
         response->addHeader("Content-Encoding", "gzip");
     }
-    sprintf(log_chars,"Real file path: %s",String(path).c_str());
+    sprintf(log_chars,"webhandleFileRead: Real file path: (%s) %s",gzipped?"gzip":"normal", String(path).c_str());
     log_message(log_chars);
 
     request->send(response);
 
     return true;
   }
-  sprintf(log_chars,"File Not Found: %s",String(path).c_str());
+  sprintf(log_chars,"webhandleFileRead: File Not Found: %s",String(path).c_str());
   log_message(log_chars);
   return false;                                             // If the file doesn't exist, return false
 }
@@ -1404,14 +1427,14 @@ String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk 
   for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)  /////////////////////////////korekta
   {
     String placeholdername = get_PlaceholderName(i);
-    if (ASS[i].Value.length()>0)
+    if (sizeof(ASS[i].Value)>0)
     {
       if (i>0) toreturn += F(",");
       toreturn += F("\"");
       toreturn += placeholdername;
       toreturn += F("\":");
       toreturn += F("\"");
-      toreturn += ASS[i].Value;
+      toreturn += String(ASS[i].Value);
       toreturn += F("\"");
     }
     if (function == ValuesToWSWPforWebProcessor && (placeholdername).indexOf(processorAsk) >= 0 ) return String(ASS[i].Value);
@@ -1431,13 +1454,15 @@ void handleWebSocketMessage_sensors(String message) {
     log_message(log_chars);
       for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)
       {
-        if (ASS[i].Value.length()>0)
+        if (sizeof(ASS[i].Value)>0)
         {
           String placeholdername = get_PlaceholderName(i);
           //Serial.println("Debug: "+ASS[i].placeholder+", val: "+ASS[i].Value);
           if (placeholdertmp.indexOf(placeholdername) >= 0) {
             sprintf(log_chars,"Received Websocket %s", String(message).c_str());
             log_message(log_chars);
+ //           strcpy(ASS[i].Value, valuetmp.c_str());
+//            valuetmp.toCharArray(ASS[i].Value, valuetmp.length());
             ASS[i].Value = valuetmp;
   //          receivedwebsocketdata = true;
             #if defined(enableMQTT) || defined(ENABLE_INFLUX) || defined (enableMQTTAsync)
@@ -1445,7 +1470,7 @@ void handleWebSocketMessage_sensors(String message) {
 
             #endif
             updateDatatoWWW_received(i);
-            notifyClients("{\""+String(placeholdername)+"\":\""+ASS[i].Value+"\"}");
+            notifyClients("{\""+String(placeholdername)+"\":\""+String(ASS[i].Value)+"\"}");
   //          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
           }
         }
@@ -1580,7 +1605,7 @@ void Setup_WebServer() {
 //  webserver.addHandler(webhandleFileRead);
   webserver.onFileUpload(webhandleFileUpload);
   webserver.onNotFound([](AsyncWebServerRequest * request) {        // if someone requests any other file or page, go to function 'handleNotFound'
-    log_message((char*)F("On not found"));
+    log_message((char*)F("onNotFound: Check if file exist else return 404"));
     if(!webhandleFileRead(request, request->url())){                        // check if the file exists in the flash memory (SPIFFS), if so, send it
       webhandleNotFound(request);      // and check if the file exists
     }
@@ -1681,6 +1706,9 @@ void MainCommonSetup()  {
   // double reset detect from start
   doubleResetDetect();
   #endif
+  WiFi.setAutoReconnect(false);
+  WiFi.setAutoConnect(false);
+  WiFi.disconnect(true);
   int ledpin = LED_BUILTIN;
   pinMode(ledpin, OUTPUT);
   #ifdef ESP32
@@ -1713,12 +1741,10 @@ void MainCommonSetup()  {
   WebSerial.msgCallback(RemoteCommandReceived);
 #endif                //we have webserial so we can enable it now
   #ifdef enableWebSocket
-
-
   Setup_WebSocket();
   Setup_WebServer();    //new www based on spiff files
   starting = false;
-  updateDatatoWWW();
+  updateDatatoWWW_common();
   #else
   starthttpserver();    //old www
   #endif
@@ -1735,25 +1761,91 @@ void MainCommonSetup()  {
   #endif
 }
 //***********************************************************************************************************************************************************************************************
+
+char* toCharPointer (String ptrS) {
+  // char ptr[ptrS.length()+1];
+  // strcpy(ptr, ptrS.c_str());
+  //ptrS.toCharArray(ptr, ptrS.length()+1);
+  // Serial.print("tocharpntr: ");
+  // Serial.println(String(*ptr));
+  // Serial.println(" String: ");
+  // Serial.println(*ptrS);
+  char* retptr = (char*) ptrS.c_str();
+  return retptr;
+}
+//***********************************************************************************************************************************************************************************************
+void SaveAssValue(uint8_t ASSV, String source_str) {
+  ASS[ASSV].Value = source_str;
+}
+//***********************************************************************************************************************************************************************************************
+void updateDatatoWWW_common()
+{
+  //ASS[ASS_uptimedana].Value = (String(uptimedana(0) + "    CRT: <b>" + String(CRTrunNumber)));
+  // strcpy(ASS[ASS_MemStats].Value, String(uptimedana(0) + "    CRT: <b>" + String(CRTrunNumber)).c_str() );
+  SaveAssValue(ASS_uptimedana, String(uptimedana(0) + "    CRT: <b>" + String(CRTrunNumber)) );
+  //Statusy
+    String ptr = "\0";
+    ptr += F("Free mem: <b>");
+    ptr += String(getFreeMemory());
+    ptr += F("&percnt;</b>, Heap: <b>");
+    ptr += formatBytes(ESP.getFreeHeap());
+    ptr += F("</b>, Wifi: <b>");
+    ptr += String(getWifiQuality());
+    ptr += F("&percnt;");
+    ptr += F("</b>");
+    #if defined enableMQTT || defined enableMQTTAsync
+    ptr += F("</br>MQTT");
+    #ifdef enableMQTTAsync
+    ptr += F("-Async ");
+    #endif
+    ptr += F("status: <b>");
+    ptr += ((mqttclient.connected())?"Połączony":"Rozłączony");
+    ptr += F("</b>");
+    ptr += F(", reconnects: <b>");
+    ptr += mqttReconnects;
+    ptr += F("</b>");
+    #endif
+    if (ESPlastResetReason.length() > 0) {
+      ptr += F("</br>Last reset: '<b>");
+      ptr += ESPlastResetReason;
+      ptr += F("</b>'");
+    }
+    SaveAssValue(ASS_MemStats, ptr );
+    updateDatatoWWW();
+  //ASS[ASS_MemStats].Value = ((ptr));
+  // strcpy(ASS[ASS_MemStats].Value, String(ptr).c_str() );
+}
 void MainCommonLoop()
 {
   #include "configmqtttopics.h"
   #ifdef doubleResDet
   drd->loop();
   #endif
-  log_message((char*)F("Main Common Loop..."));
+  log_message((char*)F("MainLoop: ArduinoOTA"));
   #ifdef enableArduinoOTA
   // Handle OTA first.
   ArduinoOTA.handle();
   #endif
+  #ifdef debug
+  log_message((char*)F("MainLoop: checkWifi"));
+  #endif
   check_wifi();
   #ifdef enableMESHNETWORK
+  #ifdef debug
+  log_message((char*)F("MainLoop: meshnetwork"));
+  #endif
   MeshWiFi.update();
   #endif
   #ifdef enableMQTT
+  #ifdef debug
+  log_message((char*)F("MainLoop: mqtt loop"));
+  #endif
   mqttclient.loop();
   #endif
   #ifdef enableWebSocket
+  #ifdef debug
+  log_message((char*)F("MainLoop: Websocket cleanup"));
+  #endif
   WebSocket.cleanupClients();
   #endif
 
@@ -1762,6 +1854,9 @@ void MainCommonLoop()
     String test = Serial.readString();
     data = (u_int8_t *)test.c_str();
     RemoteCommandReceived(data, (size_t)(test.length() ));
+    #ifdef debug
+    log_message((char*)F("MainLoop: Received SerialData"));
+    #endif
     //free(data);
   }
 
@@ -1769,19 +1864,19 @@ void MainCommonLoop()
   {
     lastloopRunTime = millis();
     #ifdef debug
-    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww"));
+    log_message((char*)F("MainLoopInLoop: loop begin updatedatatowww"));
     #endif
-    updateDatatoWWW();
+    updateDatatoWWW_common();
     #ifdef debug
-    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (updateDatatoWWW)"));
+    log_message((char*)F("MainLoopInLoop: notifyclients to /ws in JSON"));
     #endif
     notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
-    #ifdef debug
-    log_message((char*)F("Timing start getValuesToWebSocket_andWebProcessor datawww (notifyClients)"));
-    #endif
     // check mqtt
-  #ifdef enableMQTT
-    if ((WiFi.isConnected()) && (!mqttclient.connected()))
+    #ifdef enableMQTT
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: mqtt pubsub"));
+    #endif
+      if ((WiFi.isConnected()) && (!mqttclient.connected()))
     {
       mqttclient.disconnect();
       log_message((char *)F("Lost MQTT connection! Trying Reconnect. Just .disconnected"));
@@ -1789,6 +1884,9 @@ void MainCommonLoop()
     }
   #endif
   #ifdef ENABLE_INFLUX
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: Influx validateconnection"));
+    #endif
     if (InfluxClient.validateConnection())
     {
       sprintf(log_chars, "Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
@@ -1800,6 +1898,10 @@ void MainCommonLoop()
       log_message(log_chars,0);
     }
   #endif
+    wdt_reset();
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: message str builder to log"));
+    #endif
     // log stats
     //    #include "configmqtttopics.h"
     String message = F("stats: Uptime: ");
@@ -1816,6 +1918,9 @@ void MainCommonLoop()
     #endif
     log_message((char *)message.c_str());
 
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: stats string builder to json"));
+    #endif
     String stats = F("{\"CRT\":");
     stats += String(CRTrunNumber);
     stats += F(",\"rssi\":");
@@ -1838,41 +1943,65 @@ void MainCommonLoop()
     #endif
     stats += F("}");
     #ifdef enableMQTTAsync
-    mqttclient.publish(String(STATS_TOPIC).c_str(), QOS, mqtt_Retain, stats.c_str());
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: mqttAsync send stats"));
+    #endif //debug
     uint16_t packetIdSub;
     packetIdSub = mqttclient.publish(String(STATS_TOPIC).c_str(), QOS, mqtt_Retain, stats.c_str());
     if (packetIdSub == 0) packetIdSub = 0;
     // get new data
     //  if (!heishamonSettings.listenonly) send_panasonic_query();
     // Make sure the LWT is set to Online, even if the broker have marked it dead.
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: mqttAsync send WillTopic"));
+    #endif //debug
     packetIdSub = mqttclient.publish(String(WILL_TOPIC).c_str(), QOS, 0, String(WILL_ONLINE).c_str());
     #endif
     #ifdef enableMQTT
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: mqtt send stats"));
+    #endif //debug
     mqttclient.publish(String(STATS_TOPIC).c_str(), stats.c_str(), mqtt_Retain);
     // get new data
     //  if (!heishamonSettings.listenonly) send_panasonic_query();
     // Make sure the LWT is set to Online, even if the broker have marked it dead.
+    #ifdef debug
+    log_message((char*)F("MainLoopInLoop: MQTT sendWillTopic"));
+    #endif //debug
     mqttclient.publish(String(WILL_TOPIC).c_str(), String(WILL_ONLINE).c_str());
     #endif
-    //updateDatatoWWW();  //send after sync struct with vars
+    //updateDatatoWWW_common();  //send after sync struct with vars
   }
 
   if (((millis() - lastUpdatemqtt) > mqttUpdateInterval_ms) or lastUpdatemqtt == 0 or (receivedmqttdata == true and ((millis() - lastUpdatemqtt) > mqttUpdateInterval_ms/3))) // recived data ronbi co 800ms -wylacze ten sttus dla odebrania news
   {
+    #ifdef debug
+    log_message((char*)F("MainLoop2ndTimed: entry on mqttmessage or time"));
+    #endif //debug
     sprintf(log_chars, "Update MQTT and influxDB. lastUpdatemqtt: %s receivedmqttdata: %s mqttUpdateInterval_ms: %s", String(uptimedana(lastUpdatemqtt,true,true)).c_str(), String(receivedmqttdata).c_str(), String(mqttUpdateInterval_ms).c_str());
     log_message(log_chars,0);
     receivedmqttdata = false;
     lastUpdatemqtt = millis();
     #ifdef ENABLE_INFLUX
+    #ifdef debug
+    log_message((char*)F("MainLoop2ndTimed: Update InfluxDB"));
+    #endif //debug
     updateInfluxDB(); // i have on same server mqtt and influx so when mqtt is down influx probably also ;(  This   if (InfluxClient.isConnected())  doesn't work forme 202205
     #endif //ENABLE_INFLUX
     //mqttReconnect_subscribe_list();
     #if defined enableMQTT || defined enableMQTTAsync
+    #ifdef debug
+    log_message((char*)F("MainLoop2ndTimed: Update MQTT data"));
+    #endif //debug
     updateMQTTData();
     #endif //defined enableMQTT || enableMQTTAsync
   }
 
-  if ((millis() % 600) < 100) digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  if ((millis() % 600) < 100) {
+    #ifdef debug
+    log_message((char*)F("MainLoop3rdTimed: Ledblonk"));
+    #endif //debug
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));}
 }
 
 //***********************************************************************************************************************************************************************************************
@@ -2103,13 +2232,13 @@ String webgetContentType(String filename) {
   if(filename=="download") return "application/octet-stream";
   else if(filename.endsWith(".htm")) return "text/html; charset=utf-8";
   else if(filename.endsWith(".html")) return "text/html; charset=utf-8";
-  else if(filename.endsWith(".css")) return "text/css";
-  else if(filename.endsWith(".js")) return "application/javascript";
+  else if(filename.endsWith(".css")) return "text/css; charset=utf-8";
+  else if(filename.endsWith(".js")) return "application/javascript; charset=utf-8";
   else if(filename.endsWith(".png")) return "image/png";
   else if(filename.endsWith(".gif")) return "image/gif";
   else if(filename.endsWith(".jpg")) return "image/jpeg";
   else if(filename.endsWith(".ico")) return "image/x-icon";
-  else if(filename.endsWith(".xml")) return "text/xml";
+  else if(filename.endsWith(".xml")) return "text/xml; charset=utf-8";
   else if(filename.endsWith(".pdf")) return "application/x-pdf";
   else if(filename.endsWith(".zip")) return "application/x-zip";
   else if(filename.endsWith(".gz")) return "application/x-gzip";

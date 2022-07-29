@@ -20,19 +20,21 @@
 
 //#define debug
 //#define debugweb
+
 #define enableDebug2Serial    //send log_message to websocket
-#define enableWebSocketlog  //send log to websocket AND WEBSOCKET MUST BE ENABLED -this replaces me webserial -files on web to build ... to get it
+#define enableWebSocketlog  //send log to websocket AND enableWebSocket MUST BE ENABLED -this replaces me webserial -files on web to build ... to get it
 #define enableArduinoOTA
 #define enableWebSocket      //ESPAsyncWebServer
 #define doubleResDet        //  khoih-prog/ESP_DoubleResetDetector @ ^1.3.1)  check if double reset occurs -if yes stay on OTA ready
 #define ENABLE_INFLUX        // tobiasschuerg/ESP8266 Influxdb @ ^3.12.0   if defined sending to influx database is performed at time when mqtt messages is send  -about 130kB of code
+#define enableInfluxClient     // works as client -uses include InfluxdbClient.h not Influxdb.h
 #define enableMQTTAsync     //Async MQTT   ottowinter/AsyncMqttClient-esphome @ ^0.8.6  -implements also reconnects based by wifi
 //#define enableMQTT        //knolleary/PubSubClient@^2.8  --problem with connected status ---
 //#define enableWebUpdate   //not implemented -not working well
 //#define enableMESHNETWORK
-//#define enableWebSerial     //not fully implemented
+//#define enableWebSerial     //not fully implemented and abandoned
 
-#define maxLogSize 220      //max size of chars sending to remote log like webserial, mqtt and websocket
+#define maxLogSize 1023      //max size of chars sending to remote log like webserial, mqtt and websocket
 
 
 #if defined enableWebSocketlog && not defined enableWebSocket

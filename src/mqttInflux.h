@@ -418,27 +418,9 @@ void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT) {
   payloadStrFromMQTT.trim();
   String TmpToLog ="\0";
   if (payloadStrFromMQTT.length() > maxLogSize) {TmpToLog = payloadStrFromMQTT; TmpToLog[maxLogSize]='\0';} else {TmpToLog = payloadStrFromMQTT;}
-  sprintf(log_chars, "MQTT callback Topic: %s, Received %sB message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT.length()).c_str(), TmpToLog);
-  log_message(log_chars);
-  #ifdef debug0xtu //na seriaprint wywale exc28
-  sprintf(log_chars, "MQTT callback Topic: %s, Received message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT).c_str());
+  sprintf(log_chars, "MQTT callback Topic: %s, Received %sB message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT.length()).c_str(), TmpToLog.c_str());
   log_message(log_chars);
 
-    Serial.println(TEMP_SETPOINT_SET_TOPIC);
-    Serial.println(MODE_SET_TOPIC);
-    Serial.println(TEMP_DHW_SET_TOPIC);
-    Serial.println(STATE_DHW_SET_TOPIC);
-    Serial.println(SETPOINT_OVERRIDE_SET_TOPIC);
-    Serial.println(SETPOINT_OVERRIDE_RESET_TOPIC);
-
-    Serial.println(NEWS_GET_TOPIC);
-    Serial.println(COPUMP_GET_TOPIC);
-    Serial.println(TEMP_CUTOFF_SET_TOPIC);
-    Serial.println(ROOMS_F1_GET_TOPIC);
-    Serial.println(ROOMS_F2_GET_TOPIC);
-    Serial.println(ROOM_TEMP_SET_TOPIC);
-
-  #endif
 //return ;
 //It cannon be else if because one topic can contain more values ;()
   if (topicStrFromMQTT.indexOf(String(ROOMS_F1_GET_TOPIC))==0 and payloadStrFromMQTT.indexOf(String(roomF1temp_json))>=0) //topic min temp and max setpoint from floor 1
