@@ -2596,6 +2596,7 @@ bool SaveConfig() {
   if (runtmp != CRTrunNumber) {
     EEPROM.put(EpromPosition, CRTrunNumber);
     log_message((char*)F("SaveConfig. Saved new CRT number in EPROM"));
+  }
   EpromPosition += sizeof(CRTrunNumber);
 
   unsigned long long check_l = 0;
