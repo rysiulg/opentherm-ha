@@ -57,6 +57,7 @@ function updateSliderPWM(element) {
     var topic, message;
     topic = element.id;
     message = element.value;
+
     if ((element.id).indexOf('slider') >= 0 )
     {
         var sliderNumber = element.id.charAt(element.id.length-1);
@@ -85,6 +86,11 @@ function updateSliderPWM(element) {
     {
         element.value = null;
         document.getElementById("log").scrollTop = document.getElementById("log").scrollHeight;
+        if (message.toLowerCase() == "clear" || message.toLowerCase() == "cr")
+        {
+            document.getElementById("log").value=null;
+            return;
+        }
     }
 //    console.log("topic: "+topic+" message: "+message+" element_val: "+element.value+" el.checked: "+element.checked);
     if (topic != null && message != null) websocket.send(topic+":"+message);

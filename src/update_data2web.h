@@ -2,10 +2,10 @@
 
 
 String LocalVarsRemoteCommands(String command, size_t gethelp) {
-  if (gethelp == remoteHelperMenuCommand) {
+  if (gethelp == remoteHelperMenu) {
     return F(", RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-, USEDMEDIA");
   } else
-  if (gethelp == remoteHelperMenu)
+  if (gethelp == remoteHelperMenuCommand)
   {
     if (command.indexOf("ROOMTEMP0") >=0) {
       log_message((char*)F("  ROOMTEMP0   -Przelacza temperature z pokoju na automat,"), logCommandResponse);
@@ -15,6 +15,9 @@ String LocalVarsRemoteCommands(String command, size_t gethelp) {
     } else
     if (command.indexOf("ROOMTEMP-") >=0) {
       log_message((char*)F(" ROOMTEMP-  -Zmniejsza wartość temperatury z pokoju o 0,5 stopnia,"), logCommandResponse);
+    } else
+    if (command.indexOf("USEDMEDIA") >=0) {
+      log_message((char*)F(" USEDMEDIA  -Wyświetla zużycie gazu i czas pracy,"), logCommandResponse);
     } else
     if (command.indexOf("RESET_FLAMETOTAL") >=0) {
       log_message((char*)F("  RESET_FLAMETOTAL  -UWAGA!!!! Resetuje licznik płomienia-zużycia kWh i czas oraz CRT na 0"), logCommandResponse);
@@ -26,9 +29,9 @@ String LocalVarsRemoteCommands(String command, size_t gethelp) {
     if (command == "USEDMEDIA")
     {
       String ptrS = F("Used Media: ");
-      ptrS += String(Flame_total) + ": " + String(flame_used_power_kwh) + "kWh,    " + uptimedana((flame_time_total), true) + "\n";
-      ptrS += "   w tym woda: " + String(flame_used_power_waterTotal) + "kWh,     " + String(uptimedana((flame_time_waterTotal), true) + "\n");
-      ptrS += "   w tym CO:   " + String(flame_used_power_CHTotal) + "kWh,      " + String(uptimedana((flame_time_CHTotal), true)+"\n");
+      ptrS += String(Flame_total) + ": " + String(flame_used_power_kwh*1000) + "Wh,    " + String( flame_time_total ) + "\n");      //uptimedana((flame_time_total), true) + "\n";
+      ptrS += "   w tym woda: " + String(flame_used_power_waterTotal*1000) + "Wh,     " + String( flame_time_waterTotal  ) + "\n"); //uptimedana((flame_time_waterTotal), true) + "\n");
+      ptrS += "   w tym CO:   " + String(flame_used_power_CHTotal*1000) + "Wh,      " + String(flame_time_CHTotal) + "\n");         //uptimedana((flame_time_CHTotal), true)+"\n");
       log_message((char*)ptrS.c_str(), logCommandResponse);
     } else
     if (command == "ROOMTEMP+")

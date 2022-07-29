@@ -1132,12 +1132,12 @@ void Setup_DNS() {
 //***********************************************************************************************************************************************************************************************
 String getFSDir (String path = "/")
 {
-  String directory = "\0";
+  String directory = "Actual direcory list:\n";
   Dir dir = SPIFFS.openDir(path);
   while (dir.next()) {                      // List the file system contents
   String fileName = dir.fileName();
   size_t fileSize = dir.fileSize();
-  sprintf(log_chars, "Actual direcory list:\n  FS File: %s, size: %s", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
+  sprintf(log_chars, "  FS File: %s, size: %s\n", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
   directory += String(log_chars);
   }
   return directory;
@@ -2726,15 +2726,15 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
     if (d1.length()==0) {
       log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"), logCommandResponse);
       String commands = F("KOMENDY: ");
-      commands += F("RESTART, LOAD, SAVE, DIR, DEL filename");
+      commands += F("CLEAR, RESTART, LOAD, SAVE, DIR, DEL filename");
       #ifdef enableDebug2Serial
-      commands += F(", SENDLOGTOSERIAL");
+      commands += F(", SERIALLOG");
       #endif //enableDebug2Serial
       #if defined enableWebSocketlog && defined enableWebSocket
-      commands += F(", SENDLOGTOWEBSOCKET");
+      commands += F(", WSLOG");
       #endif //defined enableWebSocketlog && defined enableWebSocket
       #if defined enableMQTT || defined enableMQTTAsync
-      commands += F(", SENDLOGTOMQTT");
+      commands += F(", MQTTLOG");
       #endif  //#if defined enableMQTT || defined enableMQTTAsync
       commands += F(", RESET_CONFIG");
       #ifdef enableMQTT
@@ -2747,6 +2747,9 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
     {
       if (d.indexOf("RESTART") >=0) {
         log_message((char*)F(" RESTART  -Uruchamia ponownie układ,"), logCommandResponse);
+      } else
+      if (d.indexOf("CLEAR") >=0) {
+        log_message((char*)F(" CLEAR  -(skrot CR) Wymazuje zawartosc okna logu na websocket (JS solution),"), logCommandResponse);
       } else
       if (d.indexOf("LOAD") >=0) {
         log_message((char*)F(" LOAD    -Wymusza odczyt konfiguracji,"), logCommandResponse);
@@ -2763,22 +2766,22 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
       } else
       #endif
       #if defined enableWebSocketlog && defined enableWebSocket
-      if (d.indexOf(F("SENDLOGTOWEBSOCKET")) >=0) {
-        log_message((char*)F(" SENDLOGTOWEBSOCKET   -Wysyła Logi do serwera Websocket."), logCommandResponse);
+      if (d.indexOf(F("WSLOG")) >=0) {
+        log_message((char*)F(" WSLOG   -Wysyła Logi do serwera Websocket."), logCommandResponse);
       } else
       #endif  //defined enableWebSocketlog && defined enableWebSocket
       #ifdef enableDebug2Serial
-      if (d.indexOf(F("SENDLOGTOSERIAL")) >=0) {
-        log_message((char*)F(" SENDLOGTOSERIAL   -Wysyła Logi do portu szeregowego COM."), logCommandResponse);
+      if (d.indexOf(F("SERIALLOG")) >=0) {
+        log_message((char*)F(" SERIALLOG   -Wysyła Logi do portu szeregowego COM."), logCommandResponse);
       } else
       #endif   //enableDebug2Serial
       #if defined enableMQTT || defined enableMQTTAsync
-      if (d.indexOf(F("SENDLOGTOMQTT")) >=0) {
-        log_message((char*)F(" SENDLOGTOMQTT   -Wysyła Logi do serwera MQTT w topiku log."), logCommandResponse);
+      if (d.indexOf(F("MQTTLOG")) >=0) {
+        log_message((char*)F(" MQTTLOG   -Wysyła Logi do serwera MQTT w topiku log."), logCommandResponse);
       } else
       #endif //#if defined enableMQTT || defined enableMQTTAsync
       {
-      String x = LocalVarsRemoteCommands(d, remoteHelperMenu);
+      String x = LocalVarsRemoteCommands(d, remoteHelperMenuCommand);
       }
     }
   } else
@@ -2793,11 +2796,9 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   } else
   if (d.indexOf("DEL")==0)
   {
-    d_oryg.substring(4);
+    d_oryg = d_oryg.substring(4);
     d_oryg.trim();
-    d.replace("DEL","");
-    d.trim();
-    if (d.length()>0)
+    if (d_oryg.length()>0)
     {
       if(SPIFFS.exists("/"+d_oryg)) {
         SPIFFS.remove("/"+d_oryg);
@@ -2807,18 +2808,18 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
         sprintf(log_chars,"Filename %s doesn't exist.\n%s", d_oryg.c_str(), getFSDir().c_str());
         log_message(log_chars, logCommandResponse);
       }
-      if (d_oryg == configfile) {
+      if (("/"+d_oryg) == configfile) {
         SaveConfig();
-        sprintf(log_chars,"Filename %s is essential !!!. So I've created new one.\n%s", d_oryg.c_str(), getFSDir().c_str());
+        sprintf(log_chars,"\nFilename %s is essential !!!. So I've created new one. ;(\n%s", d_oryg.c_str(), getFSDir().c_str());
       }
     }
   } else
   #if defined enableWebSocketlog && defined enableWebSocket
-  if (d.indexOf("SENDLOGTOWEBSOCKET") == 0)
+  if (d.indexOf("WSLOG") == 0)
   {
     sprintf(log_chars, "Actual State of sending WebSocket log: %s, %s", String(WebSocketlog ? "ENABLED" : "DISABLED").c_str(), String(WebSocketlog).c_str());
     log_message(log_chars, logCommandResponse);
-    d.replace("SENDLOGTOWEBSOCKET","");
+    d.replace("WSLOG","");
     d.trim();
     if (d.length()>0)
     {
@@ -2839,11 +2840,11 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   } else
   #endif
   #if defined enableMQTT || defined enableMQTTAsync
-  if (d.indexOf("SENDLOGTOMQTT") == 0)
+  if (d.indexOf("MQTTLOG") == 0)
   {
     sprintf(log_chars,"Actual State of sending MQTT Log: %s, %s", String(sendlogtomqtt ? "ENABLED" : "DISABLED").c_str(), String(sendlogtomqtt).c_str());
     log_message(log_chars, logCommandResponse);
-    d.replace("SENDLOGTOMQTT","");
+    d.replace("MQTTLOG","");
     d.trim();
     if (d.length()>0)
     {
@@ -2864,11 +2865,11 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   } else
   #endif //#if defined enableMQTT || defined enableMQTTAsync
   #ifdef enableDebug2Serial
-  if (d.indexOf("SENDLOGTOSERIAL") == 0)
+  if (d.indexOf("SERIALLOG") == 0)
   {
     sprintf(log_chars,"Actual State of sending Serial log: %s, %s", String(debugSerial ? "ENABLED" : "DISABLED").c_str(), String(debugSerial).c_str());
     log_message(log_chars, logCommandResponse);
-    d.replace("SENDLOGTOSERIAL","");
+    d.replace("SERIALLOG","");
     d.trim();
     if (d.length()>0)
     {
