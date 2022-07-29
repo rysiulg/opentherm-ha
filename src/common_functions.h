@@ -2813,6 +2813,7 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
       if (("/"+d_oryg) == configfile) {
         SaveConfig();
         sprintf(log_chars,"\nFilename %s is essential !!!. So I've created new one. ;(\n%s", d_oryg.c_str(), getFSDir().c_str());
+        log_message(log_chars, logCommandResponse);
       }
     }
   } else
