@@ -23,52 +23,54 @@ void addusage_local_values_load(String dane, int EpromPosition) {
   if (isnan(flame_used_power_CHTotal) || (flame_used_power_CHTotal + 1) == 0) flame_used_power_CHTotal = 0;
 
   String tmpstrval = "\0";
-  if (dane.indexOf("COPUMP_GET_TOPIC") != -1)      { tmpstrval = getJsonVal(dane, "COPUMP_GET_TOPIC"); tmpstrval.replace("\"",""); COPUMP_GET_TOPIC = tmpstrval; }
-  if (dane.indexOf("COPumpStatus_json") != -1)     { tmpstrval = getJsonVal(dane, "COPumpStatus_json"); tmpstrval.replace("\"",""); COPumpStatus_json = tmpstrval; }
-  if (dane.indexOf("WaterPumpStatus_json") != -1)  { tmpstrval = getJsonVal(dane, "WaterPumpStatus_json"); tmpstrval.replace("\"",""); WaterPumpStatus_json = tmpstrval; }
-  if (dane.indexOf("ROOMS_F1_GET_TOPIC") != -1)    { tmpstrval = getJsonVal(dane, "ROOMS_F1_GET_TOPIC"); tmpstrval.replace("\"",""); ROOMS_F1_GET_TOPIC = tmpstrval; }
-  if (dane.indexOf("roomF1temp_json") != -1)       { tmpstrval = getJsonVal(dane, "roomF1temp_json"); tmpstrval.replace("\"",""); roomF1temp_json = tmpstrval; }
-  if (dane.indexOf("roomF1tempset_json") != -1)    { tmpstrval = getJsonVal(dane, "roomF1tempset_json"); tmpstrval.replace("\"",""); roomF1tempset_json = tmpstrval; }
-  if (dane.indexOf("ROOMS_F2_GET_TOPIC") != -1)    { tmpstrval = getJsonVal(dane, "ROOMS_F2_GET_TOPIC"); tmpstrval.replace("\"",""); ROOMS_F2_GET_TOPIC = tmpstrval; }
-  if (dane.indexOf("roomF2temp_json") != -1)       { tmpstrval = getJsonVal(dane, "roomF2temp_json"); tmpstrval.replace("\"",""); roomF2temp_json = tmpstrval; }
-  if (dane.indexOf("roomF2tempset_json") != -1)    { tmpstrval = getJsonVal(dane, "roomF2tempset_json"); tmpstrval.replace("\"",""); roomF2tempset_json = tmpstrval; }
+  if (dane.indexOf("COPUMP_GET_TOPIC") >= 0)      { tmpstrval = getJsonVal(dane, "COPUMP_GET_TOPIC"); tmpstrval.replace("\"",""); COPUMP_GET_TOPIC = tmpstrval; }
+  if (dane.indexOf("COPumpStatus_json") >= 0)     { tmpstrval = getJsonVal(dane, "COPumpStatus_json"); tmpstrval.replace("\"",""); COPumpStatus_json = tmpstrval; }
+  if (dane.indexOf("WaterPumpStatus_json") >= 0)  { tmpstrval = getJsonVal(dane, "WaterPumpStatus_json"); tmpstrval.replace("\"",""); WaterPumpStatus_json = tmpstrval; }
+  if (dane.indexOf("ROOMS_F1_GET_TOPIC") >= 0)    { tmpstrval = getJsonVal(dane, "ROOMS_F1_GET_TOPIC"); tmpstrval.replace("\"",""); ROOMS_F1_GET_TOPIC = tmpstrval; }
+  if (dane.indexOf("roomF1temp_json") >= 0)       { tmpstrval = getJsonVal(dane, "roomF1temp_json"); tmpstrval.replace("\"",""); roomF1temp_json = tmpstrval; }
+  if (dane.indexOf("roomF1tempset_json") >= 0)    { tmpstrval = getJsonVal(dane, "roomF1tempset_json"); tmpstrval.replace("\"",""); roomF1tempset_json = tmpstrval; }
+  if (dane.indexOf("ROOMS_F2_GET_TOPIC") >= 0)    { tmpstrval = getJsonVal(dane, "ROOMS_F2_GET_TOPIC"); tmpstrval.replace("\"",""); ROOMS_F2_GET_TOPIC = tmpstrval; }
+  if (dane.indexOf("roomF2temp_json") >= 0)       { tmpstrval = getJsonVal(dane, "roomF2temp_json"); tmpstrval.replace("\"",""); roomF2temp_json = tmpstrval; }
+  if (dane.indexOf("roomF2tempset_json") >= 0)    { tmpstrval = getJsonVal(dane, "roomF2tempset_json"); tmpstrval.replace("\"",""); roomF2tempset_json = tmpstrval; }
 
   unsigned long long tmpval = 0;
   char * pEnd;
-    if (dane.indexOf("flame_time_total") != -1) {
+    if (dane.indexOf("flame_time_total") >= 0) {
       tmpval = strtoull (getJsonVal(dane, "flame_time_total").c_str(), &pEnd, 10);
+      sprintf(log_chars,"flame_time_total: %s, afterstrtoull: %s, double: %s", String(getJsonVal(dane, "flame_time_total")).c_str(), String(tmpval).c_str(), String(flame_time_total).c_str());
+      log_message(log_chars);
       if (tmpval > flame_time_total) flame_time_total = tmpval; //if eprom is reset
     }
-    if (dane.indexOf("flame_time_waterTotal") != -1) {
+    if (dane.indexOf("flame_time_waterTotal") >= 0) {
       tmpval = strtoull (getJsonVal(dane, "flame_time_waterTotal").c_str(), &pEnd, 10);
       if (tmpval > flame_time_waterTotal) flame_time_waterTotal = tmpval; //if eprom is reset
     }
-    if (dane.indexOf("flame_time_CHTotal") != -1) {
+    if (dane.indexOf("flame_time_CHTotal") >= 0) {
       tmpval = strtoull(getJsonVal(dane, "flame_time_CHTotal").c_str(), &pEnd, 10);
       if (tmpval > flame_time_CHTotal) flame_time_CHTotal = tmpval; //if eprom is reset
     }
     double tmpdouble = 0;
-    if (dane.indexOf("flame_used_power_kwh") != -1) {
+    if (dane.indexOf("flame_used_power_kwh") >= 0) {
       tmpdouble = getJsonVal(dane, "flame_used_power_kwh").toDouble();
       if (tmpdouble > flame_used_power_kwh) flame_used_power_kwh = tmpdouble; //if eprom is reset
     }
-    if (dane.indexOf("flame_used_power_waterTotal") != -1) {
+    if (dane.indexOf("flame_used_power_waterTotal") >= 0) {
       tmpdouble = getJsonVal(dane, "flame_used_power_waterTotal").toDouble();
       if (tmpdouble > flame_used_power_waterTotal) flame_used_power_waterTotal = tmpdouble; //if eprom is reset
     }
-    if (dane.indexOf("flame_used_power_CHTotal") != -1) {
+    if (dane.indexOf("flame_used_power_CHTotal") >= 0) {
       tmpdouble = getJsonVal(dane, "flame_used_power_CHTotal").toDouble();
       if (tmpdouble > flame_used_power_CHTotal) flame_used_power_CHTotal = tmpdouble; //if eprom is reset
     }
 
-      if (dane.indexOf("heatingEnabled") != -1)        { tmpstrval = getJsonVal(dane, "heatingEnabled"); tmpstrval.replace("\"",""); heatingEnabled = (bool) (tmpstrval == "1"); }
-      if (dane.indexOf("enableHotWater") != -1)        { tmpstrval = getJsonVal(dane, "enableHotWater"); tmpstrval.replace("\"",""); enableHotWater = (bool) (tmpstrval == "1"); }
-      if (dane.indexOf("automodeCO") != -1)            { tmpstrval = getJsonVal(dane, "automodeCO"); tmpstrval.replace("\"",""); automodeCO = (bool) (tmpstrval == "1"); }
-      if (dane.indexOf("ecoMode") != -1)               { tmpstrval = getJsonVal(dane, "ecoMode"); tmpstrval.replace("\"","");  ecoMode = (bool) (tmpstrval == "1"); }
+      if (dane.indexOf("heatingEnabled") >= 0)        { tmpstrval = getJsonVal(dane, "heatingEnabled"); tmpstrval.replace("\"",""); heatingEnabled = (bool) (tmpstrval == "1"); }
+      if (dane.indexOf("enableHotWater") > -1)        { tmpstrval = getJsonVal(dane, "enableHotWater"); tmpstrval.replace("\"",""); enableHotWater = (bool) (tmpstrval == "1"); }
+      if (dane.indexOf("automodeCO") > -1)            { tmpstrval = getJsonVal(dane, "automodeCO"); tmpstrval.replace("\"",""); automodeCO = (bool) (tmpstrval == "1"); }
+      if (dane.indexOf("ecoMode") > -1)               { tmpstrval = getJsonVal(dane, "ecoMode"); tmpstrval.replace("\"","");  ecoMode = (bool) (tmpstrval == "1"); }
 
-      if (dane.indexOf("tempBoilerSet") != -1)         { tmpstrval = getJsonVal(dane, "tempBoilerSet"); tmpstrval.replace("\"","");  tempBoilerSet = (float) tmpstrval.toFloat(); }
-      if (dane.indexOf("cutOffTemp") != -1)            { tmpstrval = getJsonVal(dane, "cutOffTemp"); tmpstrval.replace("\"","");  cutOffTemp = (float) tmpstrval.toFloat(); }
-      if (dane.indexOf("dhwTarget") != -1)             { tmpstrval = getJsonVal(dane, "dhwTarget"); tmpstrval.replace("\"","");  dhwTarget = (float) tmpstrval.toFloat(); }
+      if (dane.indexOf("tempBoilerSet") > -1)         { tmpstrval = getJsonVal(dane, "tempBoilerSet"); tmpstrval.replace("\"","");  tempBoilerSet = (float) tmpstrval.toFloat(); }
+      if (dane.indexOf("cutOffTemp") > -1)            { tmpstrval = getJsonVal(dane, "cutOffTemp"); tmpstrval.replace("\"","");  cutOffTemp = (float) tmpstrval.toFloat(); }
+      if (dane.indexOf("dhwTarget") > -1)             { tmpstrval = getJsonVal(dane, "dhwTarget"); tmpstrval.replace("\"","");  dhwTarget = (float) tmpstrval.toFloat(); }
 
 }
 

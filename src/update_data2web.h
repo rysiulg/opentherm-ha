@@ -3,7 +3,7 @@
 
 String LocalVarsRemoteCommands(String command, size_t gethelp) {
   if (gethelp == remoteHelperMenu) {
-    return F(", RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-, USEDMEDIA");
+    return F(", RESET_FLAMETOTAL, ROOMTEMP0, ROOMTEMP+, ROOMTEMP-, USEDMEDIA, INCT");
   } else
   if (gethelp == remoteHelperMenuCommand)
   {
@@ -62,6 +62,30 @@ String LocalVarsRemoteCommands(String command, size_t gethelp) {
       lastTempSet = millis();
       sprintf(log_chars, "Toggle ROOMTEMP0 from: %s to: %s", String(!tmanual ? "MANUAL" : "AUTO").c_str(), String(tmanual ? "MANUAL" : "AUTO").c_str());
       log_message(log_chars, logCommandResponse);
+    } else
+    if (command == "INCT")
+    {
+      flame_time_total += 1150;
+      flame_used_power_kwh += 1340;
+      sprintf(log_chars, "Toggle flame_time_total from: %s to: %s", String(flame_time_total).c_str(), String(flame_used_power_kwh).c_str());
+      log_message(log_chars, logCommandResponse);
+        unsigned int crttemp =0;
+        EEPROM.begin(CONFIG_START);
+        EEPROM.get(1, crttemp);
+
+      if(SPIFFS.exists(configfile)) {
+        String dane = "\0";
+        File file = SPIFFS.open(configfile,"r");
+        while (file.available()) {
+          dane += (char)file.read();
+        }
+        file.close();
+        dane[maxLogSize-50]='\0';
+          sprintf(log_chars, "CRT EPROM: %s, config: \n%s", String(crttemp).c_str(), String(dane).c_str());
+          log_message(log_chars, logCommandResponse);
+      }
+
+
     } else
     if (command == "RESET_FLAMETOTAL" or command == "RFT")
     {

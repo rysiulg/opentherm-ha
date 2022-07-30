@@ -8,8 +8,11 @@
 #ifndef SSE_MAX_QUEUED_MESSAGES
 #define SSE_MAX_QUEUED_MESSAGES 32
 #endif
-
 #include <Arduino.h>
+#include "config.h"
+#include "localconfig.h"
+#include "configmqtttopics.h"
+
 
 #define wwwport 80
 
@@ -30,7 +33,7 @@
   #include <AsyncTCP.h>
 //  #include <AsyncUDP.h>
   #include <ESPmDNS.h>
-  #include <AsyncDNSServer.h>
+//  #include <AsyncDNSServer.h>
   #include "esp_task_wdt.h"
 #else //not ESP32
   #ifdef enableWebUpdate
@@ -73,15 +76,22 @@
   #endif
 #endif
 
+#ifdef ESP32
+#define SPIFFS LITTLEFS
+#else
+//#include <FS.h>                 //for spiffs files
+#include "LittleFS.h" // LittleFS is declared
+#define SPIFFS LittleFS       //4kB less after conversion but filesystem is higher allocation min 4kB fo LF and 256B for SPIFFS
+#endif
+
+
 #ifdef doubleResDet           // khoih-prog/ESP_DoubleResetDetector @ ^1.3.1)
   #include <ESP_DoubleResetDetector.h>
 #endif
 
 #include <DNSServer.h>
 
-//#include <FS.h>                 //for spiffs files
-#include "LittleFS.h" // LittleFS is declared
-#define SPIFFS LittleFS       //4kB less after conversion but filesystem is higher allocation min 4kB fo LF and 256B for SPIFFS
+
 
 AsyncWebServer webserver(wwwport);
 
@@ -118,6 +128,13 @@ DNSServer dnsServer;
 
 #define ValuesToWSWPinJSON 1
 #define ValuesToWSWPforWebProcessor 2
+#define wwwstatus_on "on"
+#define wwwstatus_off "off"
+#define logStandard 0               //standard log send
+#define logCommandResponse 1        //send response to websocket after received command
+#define remoteHelperMenu 0          //werbserial -remote commands helper: get menu help
+#define remoteHelperMenuCommand 1   //werbserial -remote commands helper: get menucommand line
+#define remoteHelperCommand 2       //werbserial -remote commands helper: run command
 #ifndef ASS_Num
 #define ASS_Num 50
 #endif
@@ -134,7 +151,20 @@ String local_specific_web_processor_vars(String var);
 String addusage_local_values_save(int EpromPosition);
 void addusage_local_values_load(String dane, int EpromPosition);
 String LocalVarsRemoteCommands(String command, size_t gethelp); //get local data for remotecommands like help menu, items in menu and commands torun
-
+//mqttinfluxsend
+#ifdef ENABLE_INFLUX
+void updateInfluxDB();      //send data to Influxdb
+#endif
+#if defined enableMQTT || defined enableMQTTAsync
+void updateMQTTData();       //send data to MQTT
+void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);
+void mqttReconnect_subscribe_list();
+#endif
+//others.h
+void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
+String get_PlaceholderName(u_int i);            //zestaw nazw z js i css i html dopasowania do liczb do łatwiejszego dopasowania
+void updateDatatoWWW_received(u_int i);         //Received data from web and here are converted values to variables of local
+void updateDatatoWWW();                         //update data in ASS.Value by local variables value before resend to web
 //*********************************************************************************************************************************************
 
 
@@ -174,7 +204,16 @@ const float ophi = 65,               // upper max heat water
             cutoffhi = 20,           // upper max cut-off temp above is heating CO disabled -range +-20
             cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
             roomtemphi = 29,         // upper max to set of room temperature
-            roomtemplo = 15;         // lower min to set of room temperature
+            roomtemplo = 15,         // lower min to set of room temperature
+		InitTemp = 255;
+
+#ifndef maxLogSize
+#define maxLogSize 1023
+#endif
+#if defined enableWebSocketlog && defined enableWebSocket
+bool WebSocketlog = true;
+#endif
+
 
 char log_chars[maxLogSize];      //for logging buffer to log_message function
 int temp_NEWS_count = 0;
@@ -2526,45 +2565,99 @@ bool loadConfig() {
   EEPROM.begin(CONFIG_START);  //Size can be anywhere between 4 and 4096 bytes.
   EEPROM.get(EpromPosition, CRTrunNumber);
   EpromPosition += sizeof(CRTrunNumber);
-   if (isnan(CRTrunNumber) || (CRTrunNumber + 1) == 0) CRTrunNumber = 0;
+  if (isnan(CRTrunNumber) || (CRTrunNumber + 1) == 0) CRTrunNumber = 0;
 
   if(SPIFFS.exists(configfile)) {
-    String dane = "\0";
+  String dane = "\0";
     File file = SPIFFS.open(configfile,"r");
     while (file.available()) {
-      dane += String(file.read());
+      dane += (char)file.read();
     }
     file.close();
-
-    // sprintf(log_chars, "loaded config: %s",String(dane).c_str());
-    // log_message(log_chars);
-//    return true;
-    //set to false -no data in config from web save
+    String tmpstrval = "\0";
     WebSocketlog = false;
     debugSerial = false;
     sendlogtomqtt = false;
-    String tmpstrval = "\0";
 //this block is as param from html
-    if (dane.indexOf("WebSocketlog") != -1)          { tmpstrval = getJsonVal(dane, "WebSocketlog"); tmpstrval.replace("\"",""); if (tmpstrval == "1") {WebSocketlog = true;} else {WebSocketlog = false;} }
-    if (dane.indexOf("debugSerial") != -1)           { tmpstrval = getJsonVal(dane, "debugSerial"); tmpstrval.replace("\"",""); if (tmpstrval == "1") { debugSerial = true;} else {debugSerial = false;} }
-    if (dane.indexOf("sendlogtomqtt") != -1)         { tmpstrval = getJsonVal(dane, "sendlogtomqtt"); tmpstrval.replace("\"",""); if (tmpstrval == "1") {sendlogtomqtt = true;} else {sendlogtomqtt = false;} }
-    if (dane.indexOf("SSID_Name") != -1)             { tmpstrval = getJsonVal(dane, "SSID_Name"); tmpstrval.replace("\"",""); strcpy(ssid, tmpstrval.c_str()); }
-    if (dane.indexOf("SSID_PAssword") != -1)         { tmpstrval = getJsonVal(dane, "SSID_PAssword"); tmpstrval.replace("\"",""); strcpy(pass, tmpstrval.c_str()); }
+    if (dane.indexOf("WebSocketlog") != -1) {
+      tmpstrval = getJsonVal(dane, "WebSocketlog");
+      WebSocketlog = (tmpstrval.toInt() == 1);
+    }
+    if (dane.indexOf("debugSerial") != -1) {
+      tmpstrval = getJsonVal(dane, "debugSerial");
+      debugSerial  = (tmpstrval.toInt() == 1);
+    }
+    if (dane.indexOf("sendlogtomqtt") != -1) {
+      tmpstrval = getJsonVal(dane, "sendlogtomqtt");
+      sendlogtomqtt = (tmpstrval.toInt() == 1);
+    }
+    if (dane.indexOf("SSID_Name") != -1) {
+      tmpstrval = getJsonVal(dane, "SSID_Name");
+      tmpstrval.replace("\"",""); strcpy(ssid, tmpstrval.c_str());
+    }
+    if (dane.indexOf("SSID_PAssword") != -1) {
+      tmpstrval = getJsonVal(dane, "SSID_PAssword");
+      tmpstrval.replace("\"","");
+      strcpy(pass, tmpstrval.c_str());
+    }
     #if defined enableMQTT || defined enableMQTTAsync
-    if (dane.indexOf("MQTT_servername") != -1)       { tmpstrval = getJsonVal(dane, "MQTT_servername"); tmpstrval.replace("\"",""); strcpy(mqtt_server, tmpstrval.c_str()); }
-    if (dane.indexOf("MQTT_port_No") != -1)          { tmpstrval = getJsonVal(dane, "MQTT_port_No"); tmpstrval.replace("\"",""); mqtt_port = (int) tmpstrval.toInt(); }
-    if (dane.indexOf("MQTT_username") != -1)         { tmpstrval = getJsonVal(dane, "MQTT_username"); tmpstrval.replace("\"",""); strcpy(mqtt_user, tmpstrval.c_str()); }
-    if (dane.indexOf("MQTT_Password_data") != -1)    { tmpstrval = getJsonVal(dane, "MQTT_Password_data"); tmpstrval.replace("\"",""); strcpy(mqtt_password, tmpstrval.c_str()); }
+    if (dane.indexOf("MQTT_servername") != -1) {
+      tmpstrval = getJsonVal(dane, "MQTT_servername");
+      tmpstrval.replace("\"",""); strcpy(mqtt_server, tmpstrval.c_str());
+    }
+    if (dane.indexOf("MQTT_port_No") > -1) {
+      tmpstrval = getJsonVal(dane, "MQTT_port_No");
+      tmpstrval.replace("\"","");
+      mqtt_port = (int) tmpstrval.toInt();
+    }
+    if (dane.indexOf("MQTT_username") > -1) {
+      tmpstrval = getJsonVal(dane, "MQTT_username");
+      tmpstrval.replace("\"","");
+      strcpy(mqtt_user, tmpstrval.c_str());
+    }
+    if (dane.indexOf("MQTT_Password_data") > -1) {
+      tmpstrval = getJsonVal(dane, "MQTT_Password_data");
+      tmpstrval.replace("\"","");
+      strcpy(mqtt_password, tmpstrval.c_str());
+    }
     #endif
     #ifdef ENABLE_INFLUX
-    if (dane.indexOf("INFLUXDB_URL") != -1)          { tmpstrval = getJsonVal(dane, "INFLUXDB_URL"); tmpstrval.replace("\"",""); strcpy(influx_server, tmpstrval.c_str()); }
-    if (dane.indexOf("INFLUXDB_DB_NAME") != -1)      { tmpstrval = getJsonVal(dane, "INFLUXDB_DB_NAME"); tmpstrval.replace("\"",""); strcpy(influx_database, tmpstrval.c_str()); }
-    if (dane.indexOf("INFLUXDB_USER") != -1)         { tmpstrval = getJsonVal(dane, "INFLUXDB_USER"); tmpstrval.replace("\"",""); strcpy(influx_user, tmpstrval.c_str()); }
-    if (dane.indexOf("INFLUXDB_PASSWORD") != -1)     { tmpstrval = getJsonVal(dane, "INFLUXDB_PASSWORD"); tmpstrval.replace("\"",""); strcpy(influx_password, tmpstrval.c_str()); }
-    if (dane.indexOf("influx_measurments") != -1)    { tmpstrval = getJsonVal(dane, "influx_measurments"); tmpstrval.replace("\"",""); strcpy(influx_measurments, tmpstrval.c_str()); }
+    if (dane.indexOf("INFLUXDB_URL") > -1) {
+      tmpstrval = getJsonVal(dane, "INFLUXDB_URL");
+      tmpstrval.replace("\"","");
+      strcpy(influx_server, tmpstrval.c_str());
+    }
+    if (dane.indexOf("INFLUXDB_DB_NAME") > -1) {
+      tmpstrval = getJsonVal(dane, "INFLUXDB_DB_NAME");
+      tmpstrval.replace("\"","");
+      strcpy(influx_database, tmpstrval.c_str());
+      }
+    if (dane.indexOf("INFLUXDB_USER") > -1) {
+      tmpstrval = getJsonVal(dane, "INFLUXDB_USER");
+      tmpstrval.replace("\"","");
+      strcpy(influx_user, tmpstrval.c_str());
+    }
+    if (dane.indexOf("INFLUXDB_PASSWORD") > -1) {
+      tmpstrval = getJsonVal(dane, "INFLUXDB_PASSWORD");
+      tmpstrval.replace("\"","");
+      strcpy(influx_password, tmpstrval.c_str());
+    }
+    if (dane.indexOf("influx_measurments") > -1) {
+      tmpstrval = getJsonVal(dane, "influx_measurments");
+      tmpstrval.replace("\"","");
+      strcpy(influx_measurments, tmpstrval.c_str());
+    }
     #endif
-    if (dane.indexOf("NEWS_GET_TOPIC") != -1)        { tmpstrval = getJsonVal(dane, "NEWS_GET_TOPIC"); tmpstrval.replace("\"",""); NEWS_GET_TOPIC = tmpstrval; }
-    if (dane.indexOf("NEWStemp_json") != -1)         { tmpstrval = getJsonVal(dane, "NEWStemp_json"); tmpstrval.replace("\"",""); NEWStemp_json = tmpstrval; }
+    if (dane.indexOf("NEWS_GET_TOPIC") > -1) {
+      tmpstrval = getJsonVal(dane, "NEWS_GET_TOPIC");
+      tmpstrval.replace("\"","");
+      NEWS_GET_TOPIC = tmpstrval;
+    }
+    if (dane.indexOf("NEWStemp_json") > -1) {
+      tmpstrval = getJsonVal(dane, "NEWStemp_json");
+      tmpstrval.replace("\"","");
+      NEWStemp_json = tmpstrval;
+    }
 //this block is as param from html
 //next is appender from function so i use in saveconfig this function to append rest
 // sprintf(log_chars,"LOG: mqtserver: %s:%i, mqtuser: %s, mqtpass: %s, NEWS_GET_TOPIC: %s, NEWStemp_json: %s", String(mqtt_server).c_str(), mqtt_port, String(mqtt_user).c_str(), String(mqtt_password).c_str(), String(NEWS_GET_TOPIC).c_str(),String(NEWStemp_json).c_str());
@@ -2574,11 +2667,11 @@ bool loadConfig() {
     addusage_local_values_load(dane, EpromPosition);
 
     u_int CRT = 0;
-    if (dane.indexOf("CRT") != -1) {
+    if (dane.indexOf("CRT") > -1) {
       CRT = (u_int) getJsonVal(dane, "CRT").toInt();
       if (CRT > CRTrunNumber) CRTrunNumber = CRT;
     }
-    sprintf(log_chars,"Config loaded. SSID: %s",String(ssid).c_str());
+    sprintf(log_chars,"Config loaded. SSID: %s, CRT: %s",String(ssid).c_str(), String(CRT).c_str());
     log_message(log_chars);
 
     return true; // return 1 if config loaded
@@ -2605,12 +2698,12 @@ bool SaveConfig() {
     String dane = "\0";
     File file = SPIFFS.open(configfile,"r");
     while (file.available()) {
-      dane += String(file.read());
+      dane += (char)file.read();
     }
     file.close();
     if (dane.length() > 0) {
       for (u_int i = 0; i < dane.length(); i++){
-        check_l += (unsigned long long) dane[i];
+        check_l += (unsigned int) dane[i];
       }
     //check_l = check_l;  dane.length();
     }
@@ -2678,7 +2771,7 @@ bool SaveConfig() {
 
   if (configSave.length() > 0) {
     for (u_int i=0; i< configSave.length() ; i++){
-      check_w += (unsigned long long) configSave[i];
+      check_w += (unsigned int) configSave[i];
     }
   //check_w = check_w // configSave.length();
   }
@@ -2716,10 +2809,9 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   String d_oryg = d;
   d.toUpperCase();
   log_message((char*)F("------------------------ REMOTE COMMAND RECEIVED START ------------------------------------------------------------------------"), logCommandResponse);
-  #ifdef debug
   sprintf(log_chars, "DirectCommands RemoteCommandReceived Received: %s (dł: %s)", String(d).c_str(), String(d.length()).c_str());
   log_message(log_chars, logCommandResponse);
-  #endif
+
 
   if (d.indexOf("HELP")>=0)
   {
@@ -2902,11 +2994,13 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
     #endif
   if (d == "LOAD")
   {
+    sprintf(log_chars, "Loading config from file...  ");
+    log_message(log_chars, logCommandResponse);
     if(SPIFFS.exists(configfile)) {
       String dane = "\0";
       File file = SPIFFS.open(configfile,"r");
       while (file.available()) {
-        dane += (file.readStringUntil('\n'));
+        dane += (char)file.read();
       }
       file.close();
       loadConfig();

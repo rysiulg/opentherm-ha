@@ -8,7 +8,7 @@
  *************************************************************/
 
 //#include <Arduino.h>
-const float InitTemp = 255;
+//const float InitTemp = 255;
 #include "main.h"
 
 

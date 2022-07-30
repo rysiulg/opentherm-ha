@@ -1,4 +1,8 @@
 
+#include "common_functions.h"
+
+
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -7,13 +11,13 @@
 
 #include <WiFiClient.h>
 
-// for ota
 
 
 
 
-#include "config.h"
-#include "configmqtttopics.h"
+
+//#include "config.h"
+
 
 
 OneWire oneWire(ROOM_TEMP_SENSOR_PIN);
@@ -87,9 +91,7 @@ bool heatingEnabled = true,
      status_Cooling =false,
      status_Diagnostic =false,
      ecoMode = true;
-#if defined enableWebSocketlog && defined enableWebSocket
-bool WebSocketlog = true;
-#endif
+
 
 float floor1_temp = InitTemp, floor2_temp = InitTemp, floor1_tempset = InitTemp, floor2_tempset = InitTemp;
 
@@ -104,32 +106,20 @@ String Boiler_Mode();
 void setup();
 void loop();
 
-//others.h
-void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
-String get_PlaceholderName(u_int i);            //zestaw nazw z js i css i html dopasowania do liczb do łatwiejszego dopasowania
-void updateDatatoWWW_received(u_int i);         //Received data from web and here are converted values to variables of local
-void updateDatatoWWW();                         //update data in ASS.Value by local variables value before resend to web
+
 
 //webserver_ota
-bool loadConfig();
-bool SaveConfig();
+// bool loadConfig();
+// bool SaveConfig();
 //String addusage_local_values();   //it is on commonfunc defined
 
 
-//mqttinfluxsend
-#ifdef ENABLE_INFLUX
-void updateInfluxDB();      //send data to Influxdb
-#endif
-#if defined enableMQTT || defined enableMQTTAsync
-void updateMQTTData();       //send data to MQTT
-void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);
-void mqttReconnect_subscribe_list();
-#endif
 
 
 
 
-#include "common_functions.h"
+
+//#include "common_functions.h"
 #include "load_save_config.h"
 #include "mqttinflux.h"
 #include "update_data2web.h"

@@ -34,7 +34,7 @@
 //#define enableMESHNETWORK
 //#define enableWebSerial     //not fully implemented and abandoned
 
-#define maxLogSize 1023      //max size of chars sending to remote log like webserial, mqtt and websocket
+
 
 
 #if defined enableWebSocketlog && not defined enableWebSocket
@@ -94,5 +94,5 @@
 #define sensitive_sizeS "32" //length of ssid,passwd and mqtt needed as string for version check -important 2 letters
 
 
-#include "config-localProject.h"
+
 #include "declarations_for_websync.h"

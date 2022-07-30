@@ -8,8 +8,13 @@ String STATS_TOPIC = String(BASE_TOPIC) + "/stats";
 #define WILL_ONLINE "Online"
 #define WILL_OFFLINE "Offline"
 
-
 #define BASE_HA_TOPIC "homeassistant"
+//Homeassistant Autodiscovery topics
+#define HA_SENSORS_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/"
+#define HA_SWITCH_TOPIC String(BASE_HA_TOPIC) + "/switch/" + String(BASE_TOPIC) + "/"
+#define HA_BINARY_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/"
+#define HA_CLIMATE_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/"
+
 #define ROOM_TEMP "current_remote"
 #define QOS 0
 #define OT "ot_"
@@ -83,11 +88,6 @@ String roomF2tempset_json = ("FL2_room_temperature_setpoint_0");
 #define INTEGRAL_ERROR_GET_TOPIC String(DIAGS) + "_" + "interr"
 #define DIAGS_OTHERS_FAULT String(DIAGS) + "_" + "fault"
 #define DIAGS_OTHERS_DIAG String(DIAGS) + "_" + "diagnostic"
-
-//Homeassistant Autodiscovery topics
-#define HA_SENSORS_TOPIC String(BASE_HA_TOPIC) + "/sensor/" + String(BASE_TOPIC) + "/"
-#define HA_BINARY_TOPIC String(BASE_HA_TOPIC) + "/binary_sensor/" + String(BASE_TOPIC) + "/"
-#define HA_CLIMATE_TOPIC String(BASE_HA_TOPIC) + "/climate/" + String(BASE_TOPIC) + "/"
 
 // setpoint topic
 #define SETPOINT_OVERRIDE  "setpoint-override"
