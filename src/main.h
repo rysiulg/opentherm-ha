@@ -54,7 +54,11 @@ float dhwTarget = 49.5, // domyslna temperatura docelowa wody uzytkowej
       tempBoilerSet = noCommandSpOverride, // temp boiler set -mainly used in auto mode and for display on www actual temp
       tempCWU = 0,
       dallasTemp = 0,
-      pressure = 0;
+      pressure = 0,
+      histCWU = 0,             //histereza dla cwu -obnizenie progu aktywacji grzania
+      histCO = 0,             //histereza dla co -obnizenie progu aktywacji grzania
+      histlo = 0,             //min wartosc histerezy
+      histhi = 4;             //max wartosc histerezy
 
 
 

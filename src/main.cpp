@@ -55,10 +55,11 @@ void opentherm_update_data()
   // Set/Get Boiler Status
   bool enableCooling = false;
   receivedmqttdata = false;
+  float histCOtmp = histCO,
+        histCWUtmp = histCWU;
   bool COHeat = false;
   if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
   if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
-
 
   getTemp(); //default returns roomtemp (avg) and as global sp=roomtempset (avg), roomtemp is also global var
   float op = tempBoilerSet;
@@ -70,7 +71,7 @@ void opentherm_update_data()
       COHeat = true;
     if (CO_PumpWorking)
       COHeat = false;
-    if (temp_NEWS > (cutOffTemp + 0.9))
+    if (temp_NEWS > (cutOffTemp + cutoff_histereza))
       COHeat = false;
     //  } else
     if (automodeCO) {
@@ -111,11 +112,13 @@ log_message(log_chars);
     #ifdef debug
     log_message((char*)F("Set statuses from dhwTarget"));
     #endif
-    OpenTherm.setDHWSetpoint(dhwTarget);
+    if (status_WaterActive) histCWUtmp = 0; //reset to heat longer (to Set temp) if active -on next request
+    OpenTherm.setDHWSetpoint(dhwTarget - histCWUtmp);
     #ifdef debug
     log_message((char*)F("Set statuses from op"));
     #endif
-    OpenTherm.setBoilerTemperature(op);
+    if (status_CHActive) histCOtmp = 0; //reset to increase heat to Set temperature if active CO -on next request
+    OpenTherm.setBoilerTemperature(op - histCOtmp);
 
     #ifdef debug
     log_message((char*)F("Set statuses from opentherm"));

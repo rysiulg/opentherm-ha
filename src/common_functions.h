@@ -3,8 +3,10 @@
 //Nice Info about ESP: https://tttapa.github.io/ESP8266/Chap01%20-%20ESP8266.html
 
 #define ATOMIC_FS_UPDATE   //For uploading compressed filesystems, the application must be built with ATOMIC_FS_UPDATE defined because, otherwise, eboot will not be involved in writing the filesystem.
-#define CONFIG_FREERTOS_UNICORE
+#ifndef ESP32xx
+#define CONFIG_FREERTOS_UNICORE 1
 #define CONFIG_ASYNC_TCP_RUNNING_CORE 1
+#endif
 #ifndef SSE_MAX_QUEUED_MESSAGES
 #define SSE_MAX_QUEUED_MESSAGES 32
 #endif
@@ -26,7 +28,7 @@
 #endif
 
 #ifdef ESP32
-  //#include <WiFi.h>
+  #include <WiFi.h>
   #ifdef enableWebUpdate
     #include <Update.h>
   #endif //enableWebUpdate
@@ -77,7 +79,13 @@
 #endif
 
 #ifdef ESP32
+#include <FS.h>
+#define CONFIG_VFS_SUPPORT_DIR 1
+#define CONFIG_LITTLEFS_SPIFFS_COMPAT 1
+#define USE_LittleFS
+#include <LITTLEFS.h>
 #define SPIFFS LITTLEFS
+//#define SPIFFS LittleFS
 #else
 //#include <FS.h>                 //for spiffs files
 #include "LittleFS.h" // LittleFS is declared
@@ -94,9 +102,10 @@
 
 
 AsyncWebServer webserver(wwwport);
-
+#ifndef ESP32
 WiFiEventHandler wifiConnectHandler;
 WiFiEventHandler wifiDisconnectHandler;
+#endif
 Ticker wifiReconnectTimer;
 
 DNSServer dnsServer;
@@ -121,6 +130,8 @@ DNSServer dnsServer;
 #ifndef decimalPlaces
   #define decimalPlaces 1   //how much decimal places to show on www
 #endif
+#define DS18B20nodata 85
+#define DS18B20nodata1 127
 
 //*********************************************************************************************************************************************
 //         SPECIFIC functions outside from this file to define it to compile without errors
@@ -141,13 +152,13 @@ DNSServer dnsServer;
 typedef struct
 {
   String Value;
+  String ValueHumid;
 } all_sensors_struct;
 all_sensors_struct ASS[ASS_Num];        //for get values from local variables to send to websocket
-String get_PlaceholderName(u_int i);    //replace
-void updateDatatoWWW_received(u_int i); //update local var from received val from websocket
-void updateDatatoWWW();                 //update ASS.Value for websocket
-void mqttReconnect_subscribe_list();    //list of mqtt subscibers
-String local_specific_web_processor_vars(String var);
+String get_PlaceholderName(u_int i);    //replace specific placeholder -return String for specific ASS value  zestaw nazw z js i css i html dopasowania do liczb do łatwiejszego dopasowania
+void updateDatatoWWW_received(u_int i); //update local var from received val from websocket -Received data from web and here are converted values to variables of local
+void updateDatatoWWW();                 //update ASS.Value for websocket -update data in ASS.Value by local variables value before resend to web
+String local_specific_web_processor_vars(String var);  //eg. Update config page
 String addusage_local_values_save(int EpromPosition);
 void addusage_local_values_load(String dane, int EpromPosition);
 String LocalVarsRemoteCommands(String command, size_t gethelp); //get local data for remotecommands like help menu, items in menu and commands torun
@@ -156,15 +167,10 @@ String LocalVarsRemoteCommands(String command, size_t gethelp); //get local data
 void updateInfluxDB();      //send data to Influxdb
 #endif
 #if defined enableMQTT || defined enableMQTTAsync
-void updateMQTTData();       //send data to MQTT
-void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);
-void mqttReconnect_subscribe_list();
+void updateMQTTData();       //send data to MQTT                                //Send to mqtt data
+void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);  //additional parsing local node values from MQTT return
+void mqttReconnect_subscribe_list();                                            //Subscribe list for MQTT topics
 #endif
-//others.h
-void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
-String get_PlaceholderName(u_int i);            //zestaw nazw z js i css i html dopasowania do liczb do łatwiejszego dopasowania
-void updateDatatoWWW_received(u_int i);         //Received data from web and here are converted values to variables of local
-void updateDatatoWWW();                         //update data in ASS.Value by local variables value before resend to web
 //*********************************************************************************************************************************************
 
 
@@ -186,7 +192,9 @@ bool debugSerial = true;
 #if defined enableMQTT || defined enableMQTTAsync
 bool sendlogtomqtt = false;       //Send or not Logging to MQTT Topic
 #endif //#if defined enableMQTT || defined enableMQTTAsync
-
+#ifdef ENABLE_INFLUX
+bool InfluxStatus = false;  //MQTTT Send Status
+#endif
 #ifndef ecoModeMaxTemp
   #define ecoModeMaxTemp 39       //economical low temperature heating known as condensation heat
 #endif
@@ -269,6 +277,20 @@ char influx_measurments[sensitive_size] = InfluxMeasurments;
 #ifndef ASS_Statusy
 #define ASS_Statusy 1
 #endif
+#ifndef ASS_MemStats
+#define ASS_MemStats 2
+#endif
+#ifndef ASS_uptimedanaStr
+#define ASS_uptimedanaStr "uptimedana"
+#endif
+#ifndef ASS_StatusyStr
+#define ASS_StatusyStr "Statusy"
+#endif
+#ifndef ASS_MemStatsStr
+#define ASS_MemStatsStr "MemStats"
+#endif
+
+
 
 //common_functions.h
 String get_lastResetReason();
@@ -307,7 +329,7 @@ void Setup_WiFi();
 void Setup_Influx();
 #endif
 void Setup_DNS();
-String getFSDir (String path);    //default path="/"
+String getFSDir (bool html, String path);    //default path="/"
 void Setup_FileSystem();
 #ifdef enableWebSocket
 void Setup_WebSocket();
@@ -325,8 +347,8 @@ void Setup_WebServer();
 void webhandleNotFound(AsyncWebServerRequest *request);
 void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 char* toCharPointer (String ptrS);
-void SaveAssValue(uint8_t ASSV, String source_str);
 void updateDatatoWWW_common();
+void SaveAssValue(uint8_t ASSV, String source_str, bool humid);
 void MainCommonSetup();
 void MainCommonLoop();
 #if defined enableMQTT || defined enableMQTTAsync
@@ -335,8 +357,13 @@ void Setup_Mqtt();
 #ifdef enableMQTT
 void mqttReconnect();
 #endif
+#ifndef ESP32
 void onWifiConnect(const WiFiEventStationModeGotIP& event);                 //event async to connect wifi after disconnected
 void onWifiDisconnect(const WiFiEventStationModeDisconnected& event);       //event async to connect wifi after disconnected
+#else
+void onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info);
+void onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info);
+#endif
 #ifdef enableMQTTAsync
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
@@ -364,7 +391,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
 #endif //enableMQTTAsync
 bool loadConfig();
 bool SaveConfig();
-void RemoteCommandReceived(uint8_t *data, size_t len);
+void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
 
 
 
@@ -405,9 +432,35 @@ const char version[10+1] =
 };
 
 uint8_t mac[6] = {(uint8_t)strtol(WiFi.macAddress().substring(0,2).c_str(),0,16), (uint8_t)strtol(WiFi.macAddress().substring(3,5).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(6,8).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(9,11).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(12,14).c_str(),0,16),(uint8_t)strtol(WiFi.macAddress().substring(15,17).c_str(),0,16)};
-
+#ifdef ESP32
+String verbose_print_reset_reason(int reason)
+{
+  switch ( reason)
+  {
+    case 0  : return ("0: normal startup by power on?");break;
+    case 1  : return ("1:POWERON_RESET Vbat power on reset");break;
+    case 2  : return ("2: ");break;
+    case 3  : return ("3:SW_RESET Software reset digital core");break;
+    case 4  : return ("4:OWDT_RESET Legacy watch dog reset digital core");break;
+    case 5  : return ("5:DEEPSLEEP_RESET Deep Sleep reset digital core");break;
+    case 6  : return ("6:SDIO_RESET Reset by SLC module, reset digital core");break;
+    case 7  : return ("7:TG0WDT_SYS_RESET Timer Group0 Watch dog reset digital core");break;
+    case 8  : return ("8:TG1WDT_SYS_RESET Timer Group1 Watch dog reset digital core");break;
+    case 9  : return ("9:RTCWDT_SYS_RESET RTC Watch dog Reset digital core");break;
+    case 10 : return ("10:INTRUSION_RESET Instrusion tested to reset CPU");break;
+    case 11 : return ("11:TGWDT_CPU_RESET Time Group reset CPU");break;
+    case 12 : return ("12:SW_CPU_RESET Software reset CPU");break;
+    case 13 : return ("13:RTCWDT_CPU_RESET RTC Watch dog Reset CPU");break;
+    case 14 : return ("14:EXT_CPU_RESET for APP CPU, reseted by PRO CPU");break;
+    case 15 : return ("15:RTCWDT_BROWN_OUT_RESET Reset when the vdd voltage is not stable");break;
+    case 16 : return ("16:RTCWDT_RTC_RESET RTC Watch dog reset digital core and rtc module");break;
+    default : return ("NO_MEAN");
+  }
+}
+#endif
 String get_lastResetReason()
 {
+  #ifndef ESP32
   rst_info *resetInfo;
   String lrr = "\0";
   resetInfo = ESP.getResetInfoPtr();
@@ -423,17 +476,33 @@ String get_lastResetReason()
     default: lrr = String(resetNO) + ": unknown"; break;
   }
   return lrr;
+  #else
+    // #ifdef ESP_IDF_VERSION_MAJOR // IDF 4+
+    // #if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
+    // #include "esp32/rom/rtc.h"
+    // #elif CONFIG_IDF_TARGET_ESP32S2
+    // #include "esp32s2/rom/rtc.h"
+    // #elif CONFIG_IDF_TARGET_ESP32C3
+    // #include "esp32c3/rom/rtc.h"
+    // #elif CONFIG_IDF_TARGET_ESP32S3
+    // #include "esp32s3/rom/rtc.h"
+    // #else
+    // #error Target CONFIG_IDF_TARGET is not supported
+    // #endif
+    // #else // ESP32 Before IDF 4.0
+    // #include "rom/rtc.h"
+    // #endif
+    String lrr = F("Core0: ");
+    lrr += verbose_print_reset_reason(esp_rom_get_reset_reason(0));
+    lrr += F(",\nCore1: ");
+    lrr += verbose_print_reset_reason(esp_rom_get_reset_reason(1));
+    return lrr;
+    #endif
 }
 //***********************************************************************************************************************************************************************************************
 bool check_isValidTemp(float temptmp)
 {
-
-  #define DS18B20nodata 85
-  #define DS18B20nodata1 127
   if (temptmp!=InitTemp && temptmp!=-InitTemp && temptmp!=DS18B20nodata && temptmp!=-DS18B20nodata && temptmp!=DS18B20nodata1 && temptmp!=-DS18B20nodata1) return true; else return false;
-  #undef DS18B20nodata
-  #undef DS18B20nodata1
-
 }
 //***********************************************************************************************************************************************************************************************
 void log_message(char* string, u_int specialforce = logStandard)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
@@ -450,7 +519,7 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
 #define numberOfHours(_time_) (( _time_% SECS_PER_DAY) / SECS_PER_HOUR)
 #define elapsedDays(_time_) ( _time_ / SECS_PER_DAY)
 
-  #include "configmqtttopics.h"
+//  #include "configmqtttopics.h"
   String send_string = String(uptimedana(millis(), true, true)) + F(": ") + String(string);
   send_string.trim();
 
@@ -1090,18 +1159,16 @@ void Setup_WiFi() {
   WiFi.setAutoReconnect(false);
   WiFi.setAutoConnect(false);
   WiFi.disconnect(true);
-//  if (DRDActiveStatus == false) {
-    wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
-    wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
-    // #ifdef enableMQTTAsync
-    // connectToMqtt(); //Sometimes event IPgot ip not fired -maybe faster connection ip than event ?v and this not starts
-    // #endif
-//  }
+
   #ifndef ESP32
   WiFi.hostname(String(me_lokalizacja).c_str());      //works for esp8266
+    wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
+    wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
   #else
 //  setCpuFrequencyMhz(80);   //STANDARD 240mHz
   WiFi.disconnect(true);
+    WiFi.onEvent(onWifiConnect, ARDUINO_EVENT_WIFI_STA_GOT_IP); //SYSTEM_EVENT_STA_CONNECTED);
+    WiFi.onEvent(onWifiDisconnect, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);  //SYSTEM_EVENT_STA_DISCONNECTED);
   WiFi.config(((u32_t)0x0UL),((u32_t)0x0UL),((u32_t)0x0UL));//IPADDR_NONE, INADDR_NONE, INADDR_NONE); //none gives 255.255.255.255 error in libraries
   WiFi.setHostname((me_lokalizacja).c_str());  //for esp32
   #endif
@@ -1169,18 +1236,49 @@ void Setup_DNS() {
   MDNS.addService("http", "tcp", 80);
 }
 //***********************************************************************************************************************************************************************************************
-String getFSDir (String path = "/")
-{
+String getFSDir (bool html = false, String path = "/")
+{ //get direcory contents
   String directory = "Actual direcory list:\n";
+  if (html) {
+    directory += F("<table class=\"fileTable\"><tr>");
+    directory += F("<th>FS File:</th><th>size:</th></tr>");
+  }
+  #ifndef ESP32
   Dir dir = SPIFFS.openDir(path);
   while (dir.next()) {                      // List the file system contents
-  String fileName = dir.fileName();
-  size_t fileSize = dir.fileSize();
-  sprintf(log_chars, "  FS File: %s, size: %s\n", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
-  directory += String(log_chars);
+    String fileName = dir.fileName();
+    size_t fileSize = dir.fileSize();
+  #else
+  File root = SPIFFS.open(path);
+  File dir = root.openNextFile();
+  while (dir) {
+    String fileName = dir.name();
+    size_t fileSize = dir.size();
+  #endif
+
+  if (html) {
+      directory += F("<tr><td>");
+      directory += F("<a href=\"/");
+      directory += String(fileName);
+      directory += F("\">");
+      directory += String(fileName);
+      directory += F("</a>");
+      directory += F("</td><td>");
+      directory += formatBytes((size_t)fileSize);
+      directory += F("</td></tr>");
+  } else
+  {
+    sprintf(log_chars, "  FS File: %s, size: %s\n", fileName.c_str(), formatBytes((size_t)fileSize).c_str());
+    directory += String(log_chars);
   }
+  #ifdef ESP32
+   dir = root.openNextFile();
+  #endif
+  }
+  if (html) directory += F("</table>");
   return directory;
 }
+
 //***********************************************************************************************************************************************************************************************
 void Setup_FileSystem() {// Start the FSand list all contents
   SPIFFS.begin();                             // Start the SPI Flash File System (SPIFFS)
@@ -1278,24 +1376,7 @@ String web_processor(const String var) {
   } else
   if (var == "DIR_LIST") {
     String retval = "FS started. Contents:";
-    Dir dir = SPIFFS.openDir("/");
-
-    retval += F("<table class=\"fileTable\"><tr>");
-    retval += F("<th>FS File:</th><th>size:</th></tr>");
-    while (dir.next()) {                      // List the file system contents
-      String fileName = dir.fileName();
-      size_t fileSize = dir.fileSize();
-      retval += F("<tr><td>");
-      retval += F("<a href=\"/");
-      retval += String(fileName);
-      retval += F("\">");
-      retval += String(fileName);
-      retval += F("</a>");
-      retval += F("</td><td>");
-      retval += formatBytes((size_t)fileSize);
-      retval += F("</td></tr>");
-    }
-    retval += F("</table>");
+    retval = getFSDir(true);
     return retval;
   } else
   if (var == "stopkawebsite") {
@@ -1316,7 +1397,9 @@ String web_processor(const String var) {
       #ifdef enableWebSerial
       ptr += F("&nbsp;&nbsp;&nbsp;<a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
       #endif
-      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>")+String("Edit FileSystem")+F("</a>");
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>");
+      ptr += F("Edit FileSystem");
+      ptr += F("</a>");
       ptr += F("</p>");
       return ptr;
   } else
@@ -1486,7 +1569,7 @@ String getValuesToWebSocket_andWebProcessor(u_int function, String processorAsk 
   for (u_int i = 0; i < sizeof(ASS)/sizeof(ASS[0]); i++)  /////////////////////////////korekta
   {
     String placeholdername = get_PlaceholderName(i);
-    if (sizeof(ASS[i].Value)>0)
+    if (sizeof(ASS[i].Value)>0 )
     {
       if (i>0) toreturn += F(",");
       toreturn += F("\"");
@@ -1838,8 +1921,8 @@ char* toCharPointer (String ptrS) {
   return retptr;
 }
 //***********************************************************************************************************************************************************************************************
-void SaveAssValue(uint8_t ASSV, String source_str) {
-  ASS[ASSV].Value = source_str;
+void SaveAssValue(uint8_t ASSV, String source_str, bool humid = false) {
+  if (!humid) ASS[ASSV].Value = source_str; else ASS[ASSV].ValueHumid = source_str;
 }
 //***********************************************************************************************************************************************************************************************
 void updateDatatoWWW_common()
@@ -1857,22 +1940,34 @@ void updateDatatoWWW_common()
     ptr += String(getWifiQuality());
     ptr += F("&percnt;");
     ptr += F("</b>");
+    #ifdef ESP32
+    ptr += F(", Hall: <b>");
+    ptr += String(hallRead());
+    ptr += F("</b>G");
+    #endif
     #if defined enableMQTT || defined enableMQTTAsync
     ptr += F("</br>MQTT");
     #ifdef enableMQTTAsync
     ptr += F("-Async ");
     #endif
     ptr += F("status: <b>");
-    ptr += ((mqttclient.connected())?"Połączony":"Rozłączony");
+    ptr += ((mqttclient.connected())?"Connected":"Disconnected");
     ptr += F("</b>");
     ptr += F(", reconnects: <b>");
     ptr += mqttReconnects;
     ptr += F("</b>");
     #endif
+    #ifdef ENABLE_INFLUX
+    ptr += F("</br>InfluxDB: <b>");
+    ptr += (InfluxStatus?"Connected":"Disconnected");
+    ptr += F("</b>");
+    #endif
     if (ESPlastResetReason.length() > 0) {
-      ptr += F("</br>Last reset: '<b>");
-      ptr += ESPlastResetReason;
-      ptr += F("</b>'");
+      ptr += F("</br>Last reset: <b>");
+      String ptrtmp = ESPlastResetReason;
+      ptrtmp.replace("\n","<br>");
+      ptr += ptrtmp;
+      ptr += F("</b>");
     }
     SaveAssValue(ASS_MemStats, ptr );
     updateDatatoWWW();
@@ -1881,11 +1976,11 @@ void updateDatatoWWW_common()
 }
 void MainCommonLoop()
 {
-  #include "configmqtttopics.h"
+//  #include "configmqtttopics.h"
   #ifdef doubleResDet
   drd->loop();
   #endif
-  log_message((char*)F("MainLoop: ArduinoOTA"));
+  if ((millis()/1000) % 5 == 0) log_message((char*)F("MainLoop: ArduinoOTA"));
   #ifdef enableArduinoOTA
   // Handle OTA first.
   ArduinoOTA.handle();
@@ -1950,7 +2045,8 @@ void MainCommonLoop()
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: Influx validateconnection"));
     #endif
-    if (InfluxClient.validateConnection())
+    InfluxStatus = InfluxClient.validateConnection();
+    if (InfluxStatus)
     {
       sprintf(log_chars, "Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
       log_message(log_chars,0);
@@ -1961,7 +2057,9 @@ void MainCommonLoop()
       log_message(log_chars,0);
     }
   #endif
+    #ifndef ESP32
     wdt_reset();
+    #endif
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: message str builder to log"));
     #endif
@@ -1975,9 +2073,19 @@ void MainCommonLoop()
     message += formatBytes(ESP.getFreeHeap());
     message += F(" bytes ## Wifi: ");
     message += String(getWifiQuality());
+    #ifdef ESP32
+    message += F("Hall: ");
+    message += String(hallRead());
+    message += F("Gauss");
+    #endif
     #if defined enableMQTT || defined enableMQTTAsync
     message += F("% ## Mqtt reconnects: ");
     message += String(mqttReconnects);
+    #endif
+
+    #ifdef ENABLE_INFLUX
+    message += F(", InfluxDB: ");
+    message += (InfluxStatus?"Połączony":"Rozłączony");
     #endif
     log_message((char *)message.c_str());
 
@@ -2000,6 +2108,10 @@ void MainCommonLoop()
     stats += String(ESP.getCycleCount());
     stats += F(",\"wifi\":");
     stats += String(getWifiQuality());
+    #ifdef ESP32
+    stats += F(",\"Hall\":");
+    stats += String(hallRead());
+    #endif
     #if defined enableMQTT || defined enableMQTTAsync
     stats += F(",\"mqttReconnects\":");
     stats += mqttReconnects;
@@ -2084,7 +2196,8 @@ void Setup_Mqtt()
   #endif //enableMQTT
   #ifdef enableMQTTAsync
   mqttclient.setMaxTopicLength(2048); //default 128
-  char clientid[sensitive_size] = BASE_TOPIC;
+  char clientid[sensitive_size];
+  strcpy(clientid, String(BASE_TOPIC).c_str() );
   mqttclient.setClientId(clientid);
   mqttclient.setServer(mqtt_server, mqtt_port);
   mqttclient.setCredentials(mqtt_user, mqtt_password);
@@ -2124,7 +2237,12 @@ void mqttReconnect()
 }
 #endif
 //***********************************************************************************************************************************************************************************************
+
+#ifndef ESP32
 void onWifiConnect(const WiFiEventStationModeGotIP& event) {
+#else
+void onWifiConnect(WiFiEvent_t event, WiFiEventInfo_t info) {
+#endif
   log_message((char*)F("WiFi Task: Connected to Wi-Fi."));
   // if (DRDActiveStatus == false)
   #ifdef enableMQTTAsync
@@ -2134,7 +2252,11 @@ void onWifiConnect(const WiFiEventStationModeGotIP& event) {
   // log_message(log_chars);
 }
 //***********************************************************************************************************************************************************************************************
+#ifndef ESP32
 void onWifiDisconnect(const WiFiEventStationModeDisconnected& event) {
+#else
+void onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info) {
+#endif
   log_message((char*)F("WiFi Task: Disconnected from Wi-Fi."));
   #ifdef enableMQTTAsync
   mqttReconnectTimer.detach(); // ensure we don't reconnect to MQTT while reconnecting to Wi-Fi
@@ -2243,7 +2365,9 @@ void onMqttMessage(char* topicAMCP, char* payloadAMCP, AsyncMqttClientMessagePro
   sprintf(log_chars,"!!!!!!MQTT: Publish received. ");
   log_message(log_chars);
   #endif
+  #ifndef ESP32
   wdt_reset();
+  #endif
   if (total == lenAMCP)  //check is starts and ends as json data and nmqttident null
   { //check if received payload is valid json if not save to var. I assume that index is same and one after another and not mixed with other payloads
     receivedtmpString = "\0";
@@ -2314,7 +2438,9 @@ String webgetContentType(String filename) {
  */
 void check_wifi()
 {
+  #ifndef ESP32
   wdt_reset();
+  #endif
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {//|| (!WiFi.localIP()))  {
     /*
      *  if we are not connected to an AP
@@ -2525,6 +2651,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
         if (stateClass.length()>0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
         if (HAicon.length() == 0) HAicon = "mdi:thermometer";
         unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+        break;
       }
       case energyswitch: {
         if (unitClass.length() == 0 || unitClass == " ") unitClass = "kWh";
@@ -2533,11 +2660,13 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
         unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
         if (HAicon.length() == 0) HAicon = "mdi:fire";
         unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+        break;
       }
       default: {
         if (unitClass.length() > 0) unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
         if (stateClass.length() > 0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
         if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+        break;
       }
     }
 //test/lol", 0, true, "test 1");
@@ -2673,9 +2802,10 @@ bool loadConfig() {
     }
     sprintf(log_chars,"Config loaded. SSID: %s, CRT: %s",String(ssid).c_str(), String(CRT).c_str());
     log_message(log_chars);
-
+    EEPROM.end();
     return true; // return 1 if config loaded
   }
+  EEPROM.end();
   return false; // return 0 if config NOT loaded
 }
 //***********************************************************************************************************************************************************************************************
@@ -2683,9 +2813,10 @@ bool loadConfig() {
 bool SaveConfig() {
   log_message((char*)F("Saving config...........................prepare "));
   unsigned int runtmp;
+
   EEPROM.begin(CONFIG_START);  //Size can be anywhere between 4 and 4096 bytes.
   int EpromPosition = 1;
-  EEPROM.get(EpromPosition,runtmp);
+  EEPROM.get(EpromPosition, runtmp);
   if (runtmp != CRTrunNumber) {
     EEPROM.put(EpromPosition, CRTrunNumber);
     log_message((char*)F("SaveConfig. Saved new CRT number in EPROM"));
@@ -2777,7 +2908,7 @@ bool SaveConfig() {
   }
 
   if (check_w != check_l) {
-    sprintf(log_chars,"Saving config...........................Something changed w/l: %s/%s", String(check_w).c_str(), String(check_l).c_str());
+    sprintf(log_chars,"Saving config...........................Something changed w/l: %llu/%llu", (check_w), (check_l));
     log_message(log_chars);
     if(SPIFFS.exists(configfile)) {SPIFFS.remove(configfile);}
     File file = SPIFFS.open(configfile, "w");
@@ -2792,6 +2923,7 @@ bool SaveConfig() {
     } else {
       file.close();
     }
+    EEPROM.end();
     return true;
   }
   return false;
@@ -2821,7 +2953,7 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
     if (d1.length()==0) {
       log_message((char*)F("HELP MENU.--------------------------------------------------------------------------------------"), logCommandResponse);
       String commands = F("KOMENDY: ");
-      commands += F("CLEAR, RESTART, LOAD, SAVE, DIR, DEL filename");
+      commands += F("CLEAR, RESTART, LOAD, SAVE, DIR, DEL filename, CRTRESET");
       #ifdef enableDebug2Serial
       commands += F(", SERIALLOG");
       #endif //enableDebug2Serial
@@ -3012,15 +3144,24 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
     log_message(log_chars, logCommandResponse);
     SaveConfig();
   } else
+  if (d == "CRTRESET") {
+    CRTrunNumber = 1;
+    EEPROM.begin(CONFIG_START);
+    EEPROM.put(1, CRTrunNumber);
+    EEPROM.end();
+    SaveConfig();
+  } else
   if (d == "RESET_CONFIG")
   {
     sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content and restart...  ");
     log_message(log_chars, logCommandResponse);
     SPIFFS.format();
+    EEPROM.begin(CONFIG_START);
     for (u_int i=0 ; i < 100; i++){
       EEPROM.put(i, "\0");
     }
-
+    EEPROM.end();
+    CRTrunNumber = 0;
     SaveConfig();
     restart(F("Initiated from Remote Command RESET_CONFIG..."));
   } else

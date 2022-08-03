@@ -109,29 +109,35 @@ String LocalVarsRemoteCommands(String command, size_t gethelp) {
 String get_PlaceholderName(u_int i)
 { //get names by number to match www placeholders
   switch(i) {
-    case ASS_uptimedana: return PSTR("uptimedana"); break;
-    case ASS_temp_NEWS: return PSTR("temp_NEWS"); break;
-    case ASS_tempBoiler: return PSTR("tempBoiler"); break;
-    case ASS_tempBoilerSet: return PSTR("sliderValue1"); break;
-    case ASS_retTemp: return PSTR("retTemp"); break;
-    case ASS_tempCWU: return PSTR("tempCWU"); break;
-    case ASS_dhwTarget: return PSTR("sliderValue2"); break;
-    case ASS_cutOffTemp: return PSTR("sliderValue3"); break;
-    case ASS_roomtemp: return PSTR("roomtemp"); break;
-    case ASS_roomtempSet: return PSTR("sliderValue4"); break;  //Room Target sp
-    case ASS_lastNEWSSet: return PSTR("lastNEWSSet"); break;
-    case ASS_AutoMode: return PSTR("boilermodewww"); break;
-    case ASS_EnableHeatingCO: return PSTR("boilerwww"); break;
-    case ASS_statusWaterActive: return PSTR("statusWaterActive"); break;  //pump for water cwu active
-    case ASS_statusCHActive: return PSTR("statusCHActive"); break;
-    case ASS_statusFlameOn: return PSTR("statusFlameOn"); break;
-    case ASS_statusFault: return PSTR("statusFault"); break;
-    case ASS_EnableHotWater: return PSTR("boilerhwwww"); break;
-    case ASS_Statusy: return PSTR("Statusy"); break;
-    case ASS_UsedMedia: return PSTR("UsedMedia"); break;
-    case ASS_ecoMode: return PSTR("ecoMode"); break;
-    case ASS_MemStats: return PSTR("MemStats"); break;
-    case ASS_opcohi: return PSTR("opcohi"); break;
+    case ASS_uptimedana: return PSTR(ASS_uptimedanaStr); break;
+    case ASS_Statusy: return PSTR(ASS_StatusyStr); break;
+    case ASS_MemStats: return PSTR(ASS_MemStatsStr); break;
+
+    case ASS_temp_NEWS: return PSTR(ASS_temp_NEWSStr); break;
+    case ASS_lastNEWSSet: return PSTR(ASS_lastNEWSSetStr); break;
+
+    case ASS_tempBoiler: return PSTR(ASS_tempBoilerStr); break;
+    case ASS_tempBoilerSet: return PSTR(ASS_tempBoilerSetStr); break;
+    case ASS_retTemp: return PSTR(ASS_retTempStr); break;
+    case ASS_tempCWU: return PSTR(ASS_tempCWUStr); break;
+    case ASS_dhwTarget: return PSTR(ASS_dhwTargetStr); break;
+    case ASS_cutOffTemp: return PSTR(ASS_cutOffTempStr); break;
+    case ASS_roomtemp: return PSTR(ASS_roomtempStr); break;
+    case ASS_roomtempSet: return PSTR(ASS_roomtempSetStr); break;  //Room Target sp
+    case ASS_AutoMode: return PSTR(ASS_AutoModeStr); break;
+    case ASS_EnableHeatingCO: return PSTR(ASS_EnableHeatingCOStr); break;
+    case ASS_statusWaterActive: return PSTR(ASS_statusWaterActiveStr); break;  //pump for water cwu active
+    case ASS_statusCHActive: return PSTR(ASS_statusCHActiveStr); break;
+    case ASS_statusFlameOn: return PSTR(ASS_statusFlameOnStr); break;
+    case ASS_statusFault: return PSTR(ASS_statusFaultStr); break;
+    case ASS_EnableHotWater: return PSTR(ASS_EnableHotWaterStr); break;
+    case ASS_UsedMedia: return PSTR(ASS_UsedMediaStr); break;
+    case ASS_ecoMode: return PSTR(ASS_ecoModeStr); break;
+    case ASS_opcohi: return PSTR(ASS_opcohiStr); break;
+    case ASS_tempCWUhistereza: return PSTR(ASS_tempCWUhisterezaStr); break;
+    case ASS_calcCWU: return PSTR(ASS_calcCWUStr); break;
+    case ASS_tempCOhistereza: return PSTR(ASS_tempCOhisterezaStr); break;
+    case ASS_calcCO: return PSTR(ASS_calcCOStr); break;
   }
   return "\0";
 }
@@ -198,7 +204,7 @@ void updateDatatoWWW_received(u_int i) {
       }
       if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
       break;
-      case ASS_EnableHotWater:
+    case ASS_EnableHotWater:
       if (PayloadStatus(String(ASS[ASS_EnableHotWater].Value), true)) {
         enableHotWater = true;
       } else if (PayloadStatus(String(ASS[ASS_EnableHotWater].Value), false)) {
@@ -208,7 +214,13 @@ void updateDatatoWWW_received(u_int i) {
         //sprintf(log_chars, "Unknown mode: %s", ASS[ASS_EnableHotWater].Value.c_str());
         //log_message(log_chars);
       }
-    break;
+      break;
+    case ASS_tempCWUhistereza:
+      histCWU = PayloadtoValidFloat(String(ASS[ASS_tempCWUhistereza].Value), true, histlo, histhi);
+      break;
+    case ASS_tempCOhistereza:
+      histCO = PayloadtoValidFloat(String(ASS[ASS_tempCOhistereza].Value), true, histlo, histhi);
+      break;
   }
 }
 
@@ -238,6 +250,10 @@ void updateDatatoWWW() //default false so if true than update
     SaveAssValue(ASS_roomtemp,            String(roomtemp, decimalPlaces) );
     SaveAssValue(ASS_roomtempSet,         String(roomtempSet, decimalPlaces) );
     SaveAssValue(ASS_opcohi,              String(opcohi, decimalPlaces) );
+    SaveAssValue(ASS_tempCWUhistereza,    String(histCWU, decimalPlaces) );
+    SaveAssValue(ASS_calcCWU,             String((dhwTarget-histCWU), decimalPlaces) );
+    SaveAssValue(ASS_tempCOhistereza,     String(histCO, decimalPlaces) );
+    SaveAssValue(ASS_calcCO,              String((tempBoilerSet-histCO), decimalPlaces) );
     SaveAssValue(ASS_AutoMode,            automodeCO ? "on" : "off" );
     SaveAssValue(ASS_EnableHotWater,      enableHotWater ? "on" : "off" );
     SaveAssValue(ASS_statusCHActive,      status_CHActive ? "on" : "off" );
@@ -249,7 +265,7 @@ void updateDatatoWWW() //default false so if true than update
 
     ptrS = "\0";
     if (status_FlameOn) {
-      ptrS += "<i class='fas fa-fire' id='StatusRed'></i>"; ptrS += "<span id='StatusRedNormal'>" + String(Flame_Active_Flame_level) + "</span><b>" + String(flame_level, 0) + "<sup class=\"units\">&#37;</sup></b></br>";
+      ptrS += "<i class='fas fa-fire' id='StatusRed'></i>"; ptrS += "<span id='StatusRedNormal'>" + String(Flame_Active_Flame_level) + "</span><b>" + String(flame_level, 0) + "<sup class='units'>&#37;</sup></b></br>";
     }
     if (status_Fault) ptrS += "<span id='StatusRed'>!!!!!!!!!!!!!!!!! status_Fault !!!!!!!</span></br>";
     if (heatingEnabled) {
@@ -304,6 +320,18 @@ String local_specific_web_processor_vars(String var) {
   if (var == "roomF2temp_json") { return String(roomF2temp_json);
   } else
   if (var == "roomF2tempset_json") { return String(roomF2tempset_json);
+  } else
+  if (var == "histlo") { return String(histlo, decimalPlaces);
+  } else
+  if (var == "histhi") { return String(histhi, decimalPlaces);
+  } else
+  if (var == String(ASS_tempCWUhisterezaStr)) { return String(histCWU, decimalPlaces);
+  } else
+  if (var == String(ASS_tempCOhisterezaStr)) { return String(histCO, decimalPlaces);
+  } else
+  if (var == String(ASS_calcCWUStr)) { return String((dhwTarget - histCWU), decimalPlaces);
+  } else
+  if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
   }
   return "\0";
 }

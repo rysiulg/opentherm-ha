@@ -71,6 +71,8 @@ void addusage_local_values_load(String dane, int EpromPosition) {
       if (dane.indexOf("tempBoilerSet") > -1)         { tmpstrval = getJsonVal(dane, "tempBoilerSet"); tmpstrval.replace("\"","");  tempBoilerSet = (float) tmpstrval.toFloat(); }
       if (dane.indexOf("cutOffTemp") > -1)            { tmpstrval = getJsonVal(dane, "cutOffTemp"); tmpstrval.replace("\"","");  cutOffTemp = (float) tmpstrval.toFloat(); }
       if (dane.indexOf("dhwTarget") > -1)             { tmpstrval = getJsonVal(dane, "dhwTarget"); tmpstrval.replace("\"","");  dhwTarget = (float) tmpstrval.toFloat(); }
+      if (dane.indexOf("histCWU") > -1)             { tmpstrval = getJsonVal(dane, "histCWU"); tmpstrval.replace("\"","");  histCWU = (float) tmpstrval.toFloat(); }
+      if (dane.indexOf("histCO") > -1)             { tmpstrval = getJsonVal(dane, "histCO"); tmpstrval.replace("\"","");  histCO = (float) tmpstrval.toFloat(); }
 
 }
 
@@ -129,6 +131,10 @@ String addusage_local_values_save(int EpromPosition = 0) {
   retval += String(cutOffTemp);
   retval += ",\"dhwTarget\":";
   retval += String(dhwTarget);
+  retval += ",\"histCWU\":";
+  retval += String(histCWU);
+  retval += ",\"histCO\":";
+  retval += String(histCO);
 
   if (EpromPosition > 0) {
    unsigned long long runtmp_ull = 0;

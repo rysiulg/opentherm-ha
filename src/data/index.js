@@ -128,14 +128,16 @@ function onMessage(event) {
             if (document.getElementById(key)!=null) {
                 if (key.trim() == ("sliderValue"+ key.charAt(key.length-1)).trim()) {
                     var samesam;
-                    if (parseFloat(document.getElementById("slider"+ key.charAt(key.length-1)).value).toFixed(1) == parseFloat(myObj[key]).toFixed(1)) {
-                        samesam=true;
-                    } else {
-                        samesam=false;
-                    }
-                    document.getElementById("slider"+ key.charAt(key.length-1)).value = parseFloat(myObj[key]).toFixed(1);
-                    document.getElementById("slider"+ key.charAt(key.length-1)).setAttribute('value', myObj[key]);
-                    if (samesam == false) {document.getElementById("slider"+ key.charAt(key.length-1)).onchange(); console.log("this triggers");}
+                    try {
+                        if (parseFloat(document.getElementById("slider"+ key.charAt(key.length-1)).value).toFixed(1) == parseFloat(myObj[key]).toFixed(1)) {
+                            samesam=true;
+                        } else {
+                            samesam=false;
+                        }
+                        document.getElementById("slider"+ key.charAt(key.length-1)).value = parseFloat(myObj[key]).toFixed(1);
+                        document.getElementById("slider"+ key.charAt(key.length-1)).setAttribute('value', myObj[key]);
+                        if (samesam == false) {document.getElementById("slider"+ key.charAt(key.length-1)).onchange(); console.log("this triggers");}
+                    } catch { samesam = false;}
                 } else
                 if (key.trim() === "boilerhwwww") { //CWU water
     //               console.log(key+" Stan HW: "+myObj[key]);
@@ -143,11 +145,13 @@ function onMessage(event) {
                         document.getElementById(key).checked = true;
                         document.getElementById("HotWater_title").style.background = "#f7e08c";
                         document.getElementById("slider2").disabled = false;
+                        document.getElementById("slider5").disabled = false;
                         // document.getElementById("boilermodewww").style.visibility = 'visible';
                     } else {
                         document.getElementById(key).checked = false;
                         document.getElementById("HotWater_title").style.background = null;
                         document.getElementById("slider2").disabled = true;
+                        document.getElementById("slider5").disabled = true;
                         // document.getElementById("boilermodewww").style.visibility = 'hidden';
                     }
             //      document.getElementById(key).focus();
@@ -158,9 +162,11 @@ function onMessage(event) {
                     if (myObj[key].toLowerCase() === "on" || myObj[key] === "1") {
                         document.getElementById(key).checked = true;
                         document.getElementById("slider1").disabled = true;
+                        document.getElementById("slider6").disabled = true;
                     } else {
                         document.getElementById(key).checked = false;
                         document.getElementById("slider1").disabled = false;
+                        document.getElementById("slider6").disabled = false;
                     }
                 } else
                 if (key.trim() === "boilerwww") {
@@ -187,6 +193,7 @@ function onMessage(event) {
                     } else {
                         if (document.getElementById(key).checked === false) {
                             document.getElementById("slider1").disabled = false;
+                            document.getElementById("slider6").disabled = false;
                         }
                         document.getElementById("HotWater_card").style.background = null;
                         document.getElementById("BoilerCO_title").textContent ="Temperatura Grzania CO";
@@ -273,14 +280,16 @@ function setBubble(range, bubble) {
     const newVal = Number(((val - min) * 100) / (max - min));
 
    /* if (bubble != null) {*/
-        bubble.innerHTML = `<span>${parseFloat(val).toFixed(1)}</span>`;
-
+   try {
+    bubble.innerHTML = `<span>${parseFloat(val).toFixed(1)}</span>`;
     // Sorta magic numbers based on size of the native UI thumb
     bubble.style.left = `calc(${newVal}% + (${15 - newVal * 0.30}px))`;
-//    console.log(bubble.style.left);
-//    console.log("SetBubble "+document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value+" <- "+val.toString());
-   document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value = `${parseFloat(range.value).toFixed(1)}`;
-
+    //    console.log(bubble.style.left);
+    //    console.log("SetBubble "+document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value+" <- "+val.toString());
+    document.getElementById("sliderValue"+ range.id.charAt(range.id.length-1)).value = `${parseFloat(range.value).toFixed(1)}`;
+    } catch (error) {
+    console.log(range + ":  " +error);
+    }
 
     /* } */
 }

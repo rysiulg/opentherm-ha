@@ -72,10 +72,10 @@ String NEWS_GET_TOPIC = String(COWODA0_SENSORS_TOPIC);          // pompa CO stat
 String NEWStemp_json = ("CO0_outside_temperature_Averange");
 
 
-String ROOMS_F1_GET_TOPIC = ("FLOORH1/sensor/room/attributes");          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
+String ROOMS_F1_GET_TOPIC = ("FLOORH1/room/attributes");          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
 String roomF1temp_json = ("FL1_room_temperature_0");
 String roomF1tempset_json = ("FL1_room_temperature_setpoint_0");
-String ROOMS_F2_GET_TOPIC = ("FLOORH2/sensor/room/attributes");          // pompa CO status
+String ROOMS_F2_GET_TOPIC = ("FLOORH2/room/attributes");          // pompa CO status
 String roomF2temp_json = ("FL2_room_temperature_0");
 String roomF2tempset_json = ("FL2_room_temperature_setpoint_0");
 

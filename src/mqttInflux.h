@@ -54,7 +54,8 @@ void updateInfluxDB() {
   //WebSerial.println(InfluxClient.pointToLineProtocol(InfluxSensor));
   // Write point
   if (tempBoiler>0 && retTemp>0){
-    if (!InfluxClient.writePoint(InfluxSensor))
+    InfluxStatus = InfluxClient.writePoint(InfluxSensor);
+    if (!InfluxStatus)
     {
       sprintf(log_chars, "InfluxDB write failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
       log_message(log_chars);
@@ -231,6 +232,7 @@ void updateMQTTData() {
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_SOFTWARE_CH_STATE_MODE), String(HA_SENSORS_TOPIC));
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_STATE), String(HA_BINARY_TOPIC), "heat", "\0", "\0", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
+    HADiscovery(String(BOILER_TOPIC), String(OT), String(TEMP_CUTOFF), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
@@ -238,7 +240,6 @@ void updateMQTTData() {
     HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(TEMP_CUTOFF), String(HA_SENSORS_TOPIC), "temperature");
     // homeassistant/sensor/BB050B_OPENTHERM_OT10_lo/config = {"name":"Opentherm OPENTHERM OT10 lo","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_lo","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['lo']}}"} (retained) problem
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
 //    HADiscovery(String(HA_BINARY_TOPIC), String(DIAGS_OTHERS_FAULT), String(OT), String(DIAG_TOPIC), "problem");
