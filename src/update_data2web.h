@@ -332,6 +332,7 @@ String local_specific_web_processor_vars(String var) {
   if (var == String(ASS_calcCWUStr)) { return String((dhwTarget - histCWU), decimalPlaces);
   } else
   if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
+  if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
   }
   return "\0";
 }
