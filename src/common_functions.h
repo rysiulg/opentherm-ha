@@ -379,7 +379,7 @@ void check_wifi();
 void SetupWebUpdate();
 void handleUpdate(AsyncWebServerRequest *request);
 void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final);
-void printProgress(size_t prg, size_t sz)
+void printProgress(size_t prg, size_t sz);
 #endif
 String PrintHex8(const uint8_t *data, char separator, uint8_t length);
 
@@ -470,7 +470,7 @@ String get_lastResetReason()
     case REASON_WDT_RST: lrr = F("1: hardware watch dog reset"); break;
     case REASON_EXCEPTION_RST: lrr = F("2: exception reset, GPIO status won’t change"); break;
     case REASON_SOFT_WDT_RST: lrr = F("3: software watch dog reset, GPIO status won’t change"); break;
-    case REASON_SOFT_RESTART: lrr = F("4: software restart ,system_restart , GPIO status won’t change"); break;
+    case REASON_SOFT_RESTART: lrr = F("4: software restart, system_restart , GPIO status won’t change"); break;
     case REASON_DEEP_SLEEP_AWAKE: lrr = F("5 wake up from deep-sleep"); break;
     case REASON_EXT_SYS_RST: lrr = F("6 external system reset"); break;
     default: lrr = String(resetNO) + ": unknown"; break;
@@ -593,20 +593,20 @@ String uptimedana(unsigned long started_local = 0, bool startFromZero = false, b
     unsigned long  podsuma = partia / (24 * 60 * 60 * 1000);
     partia -= podsuma * 24 * 60 * 60 * 1000;
     if (!forlogall) {
-      wynik += (String)podsuma + ""+String(t_day)+" ";
+      wynik += (String)podsuma; wynik += ""; wynik += String(t_day); wynik +=" ";
     } else {
       if (podsuma<10) { wynik += "0"; }
-      wynik += (String)podsuma + "d";
+      wynik += (String)podsuma; wynik += "d";
     }
   }
   if (partia >= 60 * 60 * 1000 ) {
     unsigned long  podsuma = partia / (60 * 60 * 1000);
     partia -= podsuma * 60 * 60 * 1000;
     if (!forlogall) {
-      wynik += (String)podsuma + ""+String(t_hour)+" ";
+      wynik += (String)podsuma; wynik += ""; wynik +=String(t_hour); wynik +=" ";
     } else {
       if (podsuma<10) { wynik += "0"; }
-      wynik += (String)podsuma + ":";
+      wynik += (String)podsuma; wynik += ":";
     }
   } else {
     if (forlogall) wynik += "00:";
@@ -615,10 +615,10 @@ String uptimedana(unsigned long started_local = 0, bool startFromZero = false, b
     unsigned long  podsuma = partia / (60 * 1000);
     partia -= podsuma * 60 * 1000;
     if (!forlogall) {
-      wynik += (String)podsuma + ""+String(t_min)+" ";
+      wynik += (String)podsuma; wynik += ""; wynik += String(t_min); wynik +=" ";
     } else {
       if (podsuma<10) { wynik += "0"; }
-      wynik += (String)podsuma + ":";
+      wynik += (String)podsuma; wynik += ":";
     }
   } else {
     if (forlogall) wynik += "00:";
@@ -627,22 +627,22 @@ String uptimedana(unsigned long started_local = 0, bool startFromZero = false, b
     unsigned long  podsuma = partia / 1000;
     partia -= podsuma * 1000;
     if (!forlogall) {
-      wynik += (String)podsuma + ""+String(t_sek)+" ";
+      wynik += (String)podsuma; wynik += ""; wynik += String(t_sek); wynik += " ";
     } else {
       if (podsuma<10) { wynik += "0"; }
-      wynik += (String)podsuma + "";
+      wynik += (String)podsuma; wynik += "";
     }
   } else {
     if (forlogall) wynik += "00";
   }
   if (forlogall) {
     if (partia<10) {
-      wynik += ".00" + String(started_local % 1000);
+      wynik += ".00"; wynik += String(started_local % 1000);
     } else
     if (partia<100) {
-      wynik += ".0" + String(started_local % 1000);
+      wynik += ".0"; wynik += String(started_local % 1000);
     } else {
-      wynik += "." + String(started_local % 1000);
+      wynik += "."; wynik += String(started_local % 1000);
     }
   }
   //wynik += (String)partia + "/1000";  //pomijam to wartosci <1sek
@@ -1238,7 +1238,7 @@ void Setup_DNS() {
 //***********************************************************************************************************************************************************************************************
 String getFSDir (bool html = false, String path = "/")
 { //get direcory contents
-  String directory = "Actual direcory list:\n";
+  String directory = "Actual directory list:\n";
   if (html) {
     directory += F("<table class=\"fileTable\"><tr>");
     directory += F("<th>FS File:</th><th>size:</th></tr>");
@@ -1276,7 +1276,7 @@ String getFSDir (bool html = false, String path = "/")
   #endif
   }
   if (html) directory += F("</table>");
-  return directory;
+  return directory.c_str();
 }
 
 //***********************************************************************************************************************************************************************************************
@@ -1372,7 +1372,7 @@ void Event_WebSocket(AsyncWebSocket       *webserver,  //
 String web_processor(const String var) {
   // sprintf(log_chars,"WebProcessor variable: %s",var.c_str());
   // log_message(log_chars);
-  if (var == "ME_TITLE") {return String(me_lokalizacja) + "  v." + String(version);
+  if (var == "ME_TITLE") {String retStrtit = String(me_lokalizacja); retStrtit += F(" v."); retStrtit += String(version); return retStrtit.c_str();
   } else
   if (var == "DIR_LIST") {
     String retval = "FS started. Contents:";
@@ -1386,20 +1386,22 @@ String web_processor(const String var) {
       ptr += F("</B><br>");
       ptr += F("&copy; ");
       ptr += String(MFG)+"  "+version[4]+version[5]+"-"+version[2]+version[3]+"-20"+version[0]+version[1]+" "+version[6]+version[7]+":"+version[8]+version[9];
-    return String(ptr);
+    return ptr;
   } else
   if (var == "linkiac") {
     String ptr="\0";
       ptr += "<p>";
       #ifdef enableWebUpdate
-      ptr += F("<a href='/update' target=\"_blank\">")+String(Update_web_link)+F("</a>");
+      ptr += F("<a href='/update' target=\"_blank\">");
+      ptr += String(Update_web_link);
+      ptr += F("</a>");
       #endif
       #ifdef enableWebSerial
-      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/webserial' target=\"_blank\">")+String(Web_Serial)+F("</a>");
-      #endif
-      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>");
-      ptr += F("Edit FileSystem");
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/webserial' target=\"_blank\">");
+      ptr += String(Web_Serial);
       ptr += F("</a>");
+      #endif
+      ptr += F("&nbsp;&nbsp;&nbsp;<a href='/edit'>Edit FileSystem</a>");
       ptr += F("</p>");
       return ptr;
   } else
@@ -1408,34 +1410,34 @@ String web_processor(const String var) {
       ptr += "<p><H2>BUILD OPTIONS:</H2>";
       #ifdef enableWebSocket
       ptr += F("Async WebSocket integration with endpoint: <IP_Addr>");
-      ptr += String(websocketendpoint) + "<br>";
+      ptr += String(websocketendpoint);
+      ptr += F("<br>");
       #endif
       #ifdef enableMESHNETWORK
       ptr += F("PainlessMesh network integration. MeshName: ");
-      ptr += String(MESH_PREFIX) + "<br>";
+      ptr += String(MESH_PREFIX);
+      ptr  += F("<br>");
       #endif
       #ifdef doubleResDet
       ptr += F("ESP double Reset Detector integration<br>");
       #endif
       #ifdef ENABLE_INFLUX
-      ptr += F("InfluxDB integration to: ");
-      ptr += String(influx_server) + " DB: " + String(influx_database) + ", Measurments: " + String(influx_measurments) + "<br>";
+      sprintf(log_chars, "InfluxDB integration to: %s  DB: %s, Measurments: %s<br>", influx_server, influx_database, influx_measurments);
+      ptr += log_chars;
       #endif
       #if defined enableMQTT || defined enableMQTTAsync
         #ifdef enableMQTTAsync
         ptr += F("Async mode ");
         #endif //enableMQTTAsync
-      ptr += F("MQTT integration to: ");
-      ptr += String(mqtt_server) + ":" + String(mqtt_port);
-      ptr += F("<br>");
+      sprintf(log_chars, "MQTT integration to: %s:%u<br>", mqtt_server, mqtt_port);
+      ptr += log_chars;
       #endif
       #ifdef enableWebUpdate
       ptr += F("WebUpdate OTA<br>");
       #endif
       #ifdef enableArduinoOTA
-      ptr += F("ArduinoOTA on :");
-      ptr += String(OTA_Port);
-      ptr += F("<br>");
+      sprintf(log_chars, "ArduinoOTA on :%u<br>", OTA_Port);
+      ptr += log_chars;
       #endif
       #ifdef debug
       ptr += F("Build with debug flag<br>");
@@ -1444,8 +1446,8 @@ String web_processor(const String var) {
       ptr += F("Build with debugweb flag<br>");
       #endif
       #ifdef enableDebug2Serial
-      ptr += F("Serial logging and use simple commands is enabled after connecting Serial at ");
-      ptr += String(SerialSpeed) + "bps<br>";
+      sprintf(log_chars, "Serial logging and use simple commands is enabled after connecting Serial at %ubps<br>", SerialSpeed);
+      ptr += log_chars;
       #endif
       #ifdef enableWebSocketlog
       ptr += F("Send logging to WebSocket and use simple commands as webSerial but native<br>");
@@ -1517,7 +1519,7 @@ String web_processor(const String var) {
     return local_specific_web_processor_vars(var);
 
   }
-
+  return "LSWPV_NONE";
 }
 //***********************************************************************************************************************************************************************************************
 bool webhandleFileRead(AsyncWebServerRequest *request, String path) {
@@ -1865,7 +1867,7 @@ void MainCommonSetup()  {
   Setup_FileSystem();
   if (loadConfig())
   {
-    sprintf(log_chars,"Config loaded. SSID: %s, Pass: %s",String(ssid).c_str(), String(pass).c_str());
+    sprintf(log_chars,"Config loaded. SSID: %s, Pass: %s", ssid, pass);
     log_message(log_chars);
   }
   else
@@ -2576,7 +2578,7 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
       response->addHeader("Location", "/");
       request->send(response);
       delay(100);
-      restart("End update from WebUpdate")
+      restart("End update from WebUpdate");
     }
   }
 }
@@ -2628,7 +2630,7 @@ void handleDoUpdate(AsyncWebServerRequest *request, const String& filename, size
 #if defined enableMQTT || defined enableMQTTAsync
 void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass = "\0", String unitClass = "\0", String stateClass = "\0", String HAicon = "\0", const String payloadvalue_startend_val = "", const String payloadON = "1", const String payloadOFF = "0")
 {
-  const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
+  const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(version) + "\",\"mdl\":\""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
   const String availabityTopic = ",\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\"";
 
   String unitbuilder = "\0";
@@ -2671,13 +2673,18 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
     }
 //test/lol", 0, true, "test 1");
   }
+  char mqttTopic[64] = {'\0'};
+  char mqttPayload[512] = {'\0'};
+  String TotalName = appendname;
+  TotalName += nameval;
+  sprintf(mqttTopic, "%s%s/config", discoverytopic.c_str(), TotalName.c_str());
+  sprintf(mqttPayload, "{\"name\":\"%s\",\"uniq_id\": \"%s\",\"stat_t\":\"%s\",\"val_tpl\":\"{{value_json.%s}}\"%s%s,\"qos\":%s,%s}",TotalName.c_str(), TotalName.c_str(), sensorswitchValTopic.c_str(), TotalName.c_str(), unitbuilder.c_str(), availabityTopic.c_str(), String(QOS).c_str(), deviceid.c_str());
   #ifdef enableMQTT
-  mqttclient.publish((discoverytopic + appendname + nameval + "/config").c_str(), ("{\"name\":\"" + appendname + nameval + "\",\"uniq_id\": \"" + appendname + nameval + "\",\"stat_t\":\"" + sensorswitchValTopic + "\",\"val_tpl\":\"{{value_json." + appendname + nameval + "}}\"" + unitbuilder + availabityTopic + ",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
+  mqttclient.publish(mqttTopic, mqttPayload, mqtt_Retain);
   #endif
   #ifdef enableMQTTAsync
-  if (QOS ==0 ) {
-    mqttclient.publish((discoverytopic + appendname + nameval + "/config").c_str(), QOS, mqtt_Retain, ("{\"name\":\"" + appendname + nameval + "\",\"uniq_id\": \"" + appendname + nameval + "\",\"stat_t\":\"" + sensorswitchValTopic + "\",\"val_tpl\":\"{{value_json." + appendname + nameval + "}}\"" + unitbuilder + availabityTopic + ",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str());
-  } // in other QOS uint returnm
+  uint16_t packetIdSub = mqttclient.publish(mqttTopic, QOS, mqtt_Retain, mqttPayload);
+  log_message((char*)String(packetIdSub).c_str());
   #endif
 }
 #endif
@@ -2843,11 +2850,12 @@ bool SaveConfig() {
     String configSave = F("{\"config\":99");
 //this block is as param from html
     configSave += F(",\"debugSerial\":");
-    configSave += debugSerial?1:0;
+    configSave += debugSerial?"1":"0";
     configSave += F(",\"WebSocketlog\":");
-    configSave += WebSocketlog?1:0;
+    configSave += WebSocketlog?"1":"0";
     configSave += F(",\"sendlogtomqtt\":");
-    configSave += sendlogtomqtt?1:0;
+    //if (sendlogtomqtt) configSave += "1"; else configSave += "0";
+    configSave += sendlogtomqtt?"1":"0";
     configSave += ",\"CRT\":";
     configSave += String(CRTrunNumber);
     configSave += F(",\"SSID_Name\":\"");

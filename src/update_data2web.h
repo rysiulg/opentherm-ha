@@ -28,11 +28,11 @@ String LocalVarsRemoteCommands(String command, size_t gethelp) {
   {
     if (command == "USEDMEDIA")
     {
-      String ptrS = F("Used Media: ");
-      ptrS += String(Flame_total) + ": " + String(flame_used_power_kwh*1000) + "Wh,    " + String( flame_time_total ) + "\n";      //uptimedana((flame_time_total), true) + "\n";
-      ptrS += "   w tym woda: " + String(flame_used_power_waterTotal*1000) + "Wh,     " + String( flame_time_waterTotal  ) + "\n"; //uptimedana((flame_time_waterTotal), true) + "\n");
-      ptrS += "   w tym CO:   " + String(flame_used_power_CHTotal*1000) + "Wh,      " + String(flame_time_CHTotal) + "\n";         //uptimedana((flame_time_CHTotal), true)+"\n");
-      log_message((char*)ptrS.c_str(), logCommandResponse);
+      sprintf(log_chars, "Used Media: %s: %lfWh,    %llu\n   w tym woda: %lfWh,     %llu\n   w tym CO:   %lfWh,      %llu\n", Flame_total, flame_used_power_kwh*1000, flame_time_total, flame_used_power_waterTotal*1000, flame_time_waterTotal, flame_used_power_CHTotal*1000, flame_time_CHTotal);
+      // ptrS += String(Flame_total) + ": " + String() + "Wh,    " + String(  ) + "\n";      //uptimedana((flame_time_total), true) + "\n";
+      // ptrS += "" + String() + "" + String(   ) + "\n"; //uptimedana((flame_time_waterTotal), true) + "\n");
+      // ptrS += "" + String() + "" + String() + "\n";         //uptimedana((flame_time_CHTotal), true)+"\n");
+      log_message((char*)log_chars, logCommandResponse);
     } else
     if (command == "ROOMTEMP+")
     {
@@ -273,28 +273,23 @@ void updateDatatoWWW() //default false so if true than update
       if (automodeCO) ptrS += F(" (AUTO)"); else ptrS += F(" (Standard)");
       ptrS += ("</span></br>");
     }
-    if (status_CHActive) ptrS += "<span id='StatusRed'>" + String(BOILER_IS_HEATING) + "</span></br>";
-    if (enableHotWater) ptrS += "<span id='StatusBlack'>" + String(DHW_HEAT_ON) + "</span></br>";
-    if (status_WaterActive) ptrS += "<span id='StatusRed'>" + String(Boiler_Active_heat_DHW) + "</span></br>";
-    if (status_Cooling) ptrS += "<span id='StatusOrange'>" + String(CoolingMode) + "</span><</br>";
-    if (status_Diagnostic) ptrS += "<span id='StatusDarkRed'>" + String(DiagMode) + "</span></br>";
-    if (CO_PumpWorking) ptrS += "<span id='StatusBlue'>" + String(Second_Engine_Heating_PompActive_Disable_heat) + "</span>></br>";
-    if (Water_PumpWorking) ptrS += "<span id='StatusBlue'>" + String(Second_Engine_Heating_Water_PompActive) + "</span></br>";
-    if (status_FlameOn) ptrS += "<span id='StatusGreen'>" + String(Flame_time) + "<b>" + uptimedana(start_flame_time_fordisplay) + "</b></span></br>";
+    if (status_CHActive) {ptrS += "<span id='StatusRed'>"; ptrS += String(BOILER_IS_HEATING); ptrS += "</span></br>";}
+    if (enableHotWater) {ptrS += "<span id='StatusBlack'>"; ptrS += String(DHW_HEAT_ON); ptrS += "</span></br>";}
+    if (status_WaterActive) {ptrS += "<span id='StatusRed'>"; ptrS += String(Boiler_Active_heat_DHW); ptrS += "</span></br>";}
+    if (status_Cooling) {ptrS += "<span id='StatusOrange'>"; ptrS += String(CoolingMode); ptrS += "</span><</br>";}
+    if (status_Diagnostic) {ptrS += "<span id='StatusDarkRed'>"; ptrS += String(DiagMode); ptrS += "</span></br>";}
+    if (CO_PumpWorking) {ptrS += "<span id='StatusBlue'>"; ptrS += String(Second_Engine_Heating_PompActive_Disable_heat); ptrS += "</span>></br>";}
+    if (Water_PumpWorking) {ptrS += "<span id='StatusBlue'>"; ptrS += String(Second_Engine_Heating_Water_PompActive); ptrS += "</span></br>";}
+    if (status_FlameOn) {ptrS += "<span id='StatusGreen'>"; ptrS += String(Flame_time); ptrS +="<b>"; ptrS += uptimedana(start_flame_time_fordisplay); ptrS += "</b></span></br>";}
 //    ASS[ASS_Statusy].Value = toCharPointer(String(ptrS));
     //strcpy(ASS[ASS_Statusy].Value, toCharPointer(ptrS) );
     SaveAssValue(ASS_Statusy, ptrS );
 
-    ptrS = "\0";
-    ptrS += "<p id='StatusBlackNormal'>" + String(Flame_total) + "<b>" + String(flame_used_power_kwh, 4) + "kWh</b>";
-    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_total), true)+"</b>");
-    ptrS += "</br>w tym woda: <b>" + String(flame_used_power_waterTotal, 4) + "kWh</b>";
-    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_waterTotal), true)+"</b>");
-    ptrS += "</br>w tym CO: <b>" + String(flame_used_power_CHTotal, 4) + "kWh</b>";
-    ptrS += String(" : ") + "<b>" + String(uptimedana((flame_time_CHTotal), true)+"</b></p>");
+
+    sprintf(log_chars, "<p id='StatusBlackNormal'>%s<b>%skWh</b> : <b>%s</b></br>w tym woda: <b>%skWh</b> : <b>%s</b></br>w tym CO: <b>%skWh</b> : <b>%s</b></p>", Flame_total, String(flame_used_power_kwh, 4).c_str(), uptimedana(flame_time_total,true).c_str(), String(flame_used_power_waterTotal, 4).c_str(), uptimedana(flame_time_waterTotal, true).c_str(), String(flame_used_power_CHTotal, 4).c_str(), uptimedana(flame_time_CHTotal, true).c_str());
 // //    ASS[ASS_UsedMedia].Value = toCharPointer(String(ptrS));
 //     strcpy(ASS[ASS_UsedMedia].Value, toCharPointer( ptrS) );
-    SaveAssValue(ASS_UsedMedia, ptrS );
+    SaveAssValue(ASS_UsedMedia, (String)log_chars );
     #ifdef debug
     sprintf(log_chars,"Flame_Total: %s (%s), CO: %s (%s), DHW: %s (%s)", String(flame_used_power_kwh).c_str(), String(uptimedana((flame_time_total), true)).c_str(), String(flame_used_power_CHTotal).c_str(), String(uptimedana((flame_time_CHTotal), true)).c_str(), String(flame_used_power_waterTotal).c_str(), String(uptimedana((flame_time_waterTotal), true)).c_str());
     log_message(log_chars);
@@ -332,6 +327,7 @@ String local_specific_web_processor_vars(String var) {
   if (var == String(ASS_calcCWUStr)) { return String((dhwTarget - histCWU), decimalPlaces);
   } else
   if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
+  } else
   if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
   }
   return "\0";
