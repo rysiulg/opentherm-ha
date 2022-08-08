@@ -13,7 +13,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include "localconfig.h"
+#if defined enableMQTT || defined enableMQTTAsync
 #include "configmqtttopics.h"
+#endif
+#include "declarations_for_websync.h"
 
 
 #define wwwport 80
@@ -174,6 +177,7 @@ void mqttReconnect_subscribe_list();                                            
 //*********************************************************************************************************************************************
 
 
+
 const unsigned long mqttUpdateInterval_ms = 1 * 60 * 1000,      //send data to mqtt and influxdb
                     LOOP_WAITTIME = (2.1*1000),    //for loop
                     WIFIRETRYTIMER = 25 * 1000;
@@ -205,6 +209,9 @@ bool InfluxStatus = false;  //MQTTT Send Status
 float opcohi = ecoModeDisabledMaxTemp,             // upper max heat boiler to CO
       ecohi = ecoModeMaxTemp;
 
+#ifndef InitTempst
+#define InitTempst 255
+#endif
 const float ophi = 65,               // upper max heat water
             opcohistatic = opcohi,
             oplo = 29,               // lower min heat water
@@ -213,12 +220,12 @@ const float ophi = 65,               // upper max heat water
             cutofflo = -cutoffhi,    // lower min cut-off temp above is heating CO disabled
             roomtemphi = 29,         // upper max to set of room temperature
             roomtemplo = 15,         // lower min to set of room temperature
-		InitTemp = 255;
+		InitTemp = InitTempst;
 
 #ifndef maxLogSize
 #define maxLogSize 1023
 #endif
-#if defined enableWebSocketlog && defined enableWebSocket
+#if defined enableWebSocketlog && defined enableWebSocket || enableWebSerial
 bool WebSocketlog = true;
 #endif
 
@@ -289,10 +296,11 @@ char influx_measurments[sensitive_size] = InfluxMeasurments;
 #ifndef ASS_MemStatsStr
 #define ASS_MemStatsStr "MemStats"
 #endif
-
+const String noTempStr = "--.-";
 
 
 //common_functions.h
+void mqtt_callback(char *topic, byte *payload, unsigned int length);
 String get_lastResetReason();
 bool check_isValidTemp(float temptmp);
 void log_message(char* string, u_int specialforce);
@@ -388,6 +396,8 @@ void connectToMqtt();
 #endif
 #if defined enableMQTT || defined enableMQTTAsync
 void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass, String unitClass, String stateClass, String HAicon, const String payloadvalue_startend_val, const String payloadON, const String payloadOFF);
+uint16_t publishMQTT(String mqttTopicxx, String mqttPayloadxx, int mqtt_Retainv, u_int qos);
+String buildMQTT_SensorPayload(String MQTTname, String MQTTvalue, bool notAddSeparator, String Payload_StartEnd);
 #endif //enableMQTTAsync
 bool loadConfig();
 bool SaveConfig();
@@ -458,6 +468,16 @@ String verbose_print_reset_reason(int reason)
   }
 }
 #endif
+//***********************************************************************************************************************************************************************************************
+void mqtt_callback(char *topic, byte *payload, unsigned int length)
+{
+  //#include "configmqtttopics.h"
+  const String topicStr(topic);
+
+  String payloadStr = convertPayloadToStr(payload, length);
+  mqttCallbackAsString(topicStr, payloadStr);
+}
+//***********************************************************************************************************************************************************************************************
 String get_lastResetReason()
 {
   #ifndef ESP32
@@ -502,7 +522,7 @@ String get_lastResetReason()
 //***********************************************************************************************************************************************************************************************
 bool check_isValidTemp(float temptmp)
 {
-  if (temptmp!=InitTemp && temptmp!=-InitTemp && temptmp!=DS18B20nodata && temptmp!=-DS18B20nodata && temptmp!=DS18B20nodata1 && temptmp!=-DS18B20nodata1) return true; else return false;
+  if (temptmp!=InitTemp && temptmp!=-InitTemp && temptmp!=DS18B20nodata && temptmp!=-DS18B20nodata && temptmp!=DS18B20nodata1 && temptmp!=-DS18B20nodata1 && !isnan(temptmp)) return true; else return false;
 }
 //***********************************************************************************************************************************************************************************************
 void log_message(char* string, u_int specialforce = logStandard)  //         log_message((char *)"WiFi lost, but softAP station connecting, so stop trying to connect to configured ssid...");
@@ -532,14 +552,15 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
 
 //  if (send_string.length()> maxLogSize ) send_string[maxLogSize] = '\0';
 //abandoned webserial
+
   #ifdef enableWebSerial
     if (starting == false and WebSocketlog) {WebSerial.println(send_string);}
   #endif
-  char* send_string_ch;
-  send_string_ch = toCharPointer(String("{\"log\":\""+String(send_string)+"\"}"));
+  char send_string_ch[512];
+  sprintf(send_string_ch, "{\"log\":\"%s\"}", send_string.c_str());
 
-  #ifdef enableWebSocketlog
-  if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(String("{\"log\":\""+String(send_string)+"\"}"));
+#if defined enableWebSocketlog && defined enableWebSocket
+  if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(String(send_string_ch));
 
   #endif
 
@@ -1286,7 +1307,7 @@ void Setup_FileSystem() {// Start the FSand list all contents
   log_message((char*)F("FS started."));
   #else
   log_message((char*)F("FS started. Contents:"));
-    log_message(getFSDir().c_str());
+    log_message((char*)getFSDir().c_str());
   #endif
 }
 //***********************************************************************************************************************************************************************************************
@@ -1474,12 +1495,18 @@ String web_processor(const String var) {
   } else
   if (var == "roomtemphi") { return String(roomtemphi);
    } else
+  #ifdef enableDebug2Serial
   if (var == "debugSerial") { return String(debugSerial ? 1 : 0);
   } else
+  #endif
+  #if defined enableMQTT || defined enableMQTTAsync
   if (var == "sendlogtomqtt") { return String(sendlogtomqtt ? 1 : 0);
   } else
+  #endif
+  #ifdef enableWebSocketlog
   if (var == "WebSocketlog") { return String(WebSocketlog ? 1 : 0);
   } else
+  #endif
   if (var == "NEWS_GET_TOPIC") { return String(NEWS_GET_TOPIC);
   } else
   if (var == "NEWStemp_json") { return String(NEWStemp_json);
@@ -2030,7 +2057,9 @@ void MainCommonLoop()
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: notifyclients to /ws in JSON"));
     #endif
+    #if defined enableMQTT || defined enableMQTTAsync
     notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+    #endif
     // check mqtt
     #ifdef enableMQTT
     #ifdef debug
@@ -2274,8 +2303,8 @@ void connectToMqtt() {
 }
 #endif
 //***********************************************************************************************************************************************************************************************
-#ifdef enableMQTTAsync
 void onMqttConnect(bool sessionPresent) {
+#ifdef enableMQTTAsync
   log_message((char*)F("MQTT: Connected to MQTT."));
   sprintf(log_chars,"Session present: %s", String(sessionPresent?"Yes":"No").c_str());
   log_message(log_chars);
@@ -2299,9 +2328,8 @@ void onMqttConnect(bool sessionPresent) {
 //here publish send every 2-4sec
   mqttReconnect_subscribe_list();
 //  updateMQTTData();
-
-}
 #endif
+}
 //***********************************************************************************************************************************************************************************************
 #ifdef enableMQTTAsync
 int _retriesCount = 0;
@@ -2637,58 +2665,155 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
   int DCswitch = 0;
   #define tempswitch 1
   #define energyswitch 2
+  #define pressureswitch 3
+  #define humidityswitch 4
+  #define highswitch 5
+  #define coswitch 6
+  #define switchswitch 7
+  #define powerswitch 8
+  #define voltageswitch 9
+  #define currentswitch 10
+  #define frequencyswitch 11
   DeviceClass.toLowerCase();
   stateClass.toLowerCase();
   HAicon.toLowerCase();
   if (unitClass.length() == 0) unitClass = " ";
   if (DeviceClass.length()>0)
   {
-    unitbuilder += ",\"dev_cla\":\"" + DeviceClass + "\"";
+
     if (DeviceClass.indexOf("temperature") >= 0) DCswitch = tempswitch;
     if (DeviceClass.indexOf("energy") >= 0) DCswitch = energyswitch;
+    if (DeviceClass.indexOf("pressure") >= 0) DCswitch = pressureswitch;
+    if (DeviceClass.indexOf("humidity") >= 0) DCswitch = humidityswitch;
+    if (DeviceClass.indexOf("high") >= 0) DCswitch = highswitch;
+    if (DeviceClass.indexOf("co") >= 0) DCswitch = coswitch;
+    if (DeviceClass.indexOf("switch") >= 0) DCswitch = switchswitch;
+    if (DeviceClass.indexOf("power") >= 0) DCswitch = powerswitch;
+    if (DeviceClass.indexOf("voltage") >= 0) DCswitch = voltageswitch;
+    if (DeviceClass.indexOf("current") >= 0) DCswitch = currentswitch;
+    if (DeviceClass.indexOf("frequency") >= 0) DCswitch = frequencyswitch;
+
     switch (DCswitch) {
       case tempswitch: {
         if (unitClass.length() == 0 || unitClass == " ") unitClass = "°C";
-        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
-        if (stateClass.length()>0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
         if (HAicon.length() == 0) HAicon = "mdi:thermometer";
-        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+        break;
+      }
+      case powerswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "W"; //energy: Wh, kWh, MWh	Energy, statistics will be stored in kWh. Represents power over time. Nmqttident to be confused with power.  power: W, kW	Power, statistics will be stored in W.
+        if (HAicon.length() == 0) HAicon = "mdi:alpha-W-box"; //fire";
+        break;
+      }
+      case voltageswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "V";
+        if (HAicon.length() == 0) HAicon = "mdi:alpha-v-box"; //fire";
+        break;
+      }
+      case currentswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "A";
+        if (HAicon.length() == 0) HAicon = "mdi:alpha-a-box"; //fire";
+        break;
+      }
+      case frequencyswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "Hz";
+        if (HAicon.length() == 0) HAicon = "mdi:sine-wave"; //fire";
+        break;
+      }
+
+      case switchswitch: {
+        unitbuilder = F(",\"pl_off\":\"OFF\",\"pl_on\":\"ON\",");
+        // if (unitClass.length() == 0 || unitClass == " ") unitClass = "m";
+        // if (HAicon.length() == 0) HAicon = "mdi:speedometer-medium"; //fire";
+        break;
+      }
+      case coswitch: {
+        DeviceClass = "carbon_monoxide";
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "ppm";
+        if (HAicon.length() == 0) HAicon = "mdi:molecule-co"; //fire";
+        break;
+      }
+      case highswitch: {
+        DeviceClass = "\0";
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "m";
+        if (HAicon.length() == 0) HAicon = "mdi:speedometer-medium"; //fire";
         break;
       }
       case energyswitch: {
         if (unitClass.length() == 0 || unitClass == " ") unitClass = "kWh";
-        unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
         if (stateClass.length() == 0) stateClass = "total_increasing";
-        unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
-        if (HAicon.length() == 0) HAicon = "mdi:fire";
-        unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+        if (HAicon.length() == 0) HAicon = "mdi:lightning-bolt-circle"; //fire";
+        break;
+      }
+      case humidityswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "%";
+        if (HAicon.length() == 0) HAicon = "mdi:mdiWavesArrowUp";
+        break;
+      }
+      case pressureswitch: {
+        if (unitClass.length() == 0 || unitClass == " ") unitClass = "hPa";  ////cbar, bar, hPa, inHg, kPa, mbar, Pa, psi
+        if (HAicon.length() == 0) HAicon = "mdi:mdiCarSpeedLimiter";
         break;
       }
       default: {
-        if (unitClass.length() > 0) unitbuilder += ",\"unit_of_meas\":\"" + unitClass + "\"";
-        if (stateClass.length() > 0) unitbuilder += ",\"state_class\":\"" + stateClass + "\"";
-        if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+
         break;
       }
     }
 //test/lol", 0, true, "test 1");
   }
+  if (DeviceClass.length() > 0) {
+    unitbuilder += F(",\"dev_cla\":\"");
+    unitbuilder += DeviceClass;
+    unitbuilder += F("\""); }
+  if (unitClass.length() > 0) {
+    unitbuilder += F(",\"unit_of_meas\":\"");
+    unitbuilder += unitClass;
+    unitbuilder += ("\""); }
+  if (stateClass.length() > 0) {
+    unitbuilder += F(",\"state_class\":\"");
+    unitbuilder += stateClass;
+    unitbuilder += F("\""); }
+  if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+  if (unitbuilder.length() == 0) unitbuilder += F(",");
   char mqttTopic[64] = {'\0'};
   char mqttPayload[512] = {'\0'};
   String TotalName = appendname;
   TotalName += nameval;
   sprintf(mqttTopic, "%s%s/config", discoverytopic.c_str(), TotalName.c_str());
-  sprintf(mqttPayload, "{\"name\":\"%s\",\"uniq_id\": \"%s\",\"stat_t\":\"%s\",\"val_tpl\":\"{{value_json.%s}}\"%s%s,\"qos\":%s,%s}",TotalName.c_str(), TotalName.c_str(), sensorswitchValTopic.c_str(), TotalName.c_str(), unitbuilder.c_str(), availabityTopic.c_str(), String(QOS).c_str(), deviceid.c_str());
-  #ifdef enableMQTT
-  mqttclient.publish(mqttTopic, mqttPayload, mqtt_Retain);
-  #endif
-  #ifdef enableMQTTAsync
-  uint16_t packetIdSub = mqttclient.publish(mqttTopic, QOS, mqtt_Retain, mqttPayload);
-  log_message((char*)String(packetIdSub).c_str());
-  #endif
+  sprintf(mqttPayload, "\"name\":\"%s\",\"uniq_id\": \"%s\",\"stat_t\":\"%s\",\"val_tpl\":\"{{value_json.%s}}\"%s%s,\"qos\":%s,%s",TotalName.c_str(), TotalName.c_str(), sensorswitchValTopic.c_str(), TotalName.c_str(), unitbuilder.c_str(), availabityTopic.c_str(), String(QOS).c_str(), deviceid.c_str());
+  if (publishMQTT(String(mqttTopic), String(mqttPayload), mqtt_Retain, QOS) > 0) log_message((char*)F("HA Discovery send OK with QOS > 0")); else log_message((char*)F("HA Discovery send OK with QOS = 0"));
+
 }
 #endif
-
+//***********************************************************************************************************************************************************************************************
+#if defined enableMQTT || defined enableMQTTAsync
+uint16_t publishMQTT(String mqttTopicxx, String mqttPayloadxx, int mqtt_Retainv = 1, u_int qos = 0) {
+    char mqttPayloadSend [512];
+    sprintf(mqttPayloadSend, "{%s}", mqttPayloadxx.c_str());
+    uint16_t packetIdSub = 0;
+    #ifdef enableMQTT
+    mqttclient.publish(mqttTopicxx.c_str(), mqttPayloadxx.c_str(), mqtt_Retainv);
+    #endif
+    #ifdef enableMQTTAsync
+    packetIdSub = mqttclient.publish(mqttTopicxx.c_str(), qos , mqtt_Retainv, mqttPayloadSend);
+    log_message((char*)String(packetIdSub).c_str());
+    #endif
+    return packetIdSub;
+}
+#endif
+//***********************************************************************************************************************************************************************************************
+String buildMQTT_SensorPayload(String MQTTname, String MQTTvalue, bool notAddSeparator = false, String Payload_StartEnd = "\0") {
+    String tmpbuild = F("\0");
+    if (!notAddSeparator) tmpbuild += F(",");
+    tmpbuild += F("\"");
+    tmpbuild += MQTTname;
+    tmpbuild += F("\":");
+    if (Payload_StartEnd != "\0") tmpbuild += Payload_StartEnd;
+    tmpbuild += MQTTvalue;
+    if (Payload_StartEnd != "\0") tmpbuild += Payload_StartEnd;
+    tmpbuild.trim();
+    return tmpbuild;
+}
 //***********************************************************************************************************************************************************************************************
 #include <EEPROM.h>
 
@@ -2711,22 +2836,32 @@ bool loadConfig() {
     }
     file.close();
     String tmpstrval = "\0";
+    #if defined enableWebSocketlog || enableWebSerial
     WebSocketlog = false;
+    #endif
+    #ifdef enableDebug2Serial
     debugSerial = false;
+    #endif
+    #if defined enableMQTT || defined enableMQTTAsync
     sendlogtomqtt = false;
+    #endif
 //this block is as param from html
     if (dane.indexOf("WebSocketlog") != -1) {
       tmpstrval = getJsonVal(dane, "WebSocketlog");
       WebSocketlog = (tmpstrval.toInt() == 1);
     }
+    #ifdef enableDebug2Serial
     if (dane.indexOf("debugSerial") != -1) {
       tmpstrval = getJsonVal(dane, "debugSerial");
       debugSerial  = (tmpstrval.toInt() == 1);
     }
+    #endif //enableDebug2Serial
+    #if defined enableMQTT || defined enableMQTTAsync
     if (dane.indexOf("sendlogtomqtt") != -1) {
       tmpstrval = getJsonVal(dane, "sendlogtomqtt");
       sendlogtomqtt = (tmpstrval.toInt() == 1);
     }
+    #endif //#if defined enableMQTT || defined enableMQTTAsync
     if (dane.indexOf("SSID_Name") != -1) {
       tmpstrval = getJsonVal(dane, "SSID_Name");
       tmpstrval.replace("\"",""); strcpy(ssid, tmpstrval.c_str());
@@ -2849,13 +2984,19 @@ bool SaveConfig() {
 
     String configSave = F("{\"config\":99");
 //this block is as param from html
+    #if defined enableDebug2Serial
     configSave += F(",\"debugSerial\":");
     configSave += debugSerial?"1":"0";
+    #endif
+    #if defined enableWebSocketlog || defined enableWebSerial
     configSave += F(",\"WebSocketlog\":");
     configSave += WebSocketlog?"1":"0";
+    #endif
+    #if defined enableMQTT || defined enableMQTTAsync
     configSave += F(",\"sendlogtomqtt\":");
     //if (sendlogtomqtt) configSave += "1"; else configSave += "0";
     configSave += sendlogtomqtt?"1":"0";
+    #endif
     configSave += ",\"CRT\":";
     configSave += String(CRTrunNumber);
     configSave += F(",\"SSID_Name\":\"");

@@ -238,17 +238,22 @@ void updateDatatoWWW() //default false so if true than update
   //tempBoilerSet
     if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
     if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
-
     SaveAssValue(ASS_lastNEWSSet,         uptimedana(lastNEWSSet) );
-    SaveAssValue(ASS_temp_NEWS,           String(temp_NEWS, decimalPlaces) );
-    SaveAssValue(ASS_tempBoiler,          String(tempBoiler, decimalPlaces) );
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(temp_NEWS, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_temp_NEWS, ptrS);
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(tempBoiler, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_tempBoiler,  ptrS);
     SaveAssValue(ASS_tempBoilerSet,       String(tempBoilerSet, decimalPlaces) );
-    SaveAssValue(ASS_retTemp,             String(retTemp, decimalPlaces) );
-    SaveAssValue(ASS_tempCWU,             String(tempCWU, decimalPlaces) );
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(retTemp, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_retTemp, ptrS);
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(tempCWU, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_tempCWU, ptrS);
     SaveAssValue(ASS_dhwTarget,           String(dhwTarget, decimalPlaces) );
     SaveAssValue(ASS_cutOffTemp,          String(cutOffTemp, decimalPlaces) );
-    SaveAssValue(ASS_roomtemp,            String(roomtemp, decimalPlaces) );
-    SaveAssValue(ASS_roomtempSet,         String(roomtempSet, decimalPlaces) );
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(roomtemp, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_roomtemp, ptrS);
+    if (check_isValidTemp(temp_NEWS)) ptrS = String(roomtempSet, decimalPlaces); else ptrS = noTempStr;
+    SaveAssValue(ASS_roomtempSet, ptrS);
     SaveAssValue(ASS_opcohi,              String(opcohi, decimalPlaces) );
     SaveAssValue(ASS_tempCWUhistereza,    String(histCWU, decimalPlaces) );
     SaveAssValue(ASS_calcCWU,             String((dhwTarget-histCWU), decimalPlaces) );

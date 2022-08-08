@@ -65,19 +65,19 @@ const String TEMP_DHW_SET_TOPIC = String(BASE_TOPIC) + "/SET/" + String(HOT_WATE
 #define COWODA0_SENSORS_TOPIC "COWoda0/sensor/boilerroom/attributes"
 #define COWODA0_SWITCH_TOPIC "COWoda0/switch/boilerroom/attributes"
 String COPUMP_GET_TOPIC = String(COWODA0_SWITCH_TOPIC);   // temperatura outside avg NEWS
-String COPumpStatus_json = ("CO0_boilerroom_pump2CO");
-String WaterPumpStatus_json = ("CO0_boilerroom_pump1Water");
+String COPumpStatus_json = ("boilerroom_pump2CO");
+String WaterPumpStatus_json = ("boilerroom_pump1Water");
 
 String NEWS_GET_TOPIC = String(COWODA0_SENSORS_TOPIC);          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
-String NEWStemp_json = ("CO0_outside_temperature_Averange");
+String NEWStemp_json = ("outside_temperature_Averange");
 
 
 String ROOMS_F1_GET_TOPIC = ("FLOORH1/room/attributes");          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
-String roomF1temp_json = ("FL1_room_temperature_0");
-String roomF1tempset_json = ("FL1_room_temperature_setpoint_0");
+String roomF1temp_json = ("room_temperature_0");
+String roomF1tempset_json = ("room_temperature_setpoint_0");
 String ROOMS_F2_GET_TOPIC = ("FLOORH2/room/attributes");          // pompa CO status
-String roomF2temp_json = ("FL2_room_temperature_0");
-String roomF2tempset_json = ("FL2_room_temperature_setpoint_0");
+String roomF2temp_json = ("room_temperature_0");
+String roomF2tempset_json = ("room_temperature_setpoint_0");
 
 // logs topic
 #define DIAGS "diag"
