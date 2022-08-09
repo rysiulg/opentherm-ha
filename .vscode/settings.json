@@ -8,6 +8,11 @@
         "string_view": "cpp",
         "random": "cpp",
         "array": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp"
     }
 }

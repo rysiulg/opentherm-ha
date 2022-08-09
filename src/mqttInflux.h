@@ -119,48 +119,59 @@ void updateMQTTData() {
   }
   #endif
 
+  String  topictmp = "\0";
   String payBuilder = "\0";
   if (tempBoiler>0 && retTemp>0)
   {
    //for pubsync change kolejnosc topic, payload, retain            for async topic, qos, retain, payload
+    topictmp = String(ROOM_OTHERS_TOPIC);
     payBuilder = F("\0");
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (ROOM_OTHERS_TEMPERATURE), String(roomtemp, decimalPlaces), true, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (ROOM_OTHERS_TEMPERATURE_SETPOINT), String(roomtempSet, decimalPlaces), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (ROOM_OTHERS_PRESSURE), String(pressure), false, payloadvalue_startend_val);
-    publishMQTT(String(ROOM_OTHERS_TOPIC).c_str(), payBuilder.c_str());
+    payBuilder += build_JSON_Payload(String(OT) + (ROOM_OTHERS_TEMPERATURE), String(roomtemp, decimalPlaces), true, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (ROOM_OTHERS_TEMPERATURE_SETPOINT), String(roomtempSet, decimalPlaces), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (ROOM_OTHERS_PRESSURE), String(pressure), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
 
+    topictmp = String(HOT_WATER_TOPIC);
     payBuilder = F("\0");
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (HOT_WATER_TEMPERATURE), String(tempCWU, decimalPlaces), true, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (HOT_WATER_TEMPERATURE_SETPOINT), String(dhwTarget, decimalPlaces), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (HOT_WATER_CH_STATE), String(status_WaterActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (HOT_WATER_SOFTWARE_CH_STATE), String(enableHotWater ? "heat" : "off"), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_W_DHW_TOTAL), String(flame_used_power_waterTotal, 4), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_TIME_SEC_DHW_TOTAL), String(flame_time_waterTotal), false, payloadvalue_startend_val);
-    publishMQTT(String(HOT_WATER_TOPIC).c_str(), payBuilder.c_str());
+    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_TEMPERATURE), String(tempCWU, decimalPlaces), true, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_TEMPERATURE_SETPOINT), String(dhwTarget, decimalPlaces), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_CH_STATE), String(status_WaterActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_SOFTWARE_CH_STATE), String(enableHotWater ? "heat" : "off"), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_W_DHW_TOTAL), String(flame_used_power_waterTotal, 4), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_TIME_SEC_DHW_TOTAL), String(flame_time_waterTotal), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
 
+    topictmp = String(BOILER_TOPIC);
     payBuilder = F("\0");
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (BOILER_TEMPERATURE), String(tempBoiler, decimalPlaces), true, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (BOILER_TEMPERATURE_RET), String(retTemp, decimalPlaces), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (BOILER_TEMPERATURE_SETPOINT), String(tempBoilerSet, decimalPlaces), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (BOILER_CH_STATE), String(status_CHActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (ECOMODE_STATE), String(ecoMode ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (BOILER_SOFTWARE_CH_STATE_MODE), String(boilermode), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_STATE), String(status_FlameOn ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_LEVEL), String(flame_level, 0), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_W), String(flame_used_power, 4), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_W_TOTAL), String(flame_used_power_kwh, 4), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_TIME_SEC_TOTAL), String(flame_time_total), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_W_CH_TOTAL), String(flame_used_power_CHTotal, 4), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (FLAME_TIME_SEC_CH_TOTAL), String(flame_time_CHTotal), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (TEMP_CUTOFF), String(cutOffTemp, 1), false, payloadvalue_startend_val);
-    publishMQTT(String(BOILER_TOPIC).c_str(), payBuilder.c_str());
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_TEMPERATURE), String(tempBoiler, decimalPlaces), true, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_TEMPERATURE_RET), String(retTemp, decimalPlaces), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_TEMPERATURE_SETPOINT), String(tempBoilerSet, decimalPlaces), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (TEMP_CUTOFF), String(cutOffTemp, 1), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
+    topictmp = String(BOILER_STATE_TOPIC);
+    payBuilder = F("\0");
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_CH_STATE), String(status_CHActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (ECOMODE_STATE), String(ecoMode ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_SOFTWARE_CH_STATE_MODE), String(boilermode), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_STATE), String(status_FlameOn ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
+    topictmp = String(FLAME_TOPIC);
+    payBuilder = F("\0");
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_LEVEL), String(flame_level, 0), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_W), String(flame_used_power, 4), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_W_TOTAL), String(flame_used_power_kwh, 4), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_TIME_SEC_TOTAL), String(flame_time_total), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_W_CH_TOTAL), String(flame_used_power_CHTotal, 4), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_TIME_SEC_CH_TOTAL), String(flame_time_CHTotal), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
 
   }
+  topictmp = String(DIAG_TOPIC);
     payBuilder = F("\0");
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (DIAGS_OTHERS_FAULT), String(status_Fault ? payloadON : payloadOFF), true, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (DIAGS_OTHERS_DIAG), String(status_Diagnostic ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += buildMQTT_SensorPayload(String(OT) + (INTEGRAL_ERROR_GET_TOPIC), String(ierr), false, payloadvalue_startend_val);
-    publishMQTT(String(DIAG_TOPIC).c_str(), payBuilder.c_str());
+    payBuilder += build_JSON_Payload(String(OT) + (DIAGS_OTHERS_FAULT), String(status_Fault ? payloadON : payloadOFF), true, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (DIAGS_OTHERS_DIAG), String(status_Diagnostic ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (INTEGRAL_ERROR_GET_TOPIC), String(ierr), false, payloadvalue_startend_val);
+    publishMQTT(topictmp, payBuilder);
 
 
 
@@ -172,9 +183,6 @@ void updateMQTTData() {
     log_message((char*)F("mqtt publish HomeAssistant start"));
     #endif
 
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(HA_BINARY_TOPIC), "problem");
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(HA_BINARY_TOPIC));
-    HADiscovery(String(DIAG_TOPIC), String(OT), String(INTEGRAL_ERROR_GET_TOPIC), String(HA_SENSORS_TOPIC));
     HADiscovery(String(LOG_GET_TOPIC), String(OT), String(LOGS), String(HA_SENSORS_TOPIC));
     HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
@@ -183,22 +191,25 @@ void updateMQTTData() {
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_SOFTWARE_CH_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_RET), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(ECOMODE_STATE), String(HA_BINARY_TOPIC), "heat");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_SOFTWARE_CH_STATE_MODE), String(HA_SENSORS_TOPIC));
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_STATE), String(HA_BINARY_TOPIC), "heat", "\0", "\0", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(TEMP_CUTOFF), String(HA_SENSORS_TOPIC), "temperature");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(BOILER_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(BOILER_STATE_TOPIC), String(OT), String(BOILER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(BOILER_STATE_TOPIC), String(OT), String(ECOMODE_STATE), String(HA_BINARY_TOPIC), "heat");
+    HADiscovery(String(BOILER_STATE_TOPIC), String(OT), String(BOILER_SOFTWARE_CH_STATE_MODE), String(HA_SENSORS_TOPIC));
+    HADiscovery(String(BOILER_STATE_TOPIC), String(OT), String(FLAME_STATE), String(HA_BINARY_TOPIC), "heat", "\0", "\0", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(HA_BINARY_TOPIC), "problem");
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(HA_BINARY_TOPIC));
+    HADiscovery(String(DIAG_TOPIC), String(OT), String(INTEGRAL_ERROR_GET_TOPIC), String(HA_SENSORS_TOPIC));
     // homeassistant/sensor/BB050B_OPENTHERM_OT10_lo/config = {"name":"Opentherm OPENTHERM OT10 lo","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_lo","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['lo']}}"} (retained) problem
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
 //    HADiscovery(String(HA_BINARY_TOPIC), String(DIAGS_OTHERS_FAULT), String(OT), String(DIAG_TOPIC), "problem");
@@ -374,10 +385,11 @@ void mqtt_callback(char *topicPubSu, byte *payloadPubSu, unsigned int lengthPubS
 }
 #endif
 #if defined enableMQTT || defined enableMQTTAsync
-void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT) {
+void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) {
   payloadStrFromMQTT.trim();
   String TmpToLog ="\0";
-  if (payloadStrFromMQTT.length() > maxLogSize) {TmpToLog = payloadStrFromMQTT; TmpToLog[maxLogSize]='\0';} else {TmpToLog = payloadStrFromMQTT;}
+  //maxLogSize
+  if (payloadStrFromMQTT.length() > 256) {TmpToLog = payloadStrFromMQTT; TmpToLog[256]='\0';} else {TmpToLog = payloadStrFromMQTT;}
   sprintf(log_chars, "MQTT callback Topic: %s, Received %sB message ...: %s", String(topicStrFromMQTT).c_str(), String(payloadStrFromMQTT.length()).c_str(), TmpToLog.c_str());
   log_message(log_chars);
 

@@ -50,7 +50,10 @@ String STATS_TOPIC = String(BASE_TOPIC) + "/stats";
 #define ROOM_OTHERS_TEMPERATURE_SETPOINT String(ROOM_TEMP) +  String(TEMPERATURE) + "_setpoint"
 #define ROOM_OTHERS_PRESSURE String(ROOM_OTHERS) + "_pressure"
 
-#define BOILER_TOPIC String(BASE_TOPIC) + "/" + String(BOILER) + "/attributes"
+String FLAME_TOPIC = String(BASE_TOPIC) + "/" + String(BOILER) + "_Flame/attributes";
+String BOILER_TOPIC = String(BASE_TOPIC) + "/" + String(BOILER) + "/attributes";
+String BOILER_STATE_TOPIC = String(BASE_TOPIC) + "/" + String(BOILER) + "_State/attributes";
+
 #define HOT_WATER_TOPIC String(BASE_TOPIC) + "/" + String(HOT_WATER) + "/attributes"
 String ROOM_OTHERS_TOPIC =  String(BASE_TOPIC) + "/" + String(ROOM_OTHERS) + "/attributes";
 String ROOM_OTHERS_json = "ot_current_remote_temperature_setpoint";

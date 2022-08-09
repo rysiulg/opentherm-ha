@@ -241,18 +241,18 @@ void updateDatatoWWW() //default false so if true than update
     SaveAssValue(ASS_lastNEWSSet,         uptimedana(lastNEWSSet) );
     if (check_isValidTemp(temp_NEWS)) ptrS = String(temp_NEWS, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_temp_NEWS, ptrS);
-    if (check_isValidTemp(temp_NEWS)) ptrS = String(tempBoiler, decimalPlaces); else ptrS = noTempStr;
+    if (check_isValidTemp(tempBoiler)) ptrS = String(tempBoiler, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_tempBoiler,  ptrS);
     SaveAssValue(ASS_tempBoilerSet,       String(tempBoilerSet, decimalPlaces) );
-    if (check_isValidTemp(temp_NEWS)) ptrS = String(retTemp, decimalPlaces); else ptrS = noTempStr;
+    if (check_isValidTemp(retTemp)) ptrS = String(retTemp, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_retTemp, ptrS);
-    if (check_isValidTemp(temp_NEWS)) ptrS = String(tempCWU, decimalPlaces); else ptrS = noTempStr;
+    if (check_isValidTemp(tempCWU)) ptrS = String(tempCWU, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_tempCWU, ptrS);
     SaveAssValue(ASS_dhwTarget,           String(dhwTarget, decimalPlaces) );
     SaveAssValue(ASS_cutOffTemp,          String(cutOffTemp, decimalPlaces) );
-    if (check_isValidTemp(temp_NEWS)) ptrS = String(roomtemp, decimalPlaces); else ptrS = noTempStr;
+    if (check_isValidTemp(roomtemp)) ptrS = String(roomtemp, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_roomtemp, ptrS);
-    if (check_isValidTemp(temp_NEWS)) ptrS = String(roomtempSet, decimalPlaces); else ptrS = noTempStr;
+    if (check_isValidTemp(roomtempSet)) ptrS = String(roomtempSet, decimalPlaces); else ptrS = noTempStr;
     SaveAssValue(ASS_roomtempSet, ptrS);
     SaveAssValue(ASS_opcohi,              String(opcohi, decimalPlaces) );
     SaveAssValue(ASS_tempCWUhistereza,    String(histCWU, decimalPlaces) );
@@ -303,6 +303,7 @@ void updateDatatoWWW() //default false so if true than update
 }
 
 String local_specific_web_processor_vars(String var) {
+  #if defined enableMQTT || defined enableMQTTAsync
   if (var == "COPUMP_GET_TOPIC") { return String(COPUMP_GET_TOPIC);
   } else
   if (var == "COPumpStatus_json") { return String(COPumpStatus_json);
@@ -321,6 +322,7 @@ String local_specific_web_processor_vars(String var) {
   } else
   if (var == "roomF2tempset_json") { return String(roomF2tempset_json);
   } else
+  #endif
   if (var == "histlo") { return String(histlo, decimalPlaces);
   } else
   if (var == "histhi") { return String(histhi, decimalPlaces);
@@ -330,8 +332,6 @@ String local_specific_web_processor_vars(String var) {
   if (var == String(ASS_tempCOhisterezaStr)) { return String(histCO, decimalPlaces);
   } else
   if (var == String(ASS_calcCWUStr)) { return String((dhwTarget - histCWU), decimalPlaces);
-  } else
-  if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
   } else
   if (var == String(ASS_calcCOStr)) { return String((tempBoilerSet - histCO), decimalPlaces);
   }

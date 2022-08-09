@@ -13,9 +13,9 @@
 #include <Arduino.h>
 #include "config.h"
 #include "localconfig.h"
-#if defined enableMQTT || defined enableMQTTAsync
+//#if defined enableMQTT || defined enableMQTTAsync
 #include "configmqtttopics.h"
-#endif
+//#endif
 #include "declarations_for_websync.h"
 
 
@@ -29,6 +29,8 @@
 #ifdef enableArduinoOTA
 #define OTA_Port 8266
 #endif
+
+
 
 #ifdef ESP32
   #include <WiFi.h>
@@ -171,7 +173,7 @@ void updateInfluxDB();      //send data to Influxdb
 #endif
 #if defined enableMQTT || defined enableMQTTAsync
 void updateMQTTData();       //send data to MQTT                                //Send to mqtt data
-void mqttCallbackAsString(String topicStrFromMQTT, String payloadStrFromMQTT);  //additional parsing local node values from MQTT return
+void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT);  //additional parsing local node values from MQTT return
 void mqttReconnect_subscribe_list();                                            //Subscribe list for MQTT topics
 #endif
 //*********************************************************************************************************************************************
@@ -223,8 +225,15 @@ const float ophi = 65,               // upper max heat water
 		InitTemp = InitTempst;
 
 #ifndef maxLogSize
-#define maxLogSize 1023
+#define maxLogSize 800
 #endif
+#ifndef maxLenMQTTTopic
+#define maxLenMQTTTopic 165
+#endif
+#ifndef maxLenMQTTPayload
+#define maxLenMQTTPayload maxLogSize
+#endif
+
 #if defined enableWebSocketlog && defined enableWebSocket || enableWebSerial
 bool WebSocketlog = true;
 #endif
@@ -300,7 +309,9 @@ const String noTempStr = "--.-";
 
 
 //common_functions.h
+#if defined enableMQTT || defined enableMQTTAsync
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
+#endif
 String get_lastResetReason();
 bool check_isValidTemp(float temptmp);
 void log_message(char* string, u_int specialforce);
@@ -396,9 +407,9 @@ void connectToMqtt();
 #endif
 #if defined enableMQTT || defined enableMQTTAsync
 void HADiscovery(String sensorswitchValTopic, String appendname, String nameval, String discoverytopic, String DeviceClass, String unitClass, String stateClass, String HAicon, const String payloadvalue_startend_val, const String payloadON, const String payloadOFF);
-uint16_t publishMQTT(String mqttTopicxx, String mqttPayloadxx, int mqtt_Retainv, u_int qos);
-String buildMQTT_SensorPayload(String MQTTname, String MQTTvalue, bool notAddSeparator, String Payload_StartEnd);
+uint16_t publishMQTT(String &mqttTopicxx, String &mqttPayloadxx, int mqtt_Retainv, u_int qos);
 #endif //enableMQTTAsync
+String build_JSON_Payload(String MQTTname, String MQTTvalue, bool notAddSeparator, String Payload_StartEnd);
 bool loadConfig();
 bool SaveConfig();
 void RemoteCommandReceived(uint8_t *data, size_t len);  //commands from remote -from serial input and websocket input and from webserial
@@ -469,14 +480,15 @@ String verbose_print_reset_reason(int reason)
 }
 #endif
 //***********************************************************************************************************************************************************************************************
+#if defined enableMQTT || defined enableMQTTAsync
 void mqtt_callback(char *topic, byte *payload, unsigned int length)
 {
   //#include "configmqtttopics.h"
-  const String topicStr(topic);
-
+  String topicStr(topic);
   String payloadStr = convertPayloadToStr(payload, length);
   mqttCallbackAsString(topicStr, payloadStr);
 }
+#endif
 //***********************************************************************************************************************************************************************************************
 String get_lastResetReason()
 {
@@ -558,6 +570,8 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
   #endif
   char send_string_ch[512];
   sprintf(send_string_ch, "{\"log\":\"%s\"}", send_string.c_str());
+  if (send_string.length()>512) send_string_ch[511] = '\0';
+
 
 #if defined enableWebSocketlog && defined enableWebSocket
   if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(String(send_string_ch));
@@ -694,6 +708,7 @@ String getJsonVal(String json, String tofind)
       u_int valu_end_position = json.indexOf(",", valu_start_position);
 
       String nvalue=json.substring(valu_start_position, valu_end_position); //get node value
+      nvalue.replace("\"","");
       nvalue.trim();
       #ifdef debugweb
       sprintf(log_chars,"Found node: %s, return val: %s", String(tofind).c_str(), String(nvalue).c_str());
@@ -943,7 +958,7 @@ void doubleResetDetect() {
     log_message((char*)F("DRD ActiveStatus"));
     drd->stop();
     SPIFFS.begin();
-    SPIFFS.format();
+    //SPIFFS.format();
     SaveConfig();
     WiFi.persistent(true);
     WiFi.disconnect();
@@ -2096,6 +2111,7 @@ void MainCommonLoop()
     #endif
     // log stats
     //    #include "configmqtttopics.h"
+    String payloadvalue_startend_val = F(" ");
     String message = F("stats: Uptime: ");
     message += uptimedana();
     message += F(" ## Free memory: ");
@@ -2120,61 +2136,40 @@ void MainCommonLoop()
     #endif
     log_message((char *)message.c_str());
 
+    #if defined enableMQTT || defined enableMQTTAsync
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: stats string builder to json"));
     #endif
-    String stats = F("{\"CRT\":");
-    stats += String(CRTrunNumber);
-    stats += F(",\"rssi\":");
-    stats += String(WiFi.RSSI());
-    stats += F(",\"uptime\":");
-    stats += String(millis());
-    stats += F(",\"version\":");
-    stats += String(version);
-    stats += F(",\"voltage\":");
-    stats += 0;
-    stats += F(",\"free memory\":");
-    stats += String(getFreeMemory());
-    stats += F(",\"ESP_cyclecount\":");
-    stats += String(ESP.getCycleCount());
-    stats += F(",\"wifi\":");
-    stats += String(getWifiQuality());
+    String stats = build_JSON_Payload( F("CRT"), String(CRTrunNumber), true, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("rssi"), String(WiFi.RSSI()), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("uptime"), String(millis()), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("version"), String(version), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("voltage"), String(0), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("free memory"), String(getFreeMemory()), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("ESP_cyclecount"), String(ESP.getCycleCount()), false, payloadvalue_startend_val);
+    stats += build_JSON_Payload( F("wifi"), String(getWifiQuality()), false, payloadvalue_startend_val);
+
     #ifdef ESP32
-    stats += F(",\"Hall\":");
-    stats += String(hallRead());
+    stats += build_JSON_Payload( F("Hall"), String(hallRead()), false, payloadvalue_startend_val);
     #endif
-    #if defined enableMQTT || defined enableMQTTAsync
-    stats += F(",\"mqttReconnects\":");
-    stats += mqttReconnects;
-    #endif
+    stats += build_JSON_Payload( F("mqttReconnects"), String(mqttReconnects), false, payloadvalue_startend_val);
     stats += F("}");
-    #ifdef enableMQTTAsync
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: mqttAsync send stats"));
     #endif //debug
-    uint16_t packetIdSub;
-    packetIdSub = mqttclient.publish(String(STATS_TOPIC).c_str(), QOS, mqtt_Retain, stats.c_str());
-    if (packetIdSub == 0) packetIdSub = 0;
+    String topicStr ="\0";
+    topicStr = String(STATS_TOPIC);
+    publishMQTT(topicStr, stats, mqtt_Retain, QOS);
+
     // get new data
     //  if (!heishamonSettings.listenonly) send_panasonic_query();
     // Make sure the LWT is set to Online, even if the broker have marked it dead.
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: mqttAsync send WillTopic"));
     #endif //debug
-    packetIdSub = mqttclient.publish(String(WILL_TOPIC).c_str(), QOS, 0, String(WILL_ONLINE).c_str());
-    #endif
-    #ifdef enableMQTT
-    #ifdef debug
-    log_message((char*)F("MainLoopInLoop: mqtt send stats"));
-    #endif //debug
-    mqttclient.publish(String(STATS_TOPIC).c_str(), stats.c_str(), mqtt_Retain);
-    // get new data
-    //  if (!heishamonSettings.listenonly) send_panasonic_query();
-    // Make sure the LWT is set to Online, even if the broker have marked it dead.
-    #ifdef debug
-    log_message((char*)F("MainLoopInLoop: MQTT sendWillTopic"));
-    #endif //debug
-    mqttclient.publish(String(WILL_TOPIC).c_str(), String(WILL_ONLINE).c_str());
+    topicStr = String(WILL_TOPIC);
+    stats = String(WILL_ONLINE);
+    publishMQTT(topicStr, stats, mqtt_Retain, QOS);
     #endif
     //updateDatatoWWW_common();  //send after sync struct with vars
   }
@@ -2398,6 +2393,7 @@ void onMqttMessage(char* topicAMCP, char* payloadAMCP, AsyncMqttClientMessagePro
   #ifndef ESP32
   wdt_reset();
   #endif
+  String topicAMCP_Str = String(topicAMCP);
   if (total == lenAMCP)  //check is starts and ends as json data and nmqttident null
   { //check if received payload is valid json if not save to var. I assume that index is same and one after another and not mixed with other payloads
     receivedtmpString = "\0";
@@ -2407,7 +2403,7 @@ void onMqttMessage(char* topicAMCP, char* payloadAMCP, AsyncMqttClientMessagePro
     String(total).c_str(), String(receivedtmpString.length()).c_str());
     log_message(log_chars);
     #endif
-    mqttCallbackAsString(String(topicAMCP), PayloadStrTmPAMCP);
+    mqttCallbackAsString(topicAMCP_Str, PayloadStrTmPAMCP);
   } else
   {
     if (receivedtmpIdx == total) {
@@ -2416,7 +2412,7 @@ void onMqttMessage(char* topicAMCP, char* payloadAMCP, AsyncMqttClientMessagePro
                 String(total).c_str(), String(receivedtmpString.length()).c_str());
       log_message(log_chars);
       #endif
-      mqttCallbackAsString(String(topicAMCP), receivedtmpString);
+      mqttCallbackAsString(topicAMCP_Str, receivedtmpString);
       receivedtmpString = "\0";
       receivedtmpIdx = 0;
 
@@ -2762,34 +2758,37 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
 //test/lol", 0, true, "test 1");
   }
   if (DeviceClass.length() > 0) {
-    unitbuilder += F(",\"dev_cla\":\"");
-    unitbuilder += DeviceClass;
-    unitbuilder += F("\""); }
+    unitbuilder += build_JSON_Payload(F("dev_cla"), DeviceClass, false, "\""); }
   if (unitClass.length() > 0) {
-    unitbuilder += F(",\"unit_of_meas\":\"");
-    unitbuilder += unitClass;
-    unitbuilder += ("\""); }
+    unitbuilder += build_JSON_Payload(F("unit_of_meas"), unitClass, false, "\"");
+  }
   if (stateClass.length() > 0) {
-    unitbuilder += F(",\"state_class\":\"");
-    unitbuilder += stateClass;
-    unitbuilder += F("\""); }
-  if (HAicon.length() > 0) unitbuilder += ",\"ic\": \"" + HAicon + "\"";
+    unitbuilder += build_JSON_Payload(F("state_class"), stateClass, false, "\"");
+  }
+  if (HAicon.length() > 0) unitbuilder += build_JSON_Payload(F("ic"), HAicon, false, "\"");
   if (unitbuilder.length() == 0) unitbuilder += F(",");
-  char mqttTopic[64] = {'\0'};
-  char mqttPayload[512] = {'\0'};
+  char mqttTopic[maxLenMQTTTopic] = {'\0'};
   String TotalName = appendname;
   TotalName += nameval;
   sprintf(mqttTopic, "%s%s/config", discoverytopic.c_str(), TotalName.c_str());
-  sprintf(mqttPayload, "\"name\":\"%s\",\"uniq_id\": \"%s\",\"stat_t\":\"%s\",\"val_tpl\":\"{{value_json.%s}}\"%s%s,\"qos\":%s,%s",TotalName.c_str(), TotalName.c_str(), sensorswitchValTopic.c_str(), TotalName.c_str(), unitbuilder.c_str(), availabityTopic.c_str(), String(QOS).c_str(), deviceid.c_str());
-  if (publishMQTT(String(mqttTopic), String(mqttPayload), mqtt_Retain, QOS) > 0) log_message((char*)F("HA Discovery send OK with QOS > 0")); else log_message((char*)F("HA Discovery send OK with QOS = 0"));
+  sprintf(log_chars, "\"name\":\"%s\",\"uniq_id\": \"%s\",\"stat_t\":\"%s\",\"val_tpl\":\"{{value_json.%s}}\"%s%s,\"qos\":%s,%s",TotalName.c_str(), TotalName.c_str(), sensorswitchValTopic.c_str(), TotalName.c_str(), unitbuilder.c_str(), availabityTopic.c_str(), String(QOS).c_str(), deviceid.c_str());
+  String mqttTopicStr = String(mqttTopic);
+  String mqttPayloadStr = String(log_chars);
+  if (publishMQTT(mqttTopicStr, mqttPayloadStr, mqtt_Retain, QOS) > 0) log_message((char*)F("HA Discovery send OK with QOS > 0")); else log_message((char*)F("HA Discovery send OK with QOS = 0"));
 
 }
 #endif
 //***********************************************************************************************************************************************************************************************
 #if defined enableMQTT || defined enableMQTTAsync
-uint16_t publishMQTT(String mqttTopicxx, String mqttPayloadxx, int mqtt_Retainv = 1, u_int qos = 0) {
-    char mqttPayloadSend [512];
-    sprintf(mqttPayloadSend, "{%s}", mqttPayloadxx.c_str());
+uint16_t publishMQTT(String &mqttTopicxx, String &mqttPayloadxx, int mqtt_Retainv = 1, u_int qos = 0) {
+    char mqttPayloadSend [maxLenMQTTPayload];
+    if (mqttPayloadxx.indexOf(",")>-1) {
+      sprintf(mqttPayloadSend, "{%s}", mqttPayloadxx.c_str());
+    } else {
+      sprintf(mqttPayloadSend, "%s", mqttPayloadxx.c_str());
+    }
+    sprintf(log_chars, "(publishMQTT) MQTT Topic %s Size: %s, Payload Size: %s", mqttTopicxx.c_str(), String(mqttTopicxx.length()).c_str(), String(mqttPayloadxx.length()).c_str());
+    log_message(log_chars);
     uint16_t packetIdSub = 0;
     #ifdef enableMQTT
     mqttclient.publish(mqttTopicxx.c_str(), mqttPayloadxx.c_str(), mqtt_Retainv);
@@ -2802,7 +2801,7 @@ uint16_t publishMQTT(String mqttTopicxx, String mqttPayloadxx, int mqtt_Retainv 
 }
 #endif
 //***********************************************************************************************************************************************************************************************
-String buildMQTT_SensorPayload(String MQTTname, String MQTTvalue, bool notAddSeparator = false, String Payload_StartEnd = "\0") {
+String build_JSON_Payload(String MQTTname, String MQTTvalue, bool notAddSeparator = false, String Payload_StartEnd = "\0") {
     String tmpbuild = F("\0");
     if (!notAddSeparator) tmpbuild += F(",");
     tmpbuild += F("\"");
@@ -2840,7 +2839,7 @@ bool loadConfig() {
     WebSocketlog = false;
     #endif
     #ifdef enableDebug2Serial
-    debugSerial = false;
+  //  debugSerial = false;
     #endif
     #if defined enableMQTT || defined enableMQTTAsync
     sendlogtomqtt = false;
@@ -2985,64 +2984,34 @@ bool SaveConfig() {
     String configSave = F("{\"config\":99");
 //this block is as param from html
     #if defined enableDebug2Serial
-    configSave += F(",\"debugSerial\":");
-    configSave += debugSerial?"1":"0";
+    configSave += build_JSON_Payload(F("debugSerial"), String(debugSerial?"1":"0"), false, "\"");
     #endif
     #if defined enableWebSocketlog || defined enableWebSerial
-    configSave += F(",\"WebSocketlog\":");
-    configSave += WebSocketlog?"1":"0";
+    configSave += build_JSON_Payload(F("WebSocketlog"), String(WebSocketlog?"1":"0"), false, "\"");
     #endif
     #if defined enableMQTT || defined enableMQTTAsync
-    configSave += F(",\"sendlogtomqtt\":");
+    configSave += build_JSON_Payload(F("sendlogtomqtt"), String(sendlogtomqtt?"1":"0"), false, "\"");
     //if (sendlogtomqtt) configSave += "1"; else configSave += "0";
-    configSave += sendlogtomqtt?"1":"0";
     #endif
-    configSave += ",\"CRT\":";
-    configSave += String(CRTrunNumber);
-    configSave += F(",\"SSID_Name\":\"");
-    configSave += String(ssid);
-    configSave += F("\"");
-    configSave += F(",\"SSID_PAssword\":\"");
-    configSave += String(pass);
-    configSave += F("\"");
+    configSave += build_JSON_Payload(F("CRT"), String(CRTrunNumber), false, "\"");
+    configSave += build_JSON_Payload(F("SSID_Name"), String(ssid), false, "\"");
+    configSave += build_JSON_Payload(F("SSID_PAssword"), String(pass), false, "\"");
+
     #if defined enableMQTT || defined enableMQTTAsync
-    configSave += F(",\"MQTT_servername\":\"");
-    configSave += String(mqtt_server);
-    configSave += F("\"");
-    configSave += F(",\"MQTT_port_No\":\"");
-    configSave += String(mqtt_port);
-    configSave += F("\"");
-    configSave += F(",\"MQTT_username\":\"");
-    configSave += String(mqtt_user);
-    configSave += F("\"");
-    configSave += F(",\"MQTT_Password_data\":\"");
-    configSave += String(mqtt_password);
-    configSave += F("\"");
+    configSave += build_JSON_Payload(F("MQTT_servername"), String(mqtt_server), false, "\"");
+    configSave += build_JSON_Payload(F("MQTT_port_No"), String(mqtt_port), false, "\"");
+    configSave += build_JSON_Payload(F("MQTT_username"), String(mqtt_user), false, "\"");
+    configSave += build_JSON_Payload(F("MQTT_Password_data"), String(mqtt_password), false, "\"");
     #endif
     #ifdef ENABLE_INFLUX
-    configSave += F(",\"INFLUXDB_URL\":\"");
-    configSave += String(influx_server);
-    configSave += F("\"");
-    configSave += F(",\"INFLUXDB_DB_NAME\":\"");
-    configSave += String(influx_database);
-    configSave += F("\"");
-    configSave += F(",\"INFLUXDB_USER\":\"");
-    configSave += String(influx_user);
-    configSave += F("\"");
-    configSave += F(",\"INFLUXDB_PASSWORD\":\"");
-    configSave += String(influx_password);
-    configSave += F("\"");
-    configSave += F(",\"influx_measurments\":\"");
-    configSave += String(influx_measurments);
-    configSave += F("\"");
+    configSave += build_JSON_Payload(F("INFLUXDB_URL"), String(influx_server), false, "\"");
+    configSave += build_JSON_Payload(F("INFLUXDB_DB_NAME"), String(influx_database), false, "\"");
+    configSave += build_JSON_Payload(F("INFLUXDB_USER"), String(influx_user), false, "\"");
+    configSave += build_JSON_Payload(F("INFLUXDB_PASSWORD"), String(influx_password), false, "\"");
+    configSave += build_JSON_Payload(F("influx_measurments"), String(influx_measurments), false, "\"");
     #endif
-    configSave += F(",\"NEWS_GET_TOPIC\":\"");
-    configSave += String(NEWS_GET_TOPIC);
-    configSave += F("\"");
-    configSave += F(",\"NEWStemp_json\":\"");
-    configSave += String(NEWStemp_json);
-    configSave += F("\"");
-
+    configSave += build_JSON_Payload(F("NEWS_GET_TOPIC"), String(NEWS_GET_TOPIC), false, "\"");
+    configSave += build_JSON_Payload(F("NEWStemp_json"), String(NEWStemp_json), false, "\"");
 
 //this block is as param from html
 //next is appender from function so i use in saveconfig this function to append rest
@@ -3302,7 +3271,7 @@ void RemoteCommandReceived(uint8_t *data, size_t len)
   } else
   if (d == "RESET_CONFIG")
   {
-    sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content and restart...  ");
+    sprintf(log_chars, "RESET ALL config to DEFAULT VALUES with all www content -make FS FORMAT and restart...  ");
     log_message(log_chars, logCommandResponse);
     SPIFFS.format();
     EEPROM.begin(CONFIG_START);

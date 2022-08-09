@@ -38,9 +38,11 @@
 
 
 #if defined enableWebSocketlog && not defined enableWebSocket
-#undef enableWebSocketlog
+#undef enableWebSocket
 #endif
-
+#if defined enableMQTTAsync && defined enableMQTT
+#undef enableMQTT
+#endif
 
 #define MFG "MARM.pl Sp. z o.o."
 #ifndef loctmp
