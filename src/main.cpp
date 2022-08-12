@@ -52,8 +52,10 @@ float pid(float sp, float pv, float pv_last, float &ierr, float dt)
     op = max(opcolo, min(opcohi, op));
   }
   ierr = I;
+  #ifdef debug
   sprintf(log_chars, "sp=%s, pv=%s, dt=%s, op=%s, P=%s, I=%s, tNEWS=%s", String(sp).c_str(), String(pv).c_str(), String(dt).c_str(), String(op).c_str(), String(P).c_str(), String(I).c_str(), String(temp_NEWS).c_str());
   log_message(log_chars);
+  #endif
   return op;
 }
 //***********************************************************************************************************************************************************************************************
@@ -131,13 +133,16 @@ void opentherm_update_data()
 
   unsigned long  response = 0;
   if (OpenTherm.isReady()) {
+    #ifdef debug
     log_message((char*)F("OpenTherm make request"));
+    #endif
     response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
 
     OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
     LastboilerResponse = String(response, HEX);
-    LastboilerResponse += F(", Status: ");
+    LastboilerResponse += F(", Status: <B>");
     LastboilerResponse += OpenTherm.statusToString(responseStatus);
+    LastboilerResponse += "</B>";
 
     if (responseStatus != OpenThermResponseStatus::SUCCESS)
     {
@@ -145,10 +150,7 @@ void opentherm_update_data()
       log_message(log_chars);
     } else
     {
-      Serial.println("Response is: "+ OpenTherm.isValidResponse(response)?"Valid":"No VALID");
-      #ifdef debug
-      log_message((char*)F("Set statuses from opentherm"));
-      #endif
+      //Serial.println("Response is: "+ OpenTherm.isValidResponse(response)?"Valid":"No VALID");
       status_CHActive = OpenTherm.isCentralHeatingActive(response);
       #ifdef debug
       sprintf(log_chars,"Set statuses from isCentralHeatingActive: %s", status_CHActive?"Yes":"No");

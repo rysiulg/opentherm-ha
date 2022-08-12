@@ -307,9 +307,9 @@ char influx_measurments[sensitive_size] = InfluxMeasurments;
 #endif
 const String noTempStr = "--.-";
 
-
+#ifdef ESP32
 TaskHandle_t Task1;
-
+#endif
 
 
 //common_functions.h
@@ -1665,7 +1665,7 @@ void handleWebSocketMessage_sensors(String message) {
             updateDatatoWWW_received(i);
             String tmpStr = F("{");
             tmpStr += build_JSON_Payload(placeholdername, ASS[i].Value, true, "\"");
-            tmpStr += F("{");
+            tmpStr += F("}");
             notifyClients(tmpStr);
   //          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
           }
