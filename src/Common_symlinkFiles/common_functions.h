@@ -25,7 +25,7 @@
 #define websocketendpoint "/ws"
 #endif
 
-#define SerialSpeed 115200
+#define SerialSpeed 74880
 #ifdef enableArduinoOTA
 #define OTA_Port 8266
 #endif
@@ -575,7 +575,7 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
   #endif
 
   //Check if string is not too long -otherwise cut string
-  if ((strlen(string)+ strlen("{\"log\":\"\"}")) > maxLogSize ) string[maxLogSize-strlen("{\"log\":\"\"}")] = '\0';
+  if ((strlen(string)+ strlen("{\"log\":\"\"}")) > maxLogSize ) string[maxLogSize-strlen("{\"log\":\"\"}") - maxLenMQTTTopic ] = '\0';
   sprintf(log_chars_tmp, "{\"log\":\"%s\"}", send_string.c_str());
   send_string = log_chars_tmp;
 
@@ -1106,6 +1106,7 @@ void doubleResetDetect() {
     drd->stop();
     SPIFFS.begin();
     //SPIFFS.format();
+    SPIFFS.rename(configfile, configfile + String(millis() + ".txt"));
     SaveConfig();
     WiFi.persistent(true);
     WiFi.disconnect();
@@ -2865,7 +2866,7 @@ bool loadConfig() {
     #ifdef enableDebug2Serial
     if (dane.indexOf("debugSerial") != -1) {
       tmpstrval = getJsonVal(dane, "debugSerial");
-      debugSerial  = (tmpstrval.toInt() == 1);
+      // debugSerial  = (tmpstrval.toInt() == 1);  //make it persistent
     }
     #endif //enableDebug2Serial
     #if defined enableMQTT || defined enableMQTTAsync
@@ -2997,7 +2998,7 @@ bool SaveConfig() {
     String configSave = F("{\"config\":99");
 //this block is as param from html
     #if defined enableDebug2Serial
-    configSave += build_JSON_Payload(F("debugSerial"), String(debugSerial?"1":"0"), false, "\"");
+    // configSave += build_JSON_Payload(F("debugSerial"), String(debugSerial?"1":"0"), false, "\"");  //this is persistent
     #endif
     #if defined enableWebSocketlog || defined enableWebSerial
     configSave += build_JSON_Payload(F("WebSocketlog"), String(WebSocketlog?"1":"0"), false, "\"");

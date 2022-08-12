@@ -74,10 +74,10 @@ const String MODE_SET_TOPIC = String(BASE_TOPIC) + "/SET/" + String(BOILER_SOFTW
 const String TEMP_DHW_SET_TOPIC = String(BASE_TOPIC) + "/SET/" + String(HOT_WATER_TEMPERATURE_SETPOINT) + "/set";    // dhwTarget
 
 #define COWODA0_SENSORS_TOPIC "COWODA0/sensor/outside/attrib"
-#define COWODA0_SWITCH_TOPIC "COWODA0/switch/boilroom/attrib"
+#define COWODA0_SWITCH_TOPIC "COWoda0/switch/boilerroom/attrib"
 String COPUMP_GET_TOPIC = String(COWODA0_SWITCH_TOPIC);   // temperatura outside avg NEWS
-String COPumpStatus_json = ("boilroom_pump2CO");
-String WaterPumpStatus_json = ("boilroom_pump1Water");
+String COPumpStatus_json = ("boilerroom_pump2CO");
+String WaterPumpStatus_json = ("boilerroom_pump1Water");
 
 String NEWS_GET_TOPIC = String(COWODA0_SENSORS_TOPIC);          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
 String NEWStemp_json = ("outside_temp_Avg");
