@@ -17,6 +17,15 @@ void IRAM_ATTR Handle_Interrupt()
 {
   OpenTherm.handleInterrupt();
 }
+
+void IRAM_ATTR processResponse(unsigned long response, OpenThermResponseStatus responseStatus)
+{
+  OpenTherm.process();
+  #ifdef debug
+  sprintf(log_chars, "OpenTherm response: %s, OpenTherm OTStatus: %s", String(response).c_str(), OpenTherm.statusToString(responseStatus));
+  log_message(log_chars);
+#endif
+}
 //***********************************************************************************************************************************************************************************************
 // op = pid(sp, t, t_last, ierr, dt);
 float pid(float sp, float pv, float pv_last, float &ierr, float dt)
@@ -58,13 +67,12 @@ void opentherm_update_data()
   float histCOtmp = histCO,
         histCWUtmp = histCWU;
   bool COHeat = false;
-  if (ecoMode) opcohi = ecohi; else opcohi = opcohistatic;
-  if (tempBoilerSet > opcohi) tempBoilerSet = opcohi;
+  if (ecoMode) {opcohi = ecohi;} else {opcohi = opcohistatic;}
+  if (tempBoilerSet > opcohi) {tempBoilerSet = opcohi;}
 
   getTemp(); //default returns roomtemp (avg) and as global sp=roomtempset (avg), roomtemp is also global var
   float op = tempBoilerSet;
-  if (heatingEnabled)
-  {
+  if (heatingEnabled) {
     //  if (!automodeCO) {
     //this will remove tempset avg from floors tempBoilerSet = op_override;  //for no automode
     if (temp_NEWS < cutOffTemp)
@@ -91,101 +99,123 @@ void opentherm_update_data()
       roomtemp_last = roomtemp;
     }
   }
-#ifdef debug
-sprintf(log_chars,"Statusy openth: COHEAT: %s, DHW: %s, automodeCO: %s, temp_NEWS: %s", String(COHeat?"chodzi":"stoi").c_str(), String(enableHotWater?"chodzi":"stoi").c_str(), String(automodeCO?"ON":"stoi").c_str(), String(temp_NEWS).c_str());
-log_message(log_chars);
-#endif
-//COHeat = false;
 
-  unsigned long response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
-  OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
   #ifdef debug
-  log_message((char*)F("Processed Opentherm and get response"));
+  sprintf(log_chars,"Statusy openth: COHEAT: %s, DHW: %s, automodeCO: %s, temp_NEWS: %f", COHeat?"chodzi":"stoi", String(enableHotWater?"chodzi":"stoi").c_str(), String(automodeCO?"ON":"stoi").c_str(), temp_NEWS);
+  log_message(log_chars);
   #endif
-  if (responseStatus != OpenThermResponseStatus::SUCCESS)
-  {
-    LastboilerResponseError = String(response, HEX);
-    sprintf(log_chars, "!!!!!!!!!!!Error: Invalid boiler response Error: %s", LastboilerResponseError.c_str());
-    log_message(log_chars);
-  } else
-  {
-    #ifdef debug
-    log_message((char*)F("Set statuses from dhwTarget"));
-    #endif
-    if (status_WaterActive) histCWUtmp = 0; //reset to heat longer (to Set temp) if active -on next request
-    OpenTherm.setDHWSetpoint(dhwTarget - histCWUtmp);
-    #ifdef debug
-    log_message((char*)F("Set statuses from op"));
-    #endif
-    if (status_CHActive) histCOtmp = 0; //reset to increase heat to Set temperature if active CO -on next request
-    OpenTherm.setBoilerTemperature(op - histCOtmp);
 
-    #ifdef debug
-    log_message((char*)F("Set statuses from opentherm"));
-    #endif
-    status_CHActive = OpenTherm.isCentralHeatingActive(response);
-    #ifdef debug
-    log_message((char*)F("Set statuses from isCentralHeatingActive"));
-    #endif
-    status_WaterActive = OpenTherm.isHotWaterActive(response);
-    #ifdef debug
-    log_message((char*)F("Set statuses from isHotWaterActive"));
-    #endif
-    bool status_flame_tmp = status_FlameOn;
-    status_FlameOn = OpenTherm.isFlameOn(response);
-    #ifdef debug
-    log_message((char*)F("Set statuses from isFlameOn"));
-    #endif
-    if (status_flame_tmp != status_FlameOn) {
-      if (status_FlameOn) {
-        start_flame_time = millis();
-        start_flame_time_fordisplay = start_flame_time;
-      } else {
-        start_flame_time = 0;
-        start_flame_time_fordisplay = start_flame_time;//After change flame status If flame is on get timer, else reset timer
-      }
+  #ifdef debug
+  log_message((char*)F("Set statuses from dhwTarget"));
+  #endif
+  if (status_WaterActive) {histCWUtmp = 0;} //reset to heat longer (to Set temp) if active -on next request
+  OpenTherm.setDHWSetpoint(dhwTarget - histCWUtmp);
+  #ifdef debug
+  log_message((char*)F("Set statuses from op"));
+  #endif
+  if (status_CHActive) {histCOtmp = 0;} //reset to increase heat to Set temperature if active CO -on next request
+  OpenTherm.setBoilerTemperature(op - histCOtmp);
+
+  #ifdef debug
+  log_message((char*)F("Set statuses from isFlameOn"));
+  #endif
+  if (status_flame_prv != status_FlameOn) {
+    if (status_FlameOn) {
+      start_flame_time = millis();
+      start_flame_time_fordisplay = start_flame_time;
+    } else {
+      start_flame_time = 0;
+      start_flame_time_fordisplay = start_flame_time;//After change flame status If flame is on get timer, else reset timer
     }
-    status_Cooling = OpenTherm.isCoolingActive(response);
-    #ifdef debug
-    log_message((char*)F("Set statuses from isCoolingActive"));
-    #endif
-    status_Diagnostic = OpenTherm.isDiagnostic(response);
-    #ifdef debug
-    log_message((char*)F("Set statuses from isDiagnostic"));
-    #endif
-    flame_level = OpenTherm.getModulation();
-    #ifdef debug
-    log_message((char*)F("Set statuses from getModulation"));
-    #endif
-    tempBoiler = OpenTherm.getBoilerTemperature();
-    #ifdef debug
-    log_message((char*)F("Set statuses from getBoilerTemperature"));
-    #endif
-    tempCWU = OpenTherm.getDHWTemperature();
-    #ifdef debug
-    log_message((char*)F("Set statuses from getDHWTemperature"));
-    #endif
-    retTemp = OpenTherm.getReturnTemperature();
-    #ifdef debug
-    log_message((char*)F("Set statuses from getReturnTemperature"));
-    #endif
-    pressure = OpenTherm.getPressure();
-    #ifdef debug
-    log_message((char*)F("Set statuses from getPressure"));
-    #endif
-    #ifdef debug
-    log_message((char*)F("Set statuses from opentherm"));
-    #endif
   }
 
-  status_Fault = OpenTherm.isFault(response);
-  #ifdef debug
-  log_message((char*)F("Set fault status from opentherm"));
-  #endif
+  unsigned long  response = 0;
+  if (OpenTherm.isReady()) {
+    log_message((char*)F("OpenTherm make request"));
+    response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
+
+    OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
+    LastboilerResponse = String(response, HEX);
+    LastboilerResponse += F(", Status: ");
+    LastboilerResponse += OpenTherm.statusToString(responseStatus);
+
+    if (responseStatus != OpenThermResponseStatus::SUCCESS)
+    {
+      sprintf(log_chars, "!!!!!!!!!!!Error: Invalid boiler response Error: %s", LastboilerResponse.c_str());
+      log_message(log_chars);
+    } else
+    {
+      Serial.println("Response is: "+ OpenTherm.isValidResponse(response)?"Valid":"No VALID");
+      #ifdef debug
+      log_message((char*)F("Set statuses from opentherm"));
+      #endif
+      status_CHActive = OpenTherm.isCentralHeatingActive(response);
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from isCentralHeatingActive: %s", status_CHActive?"Yes":"No");
+      log_message(log_chars);
+      #endif
+      status_WaterActive = OpenTherm.isHotWaterActive(response);
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from isHotWaterActive: %s", status_WaterActive?"Yes":"No");
+      log_message(log_chars);
+      #endif
+      status_flame_prv = status_FlameOn;
+      status_FlameOn = OpenTherm.isFlameOn(response);
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from status_FlameOn: %s", status_FlameOn?"Yes":"No");
+      log_message(log_chars);
+      #endif
+      status_Cooling = OpenTherm.isCoolingActive(response);
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from isCoolingActive: %s", status_Cooling?"Yes":"No");
+      log_message(log_chars);
+      #endif
+      status_Diagnostic = OpenTherm.isDiagnostic(response);
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from isDiagnostic: %s", status_Diagnostic?"Yes":"No");
+      log_message(log_chars);
+      #endif
+      flame_level = OpenTherm.getModulation();
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from getModulation: %f", flame_level);
+      log_message(log_chars);
+      #endif
+      tempBoiler = OpenTherm.getBoilerTemperature();
+      #ifdef debug
+      sprintf(log_chars, "Set statuses from getBoilerTemperature: %f", tempBoiler);
+      log_message(log_chars);
+      #endif
+      tempCWU = OpenTherm.getDHWTemperature();
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from getDHWTemperature: %f", tempCWU);
+      log_message(log_chars);
+      #endif
+      retTemp = OpenTherm.getReturnTemperature();
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from getReturnTemperature: %f", retTemp);
+      log_message(log_chars);
+      #endif
+      pressure = OpenTherm.getPressure();
+      #ifdef debug
+      sprintf(log_chars,"Set statuses from getPressure: %f",pressure);
+      log_message(log_chars);
+
+      sprintf(log_chars,"getVentilation: %d\ngetVentSupplyInTemperature: %f\ngetVentSupplyOutTemperature: %f\n, getVentExhaustInTemperature: %f\ngetVentExhaustOutTemperature: %f",OpenTherm.getVentilation(), OpenTherm.getVentSupplyInTemperature(), OpenTherm.getVentSupplyOutTemperature(), OpenTherm.getVentExhaustInTemperature(),OpenTherm.getVentExhaustOutTemperature());
+      log_message(log_chars);
+      sprintf(log_chars,"getFaultIndication: %i\ngetVentilationMode: %i\ngetBypassStatus: %d\ngetBypassAutomaticStatus: %i\ngetDiagnosticIndication: %i\n", OpenTherm.getFaultIndication()?1:0, OpenTherm.getVentilationMode()?1:0, OpenTherm.getBypassStatus()?1:0, OpenTherm.getBypassAutomaticStatus()?1:0, OpenTherm.getDiagnosticIndication()?1:0);
+      log_message(log_chars);
+      sprintf(log_chars,"getOutsideTemperature: %f\ngetDHWFlowrate: %f", OpenTherm.getOutsideTemperature(), OpenTherm.getDHWFlowrate());
+      log_message(log_chars);
+      #endif
+    }
+    status_Fault = OpenTherm.isFault(response);
+    #ifdef debug
+    if (status_Fault) log_message((char*)F("OpenTherm Set fault status from opentherm"));
+    #endif
+  }
 }
 
-void getTemp()
-{
+void getTemp() {
   if (check_isValidTemp(floor2_tempset) && check_isValidTemp(floor1_tempset)) roomtempSet = (floor2_tempset + floor1_tempset) / 2; //{roomtemp_last=roomtemp; roomtemp=(floor2_tempset+floor1_tempset)/2;}
   if (check_isValidTemp(floor2_tempset) && !check_isValidTemp(floor1_tempset)) {
     roomtempSet = floor2_tempset;
@@ -201,9 +231,8 @@ void getTemp()
   if (!check_isValidTemp(floor2_temp) && check_isValidTemp(floor1_temp)) {
     roomtemp = floor1_temp;
   }
-  sprintf(log_chars,"Get Temps: floor2_temp: %s/%s, floor1_temp: %s/%s, roomtemp: %s/%s", String(floor2_temp).c_str(), String(floor2_tempset).c_str(), String(floor1_temp).c_str(), String(floor1_tempset).c_str(), String(roomtemp).c_str(),String(roomtempSet).c_str());
+  sprintf(log_chars,"getTemp: floor2_temp: %f/%f, floor1_temp: %f/%f, roomtemp: %f/%f", floor2_temp, floor2_tempset, floor1_temp, floor1_tempset, roomtemp, roomtempSet);
   log_message(log_chars);
-
 }
 
 String Boiler_Mode()
@@ -222,7 +251,7 @@ void setup()
 {
 
   MainCommonSetup();
-  OpenTherm.begin(Handle_Interrupt);
+  OpenTherm.begin(Handle_Interrupt, processResponse);
 
   // Init DS18B20 sensor
   sensors.begin();
@@ -241,15 +270,17 @@ void setup()
 
 void loop()
 {
+  // Serial.println("loop start.");
   MainCommonLoop();
+  // Serial.println("loop local.");
   unsigned long now = millis(); // TO AVOID compare -2>10000 which is true ??? why?
   // check mqtt is available and connected in other case check values in api.
 
-  if ((now - lastUpdate) > statusUpdateInterval_ms)
-  {
-    lastUpdate = now;
+   if ((now - lastUpdate) > statusUpdateInterval_ms)
+   {
+     lastUpdate = now;
     opentherm_update_data(); // According OpenTherm Specification from Ihnor Melryk Master requires max 1s interval communication -przy okazji wg czasu update mqtt zrobie odczyt dallas
-  }
+   }
 
   if (status_FlameOn) {  //calculate statistics
     unsigned long long nowtime = millis();
@@ -317,5 +348,8 @@ void loop()
   if (!check_isValidTemp(temp_NEWS) && check_isValidTemp(dallasTemp) && lastNEWSSet == 0) temp_NEWS = dallasTemp;
 
   }
-
+// Serial.println("loop end1.");
+// wdt_reset();
+// Serial.println("loop end2.");
+// loop();
 }

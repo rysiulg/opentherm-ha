@@ -33,7 +33,7 @@
 #define enableWebUpdate   //not implemented -not working well
 //#define enableMESHNETWORK
 //#define enableWebSerial     //not fully implemented and abandoned
-
+#define enableMDNS
 
 
 
@@ -45,13 +45,11 @@
 #endif
 
 #define MFG "MARM.pl Sp. z o.o."
-#ifndef loctmp
-#define loctmp "\0"
-#endif
+
 #define hour_s 60*60          //hour in second
 
-#include "sensivity-config-data.h" //it have definitions of sensivity data
-#include "config-translate.h" //definitions polish/english translate
+#include "Common_symlinkFiles\sensivity-config-data.h" //it have definitions of sensivity data
+#include "Common_symlinkFiles\config-translate.h" //definitions polish/english translate
 #ifndef SSID_Name
 #define SSID_Name "SSID_Name"
 #endif

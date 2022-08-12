@@ -1,5 +1,5 @@
 
-#include "common_functions.h"
+#include "Common_symlinkFiles\common_functions.h"
 
 
 
@@ -42,7 +42,7 @@ float dhwTarget = 49.5, // domyslna temperatura docelowa wody uzytkowej
       roomtempSet = 20.5,       // set point roomtemp
       roomtemp = 21,     // current temperature
       roomtemp_last = 0, // prior temperature
-      ierr = 25,         // integral error
+      ierr = 0,         // integral error
       dt = 0,            // time between measurements
       //       op = 0, //PID controller output
       retTemp = 0,                         // return temperature
@@ -55,10 +55,10 @@ float dhwTarget = 49.5, // domyslna temperatura docelowa wody uzytkowej
       tempCWU = 0,
       dallasTemp = 0,
       pressure = 0,
-      histCWU = 0,             //histereza dla cwu -obnizenie progu aktywacji grzania
+      histCWU = 5,             //histereza dla cwu -obnizenie progu aktywacji grzania
       histCO = 0,             //histereza dla co -obnizenie progu aktywacji grzania
       histlo = 0,             //min wartosc histerezy
-      histhi = 4;             //max wartosc histerezy
+      histhi = histerezaCOCWU;             //max wartosc histerezy
 
 
 
@@ -92,6 +92,7 @@ bool heatingEnabled = true,
      status_CHActive = false,
      status_WaterActive =false,
      status_FlameOn =false,
+     status_flame_prv = false,     //previous status of flame before read new val
      status_Cooling =false,
      status_Diagnostic =false,
      ecoMode = true;

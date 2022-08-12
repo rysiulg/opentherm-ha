@@ -61,7 +61,8 @@
 #define numDecimalsWWW 1
 #define cutoff_histereza 0.9        //histereza cutoff and roomtemp/roomtempset
 #define dhwTargetStart 51           // domyslna temperatura docelowa wody uzytkowej
-#define cutoffstartval 2
+#define cutoffstartval 1
 #define roomtempinitial 21
 #define ecoModeMaxTemp 39           //max temp pracy kondensacyjnej
 #define ecoModeDisabledMaxTemp 60
+#define histerezaCOCWU 8

@@ -1,5 +1,11 @@
 
-#define me_lokalizacja "BOILER_GAZ" loctmp
+#define my_base_localisation "BOILER_GAZ"
+#ifndef loctmp
+#define me_lokalizacja my_base_localisation  // zostawie stara nazwe        me_lokalizacja;
+#else
+#define me_lokalizacja my_base_localisation loctmp
+#endif
+
 
 
 // Master OpenTherm Shield pins configuration
@@ -15,4 +21,4 @@ const int ROOM_TEMP_SENSOR_PIN = D0; // 0; //for Arduino, 14 for ESP8266 (D5), 1
 #define boiler_50_30_ret 31     //boiler technical factory set data at working 50st and return 30st -assume that is that mode if rettemp i under 31degC
 #define boiler_80_60 19.5     //boiler technical factory set data at working 80st and return 60st
 
-String LastboilerResponseError = "\0";
+String LastboilerResponse = "\0";

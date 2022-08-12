@@ -44,7 +44,7 @@ void updateInfluxDB() {
   InfluxSensor.addField(String(DIAGS_OTHERS_FAULT), status_Fault ? 1 : 0);
   InfluxSensor.addField(String(DIAGS_OTHERS_DIAG), status_Diagnostic ? 1 : 0);
   InfluxSensor.addField(String(INTEGRAL_ERROR_GET_TOPIC), ierr);
-  InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponseError);
+  InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponse);
 
   // Print what are we exactly writing
   String tmpstring = String(InfluxClient.getLastErrorMessage());
@@ -73,16 +73,15 @@ void updateMQTTData() {
   const String payloadvalue_startend_val = F(""); // value added before and after value send to mqtt queue
   const String payloadON = F("1");
   const String payloadOFF = F("0");
+  String  topictmp = "\0";
+  String payBuilder = "\0";
   wdt_reset();
-  #ifdef enableMQTT
-  mqttclient.publish(String(LOG_GET_TOPIC).c_str(), LastboilerResponseError.c_str());
-  #endif //
-  #ifdef enableMQTTAsync
-  uint16_t packetIdSub;
-  packetIdSub = mqttclient.publish(String(LOG_GET_TOPIC).c_str(), QOS, mqtt_Retain, LastboilerResponseError.c_str());
-  if (packetIdSub == 0) packetIdSub = 0;
-  #endif
-  String boilermode = Boiler_Mode();
+  topictmp = String(LOG_GET_TOPIC);
+  payBuilder = LastboilerResponse;
+  publishMQTT(topictmp, payBuilder);
+  String boilermode = "\"";
+    boilermode += Boiler_Mode();
+    boilermode += "\"";
 
   #ifdef debug
   if (status_Fault)
@@ -119,8 +118,6 @@ void updateMQTTData() {
   }
   #endif
 
-  String  topictmp = "\0";
-  String payBuilder = "\0";
   if (tempBoiler>0 && retTemp>0)
   {
    //for pubsync change kolejnosc topic, payload, retain            for async topic, qos, retain, payload
@@ -136,7 +133,7 @@ void updateMQTTData() {
     payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_TEMPERATURE), String(tempCWU, decimalPlaces), true, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_TEMPERATURE_SETPOINT), String(dhwTarget, decimalPlaces), false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_CH_STATE), String(status_WaterActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_SOFTWARE_CH_STATE), String(enableHotWater ? "heat" : "off"), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (HOT_WATER_SOFTWARE_CH_STATE), String(enableHotWater ? payloadON : payloadOFF), false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_W_DHW_TOTAL), String(flame_used_power_waterTotal, 4), false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_TIME_SEC_DHW_TOTAL), String(flame_time_waterTotal), false, payloadvalue_startend_val);
     publishMQTT(topictmp, payBuilder);
@@ -150,14 +147,14 @@ void updateMQTTData() {
     publishMQTT(topictmp, payBuilder);
     topictmp = String(BOILER_STATE_TOPIC);
     payBuilder = F("\0");
-    payBuilder += build_JSON_Payload(String(OT) + (BOILER_CH_STATE), String(status_CHActive ? payloadON : payloadOFF), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_CH_STATE), String(status_CHActive ? payloadON : payloadOFF), true, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (ECOMODE_STATE), String(ecoMode ? payloadON : payloadOFF), false, payloadvalue_startend_val);
-    payBuilder += build_JSON_Payload(String(OT) + (BOILER_SOFTWARE_CH_STATE_MODE), String(boilermode), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (BOILER_SOFTWARE_CH_STATE_MODE), boilermode, false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_STATE), String(status_FlameOn ? payloadON : payloadOFF), false, payloadvalue_startend_val);
     publishMQTT(topictmp, payBuilder);
     topictmp = String(FLAME_TOPIC);
     payBuilder = F("\0");
-    payBuilder += build_JSON_Payload(String(OT) + (FLAME_LEVEL), String(flame_level, 0), false, payloadvalue_startend_val);
+    payBuilder += build_JSON_Payload(String(OT) + (FLAME_LEVEL), String(flame_level, 0), true, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_W), String(flame_used_power, 4), false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_W_TOTAL), String(flame_used_power_kwh, 4), false, payloadvalue_startend_val);
     payBuilder += build_JSON_Payload(String(OT) + (FLAME_TIME_SEC_TOTAL), String(flame_time_total), false, payloadvalue_startend_val);
@@ -214,9 +211,10 @@ void updateMQTTData() {
     // 21:16:02.724 MQT: homeassistant/sensor/BB050B_OPENTHERM_OT10_hi/config = {"name":"Opentherm OPENTHERM OT10 hi","stat_t":"tele/tasmota_BB050B/SENSOR","avty_t":"tele/tasmota_BB050B/LWT","pl_avail":"Online","pl_not_avail":"Offline","uniq_id":"BB050B_OPENTHERM_OT10_hi","dev":{"ids":["BB050B"]},"unit_of_meas":" ","ic":"mdi:eye","frc_upd":true,"val_tpl":"{{value_json['OPENTHERM']['OT10']['hi']}}"} (retained)
 //    HADiscovery(String(HA_BINARY_TOPIC), String(DIAGS_OTHERS_FAULT), String(OT), String(DIAG_TOPIC), "problem");
 //    mqttclient.publish((String(HA_BINARY_TOPIC) + "_" + String(DIAGS_OTHERS_FAULT) + "/config").c_str(), ("{\"name\":\"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"uniq_id\": \"" + String(OT) + String(DIAGS_OTHERS_FAULT) + "\",\"stat_t\":\"" + String(DIAG_TOPIC) + "\",\"payload_on\": " + payloadON + ",\"payload_off\": " + payloadOFF + ",\"val_tpl\":\"{{value_json." + String(OT) + String(DIAGS_OTHERS_FAULT) + "}}\",\"dev_cla\":\"problem\",\"unit_of_meas\": \" \",\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-
-    #ifdef enableMQTT
-    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Hot Water\",\"uniq_id\": \"" + String(OT) + "Hot_Water\", \
+if (0==1) {
+topictmp = String(HA_CLIMATE_TOPIC);
+topictmp += F("_climate/config");
+payBuilder = "\"name\":\"" + String(OT) + "Hot Water\",\"uniq_id\": \"" + String(OT) + "Hot_Water\", \
 \"modes\":[\"off\",\"heat\"], \
 \"icon\": \"mdi:water-pump\", \
 \"current_temperature_topic\":\"" + String(HOT_WATER_TOPIC) + "\", \
@@ -235,143 +233,72 @@ void updateMQTTData() {
 \"min_temp\": " + oplo + ", \
 \"max_temp\": " + ophi + ", \
 \"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler CO\",\"uniq_id\": \"" + String(OT) + "Boiler_CO\", \
-\"modes\":[\"off\",\"heat\",\"auto\"], \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE) + "}}\", \
-\"temperature_command_topic\":\"" + String(TEMP_SETPOINT_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE_SETPOINT) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
-\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
-\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
-\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + opcolo + ", \
-\"max_temp\": " + opcohi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + String(OT) + "Boiler_RoomTemp_Control_CO\", \
-\"modes\":[\"off\",\"heat\",\"auto\"], \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE) + "}}\", \
-\"temperature_command_topic\":\"" + String(ROOM_TEMP_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE_SETPOINT) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
-\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
-\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
-\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + roomtemplo + ", \
-\"max_temp\": " + roomtemphi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    mqttclient.publish((String(HA_CLIMATE_TOPIC) + "cutoff_climate/config").c_str(), ("{\"name\":\"" + String(OT) + "CutoffTemp\",\"uniq_id\": \"" + String(OT) + "CutoffTemp\", \
-\"modes\":\"\", \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(NEWS_GET_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value}}\", \
-\"temperature_command_topic\":\"" + String(TEMP_CUTOFF_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(TEMP_CUTOFF) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + cutofflo + ", \
-\"max_temp\": " + cutoffhi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str(), mqtt_Retain);
-    #endif  //enableMQTT
-    #ifdef enableMQTTAsync    //for pubsync change kolejnosc topic, payload, retain            for async topic, qos, retain, payload
-    packetIdSub = mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), QOS, mqtt_Retain, ("{\"name\":\"" + String(OT) + "Hot Water\",\"uniq_id\": \"" + String(OT) + "Hot_Water\", \
-\"modes\":[\"off\",\"heat\"], \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(HOT_WATER_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value_json." + String(OT) + String(HOT_WATER_TEMPERATURE) + "}}\", \
-\"temperature_command_topic\":\"" + String(TEMP_DHW_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(HOT_WATER_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(HOT_WATER_TEMPERATURE_SETPOINT) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"mode_state_topic\": \"" + String(HOT_WATER_TOPIC) + "\", \
-\"mode_state_template\": \"{{value_json." + String(OT) + String(HOT_WATER_SOFTWARE_CH_STATE) + "}}\", \
-\"mode_command_topic\": \"" + String(STATE_DHW_SET_TOPIC) + "\", \
-\"mode_command_template\" : \"{% set values = { 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + oplo + ", \
-\"max_temp\": " + ophi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str() );
-    packetIdSub = mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), QOS, mqtt_Retain, ("{\"name\":\"" + String(OT) + "Boiler CO\",\"uniq_id\": \"" + String(OT) + "Boiler_CO\", \
-\"modes\":[\"off\",\"heat\",\"auto\"], \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE) + "}}\", \
-\"temperature_command_topic\":\"" + String(TEMP_SETPOINT_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE_SETPOINT) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
-\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
-\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
-\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + opcolo + ", \
-\"max_temp\": " + opcohi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str()  );
-    packetIdSub = mqttclient.publish((String(HA_CLIMATE_TOPIC) + "_climate/config").c_str(), QOS, mqtt_Retain, ("{\"name\":\"" + String(OT) + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + String(OT) + "Boiler_RoomTemp_Control_CO\", \
-\"modes\":[\"off\",\"heat\",\"auto\"], \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE) + "}}\", \
-\"temperature_command_topic\":\"" + String(ROOM_TEMP_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE_SETPOINT) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
-\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
-\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
-\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + roomtemplo + ", \
-\"max_temp\": " + roomtemphi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str() );
-    packetIdSub = mqttclient.publish((String(HA_CLIMATE_TOPIC) + "cutoff_climate/config").c_str(), QOS, mqtt_Retain, ("{\"name\":\"" + String(OT) + "CutoffTemp\",\"uniq_id\": \"" + String(OT) + "CutoffTemp\", \
-\"modes\":\"\", \
-\"icon\": \"mdi:water-pump\", \
-\"current_temperature_topic\":\"" + String(NEWS_GET_TOPIC) + "\", \
-\"current_temperature_template\":\"{{value}}\", \
-\"temperature_command_topic\":\"" + String(TEMP_CUTOFF_SET_TOPIC) + "\", \
-\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
-\"temperature_state_template\":\"{{value_json." + String(OT) + String(TEMP_CUTOFF) + "}}\", \
-\"temperature_unit\":\"C\", \
-\"temp_step\": 0.5, \
-\"precision\": 0.5, \
-\"target_temp_step\": 0.5, \
-\"min_temp\": " + cutofflo + ", \
-\"max_temp\": " + cutoffhi + ", \
-\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
-\"qos\":" + String(QOS) + "," + String(deviceid) + "}").c_str() );
+\"qos\":" + String(QOS) + "," + String(deviceid);
+publishMQTT(topictmp, payBuilder);
 
-    #endif  //enableMQTTAsync
+payBuilder = "\"name\":\"" + String(OT) + "Boiler CO\",\"uniq_id\": \"" + String(OT) + "Boiler_CO\", \
+\"modes\":[\"off\",\"heat\",\"auto\"], \
+\"icon\": \"mdi:water-pump\", \
+\"current_temperature_topic\":\"" + String(BOILER_TOPIC) + "\", \
+\"current_temperature_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE) + "}}\", \
+\"temperature_command_topic\":\"" + String(TEMP_SETPOINT_SET_TOPIC) + "\", \
+\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
+\"temperature_state_template\":\"{{value_json." + String(OT) + String(BOILER_TEMPERATURE_SETPOINT) + "}}\", \
+\"temperature_unit\":\"C\", \
+\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
+\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
+\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
+\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + opcolo + ", \
+\"max_temp\": " + opcohi + ", \
+\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
+\"qos\":" + String(QOS) + "," + String(deviceid);
+publishMQTT(topictmp, payBuilder);
+payBuilder = "\"name\":\"" + String(OT) + "Boiler RoomTemp Control CO\",\"uniq_id\": \"" + String(OT) + "Boiler_RoomTemp_Control_CO\", \
+\"modes\":[\"off\",\"heat\",\"auto\"], \
+\"icon\": \"mdi:water-pump\", \
+\"current_temperature_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
+\"current_temperature_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE) + "}}\", \
+\"temperature_command_topic\":\"" + String(ROOM_TEMP_SET_TOPIC) + "\", \
+\"temperature_state_topic\":\"" + String(ROOM_OTHERS_TOPIC) + "\", \
+\"temperature_state_template\":\"{{value_json." + String(OT) + String(ROOM_OTHERS_TEMPERATURE_SETPOINT) + "}}\", \
+\"temperature_unit\":\"C\", \
+\"mode_state_topic\": \"" + String(BOILER_TOPIC) + "\", \
+\"mode_state_template\": \"{{value_json." + String(OT) + String(BOILER_SOFTWARE_CH_STATE_MODE) + "}}\", \
+\"mode_command_topic\": \"" + String(MODE_SET_TOPIC) + "\", \
+\"mode_command_template\" : \"{% set values = { 'auto':'2', 'heat':'1', 'off':'0'} %}   {{ values[value] if value in values.keys() else '0' }}\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + roomtemplo + ", \
+\"max_temp\": " + roomtemphi + ", \
+\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
+\"qos\":" + String(QOS) + "," + String(deviceid);
+publishMQTT(topictmp, payBuilder);
+
+topictmp = String(HA_CLIMATE_TOPIC);
+topictmp += F("cutoff_climate/config");
+payBuilder = "\"name\":\"" + String(OT) + "CutoffTemp\",\"uniq_id\": \"" + String(OT) + "CutoffTemp\", \
+\"modes\":\"\", \
+\"icon\": \"mdi:water-pump\", \
+\"current_temperature_topic\":\"" + String(NEWS_GET_TOPIC) + "\", \
+\"current_temperature_template\":\"{{value}}\", \
+\"temperature_command_topic\":\"" + String(TEMP_CUTOFF_SET_TOPIC) + "\", \
+\"temperature_state_topic\":\"" + String(BOILER_TOPIC) + "\", \
+\"temperature_state_template\":\"{{value_json." + String(OT) + String(TEMP_CUTOFF) + "}}\", \
+\"temperature_unit\":\"C\", \
+\"temp_step\": 0.5, \
+\"precision\": 0.5, \
+\"target_temp_step\": 0.5, \
+\"min_temp\": " + cutofflo + ", \
+\"max_temp\": " + cutoffhi + ", \
+\"avty_t\":\"" + String(WILL_TOPIC) + "\",\"pl_avail\":\"" + String(WILL_ONLINE) + "\",\"pl_not_avail\":\"" + String(WILL_OFFLINE) + "\", \
+\"qos\":" + String(QOS) + "," + String(deviceid);
+publishMQTT(topictmp, payBuilder);
+  }
   }
 }
 #endif  //enableMQTTAsync || enableMQTT
@@ -399,9 +326,10 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
   {
     String ident = "Floor1temp ";
     //   WebSerial.println("Payload: " + String(payloadStrFromMQTT));
-    if (PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(roomF1temp_json)))) //wrong value are displayed in function
+    String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(roomF1temp_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt)) //wrong value are displayed in function
     {
-      floor1_temp = PayloadtoValidFloat(getJsonVal(payloadStrFromMQTT, String(roomF1temp_json)), true, roomtemplo, roomtemphi);
+      floor1_temp = PayloadtoValidFloat(tmpStrmqtt, true, roomtemplo, roomtemphi);
       sprintf(log_chars, "%s set to: %s", ident.c_str(), String(floor1_temp).c_str());
       log_message(log_chars);
       receivedmqttdata = true;
@@ -409,9 +337,10 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
       sprintf(log_chars, "%s is not a valid number, ignoring..., payloadStrFromMQTT: %s, (%s)", ident.c_str(), payloadStrFromMQTT.c_str(), String(payloadStrFromMQTT.length()).c_str());
       log_message(log_chars);
     }
-    if (PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(roomF1tempset_json)))) //wrong value are displayed in function
+    tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(roomF1tempset_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt)) //wrong value are displayed in function
     {
-      floor1_tempset = PayloadtoValidFloat(getJsonVal(payloadStrFromMQTT, String(roomF1tempset_json)), true, roomtemplo, roomtemphi);
+      floor1_tempset = PayloadtoValidFloat(tmpStrmqtt, true, roomtemplo, roomtemphi);
       sprintf(log_chars, "%s Setpoint set to: %s", ident.c_str(), String(floor1_tempset).c_str());
       log_message(log_chars);
       // receivedmqttdata = true;z
@@ -424,9 +353,10 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
   {
     String ident = "Floor2temp ";
     //   WebSerial.println("Payload: " + String(payloadStrFromMQTT));
-    if (PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(roomF2temp_json)))) //wrong value are displayed in function
+    String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(roomF2temp_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt)) //wrong value are displayed in function
     {
-      floor2_temp = PayloadtoValidFloat(getJsonVal(payloadStrFromMQTT, roomF2temp_json), true, roomtemplo, roomtemphi);
+      floor2_temp = PayloadtoValidFloat(tmpStrmqtt, true, roomtemplo, roomtemphi);
       sprintf(log_chars, "%s set to: %s", ident.c_str(), String(floor2_temp).c_str());
       log_message(log_chars);
       receivedmqttdata = true;
@@ -434,9 +364,10 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
       sprintf(log_chars, "%s Setpoint is not a valid number, ignoring..., payloadStrFromMQTT: %s (%s)", ident.c_str(), payloadStrFromMQTT.c_str(), String(payloadStrFromMQTT.length()).c_str());
       log_message(log_chars);
     }
-    if (PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(roomF2tempset_json)))) //wrong value are displayed in function
+    tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(roomF2tempset_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt)) //wrong value are displayed in function
     {
-      floor2_tempset = PayloadtoValidFloat(getJsonVal(payloadStrFromMQTT, roomF2tempset_json), true, roomtemplo, roomtemphi);
+      floor2_tempset = PayloadtoValidFloat(tmpStrmqtt, true, roomtemplo, roomtemphi);
       sprintf(log_chars, "%s Setpoint set to: %s", ident.c_str(), String(floor2_tempset).c_str());
       log_message(log_chars);
       receivedmqttdata = true;
@@ -448,16 +379,17 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
   if (topicStrFromMQTT.indexOf(String(NEWS_GET_TOPIC))==0 and payloadStrFromMQTT.indexOf(String(NEWStemp_json))>=0)              //NEWS averange temp -outside temp
   {
     String ident = "NEWS temp ";
-    if (PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json))))          //invalid val is displayed in funct
+    String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(NEWStemp_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt))          //invalid val is displayed in funct
     {
-      temp_NEWS = PayloadtoValidFloat(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)), true);   //true to get output to serial and webserial
+      temp_NEWS = PayloadtoValidFloat(tmpStrmqtt, true);   //true to get output to serial and webserial
       sprintf(log_chars, "%s updated from MQTT to: %s", ident.c_str(), String(temp_NEWS).c_str());
       log_message(log_chars);
       lastNEWSSet = millis();
       temp_NEWS_count = 0;
       //      receivedmqttdata = true;    //makes every second run mqtt send and influx
     } else {
-      sprintf(log_chars, "%s not updated from MQTT: %s, %s", ident.c_str(), String(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json))).c_str(), String(PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)))).c_str());
+      //sprintf(log_chars, "%s not updated from MQTT: %s, %s", ident.c_str(), getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)).c_str(), String(PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)))).c_str());
       log_message(log_chars);
     }
   }
@@ -580,10 +512,11 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
     {
       String ident = "Wood/coax CO Pump Status ";
       receivedmqttdata = true;
-      if (PayloadStatus(getJsonVal(payloadStrFromMQTT, String(COPumpStatus_json)), true)) {
+      String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(COPumpStatus_json));
+      if (PayloadStatus(tmpStrmqtt, true)) {
         CO_PumpWorking = true;
       } else
-      if (PayloadStatus(getJsonVal(payloadStrFromMQTT, String(COPumpStatus_json)), false)) {
+      if (PayloadStatus(tmpStrmqtt, false)) {
         CO_PumpWorking = false;
       }
       else
@@ -602,11 +535,12 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
       if (topicStrFromMQTT.indexOf(String(COPUMP_GET_TOPIC))==0 and payloadStrFromMQTT.indexOf(String(WaterPumpStatus_json))>=0)                                                                   //external CO Pump Status
       {
         String ident = "Wood/coax Water Pump Status ";
+        String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(WaterPumpStatus_json));
         receivedmqttdata = true;
-        if (PayloadStatus(getJsonVal(payloadStrFromMQTT, String(WaterPumpStatus_json)), true)) {
+        if (PayloadStatus(tmpStrmqtt, true)) {
           Water_PumpWorking = true;
         }
-        else if (PayloadStatus(getJsonVal(payloadStrFromMQTT, String(WaterPumpStatus_json)), false)) {
+        else if (PayloadStatus(tmpStrmqtt, false)) {
           Water_PumpWorking = false;
         }
         else

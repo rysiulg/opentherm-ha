@@ -225,7 +225,7 @@ const float ophi = 65,               // upper max heat water
 		InitTemp = InitTempst;
 
 #ifndef maxLogSize
-#define maxLogSize 800
+#define maxLogSize 1023
 #endif
 #ifndef maxLenMQTTTopic
 #define maxLenMQTTTopic 165
@@ -308,6 +308,10 @@ char influx_measurments[sensitive_size] = InfluxMeasurments;
 const String noTempStr = "--.-";
 
 
+TaskHandle_t Task1;
+
+
+
 //common_functions.h
 #if defined enableMQTT || defined enableMQTTAsync
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
@@ -316,16 +320,16 @@ String get_lastResetReason();
 bool check_isValidTemp(float temptmp);
 void log_message(char* string, u_int specialforce);
 String uptimedana(unsigned long started_local, bool startFromZero, bool forlogall);
-String getJsonVal(String json, String tofind);
+String getJsonVal(String &jsoninput, String tofind);
 String getJsonVal_old(String json, String tofind);
-bool isValidNumber(String str);
+bool isValidNumber(String &str);
 String convertPayloadToStr(byte *payload, u_int length);
 int dBmToQuality(int dBm);
 int getWifiQuality();
 int getFreeMemory();
-bool PayloadStatus(String payloadStr, bool state);
-bool PayloadtoValidFloatCheck(String payloadStr);
-float PayloadtoValidFloat(String payloadStr, bool withtemps_minmax, float mintemp, float maxtemp);
+bool PayloadStatus(String &payloadStr, bool state);
+bool PayloadtoValidFloatCheck(String &payloadStr);
+float PayloadtoValidFloat(String &payloadStr, bool withtemps_minmax, float mintemp, float maxtemp);
 void restart(String messagewhy);
 String getIdentyfikator(int x);
 #ifdef doubleResDet
@@ -353,7 +357,7 @@ void Setup_FileSystem();
 #ifdef enableWebSocket
 void Setup_WebSocket();
 void Setup_WebSocket();
-void notifyClients(String Message);
+void notifyClients(String &Message);
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 void Event_WebSocket(AsyncWebSocket *webserver, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 #endif
@@ -550,15 +554,16 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
 #define numberOfMinutes(_time_) ((_time_ / SECS_PER_MIN) % SECS_PER_MIN)
 #define numberOfHours(_time_) (( _time_% SECS_PER_DAY) / SECS_PER_HOUR)
 #define elapsedDays(_time_) ( _time_ / SECS_PER_DAY)
-
 //  #include "configmqtttopics.h"
-  String send_string = String(uptimedana(millis(), true, true)) + F(": ") + String(string);
+sprintf(log_chars,"%s: %s", uptimedana(millis(), true, true).c_str(), string);
+  String send_string = log_chars;
   send_string.trim();
 
   //Send to serial port COM
   #ifdef enableDebug2Serial
+  //debugSerial = true;
   if (debugSerial == true) {
-    Serial.println(send_string);
+    Serial.println(log_chars);
   }
   #endif
 
@@ -566,16 +571,16 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
 //abandoned webserial
 
   #ifdef enableWebSerial
-    if (starting == false and WebSocketlog) {WebSerial.println(send_string);}
+    if (starting == false and WebSocketlog) {WebSerial.println(log_chars);}
   #endif
-  char send_string_ch[512];
-  sprintf(send_string_ch, "{\"log\":\"%s\"}", send_string.c_str());
-  if (send_string.length()>512) send_string_ch[511] = '\0';
 
+  //char send_string_ch[maxLogSize];
+  sprintf(log_chars, "{\"log\":\"%s\"}", send_string.c_str());
+  if (sizeof(log_chars)>512) log_chars[511] = '\0';
+  send_string = log_chars;
 
 #if defined enableWebSocketlog && defined enableWebSocket
-  if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(String(send_string_ch));
-
+  if (!starting && (WebSocketlog || specialforce == logCommandResponse)) notifyClients(send_string);
   #endif
 
   #if defined enableMQTT || defined enableMQTTAsync
@@ -586,11 +591,11 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
     {
       #if defined enableMQTTAsync
       uint16_t packetIdSub;
-      packetIdSub = mqttclient.publish(String(LOG_TOPIC).c_str(), QOS, mqtt_Retain, send_string_ch);
+      packetIdSub = mqttclient.publish(String(LOG_TOPIC).c_str(), QOS, mqtt_Retain, send_string.c_str());
       if (packetIdSub == 0) packetIdSub = 0;
       #endif
       #if defined enableMQTT
-      if (!mqttclient.publish(String(LOG_TOPIC).c_str(), send_string_ch)) {
+      if (!mqttclient.publish(String(LOG_TOPIC).c_str(), send_string.c_str())) {
         mqttclient.disconnect();
         Serial.print(millis());
         Serial.print(F(": "));
@@ -685,13 +690,14 @@ String uptimedana(unsigned long started_local = 0, bool startFromZero = false, b
 }
 
 //***********************************************************************************************************************************************************************************************
-String getJsonVal(String json, String tofind)
+String getJsonVal(String &jsoninput, String tofind)
 { //function to get value from json payload
+  String json = jsoninput;
   json.trim();
   tofind.trim();
   #ifdef debugweb
   sprintf(log_chars,"json0: %s",json.c_str());
-  log_message(log_chars);
+  //log_message(log_chars);
   #endif
   if (!json.isEmpty() and !tofind.isEmpty() and json.startsWith("{") and json.endsWith("}"))  //check is starts and ends as json data and nmqttident null
   {
@@ -806,7 +812,7 @@ String getJsonVal_old(String json, String tofind)
 }
 
 //***********************************************************************************************************************************************************************************************
-bool isValidNumber(String str)
+bool isValidNumber(String &str)
 {
   bool valid = true;
   for (byte i = 0; i < str.length(); i++)
@@ -857,7 +863,7 @@ int getFreeMemory() {
 }
 
 //***********************************************************************************************************************************************************************************************
-bool PayloadStatus(String payloadStr, bool state)
+bool PayloadStatus(String &payloadStr, bool state)
 {
   payloadStr.toUpperCase();
   payloadStr.replace("\"","");
@@ -874,13 +880,13 @@ bool PayloadStatus(String payloadStr, bool state)
 }
 
 //***********************************************************************************************************************************************************************************************
-bool PayloadtoValidFloatCheck(String payloadStr)
+bool PayloadtoValidFloatCheck(String &payloadStr)
 {
   if (isValidNumber(payloadStr)) return true; else return false;
 }
 
 //***********************************************************************************************************************************************************************************************
-float PayloadtoValidFloat(String payloadStr, bool withtemps_minmax, float mintemp = 0, float maxtemp = 0)  //bool withtemps_minmax=false, float mintemp=InitTemp,float
+float PayloadtoValidFloat(String &payloadStr, bool withtemps_minmax, float mintemp = 0, float maxtemp = 0)  //bool withtemps_minmax=false, float mintemp=InitTemp,float
 {
   payloadStr.trim();
   if (isValidNumber(payloadStr))  payloadStr.replace(",", ".");
@@ -1026,7 +1032,8 @@ void Setup_OTA() {
     mqttclient.disconnect();
   #endif
    // Advertise connected clients what's going on
-   notifyClients(F("OTA Update Started"));
+   String tmpStrt = F("OTA Update Started");
+   notifyClients(tmpStrt);
    // Close them
    WebSocket.closeAll();
    webserver.end();
@@ -1255,10 +1262,10 @@ void Setup_Influx() {
   InfluxSensor.addTag("device", me_lokalizacja);
   // Check server connection
   if (InfluxClient.validateConnection()) {
-    sprintf(log_chars, "Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
+    sprintf(log_chars, "Setup: Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
     log_message(log_chars,0);
   } else {
-    sprintf(log_chars, "InfluxDB connection failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
+    sprintf(log_chars, "Setup: InfluxDB connection failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
     log_message(log_chars,0);
   }
 }
@@ -1333,7 +1340,7 @@ void Setup_WebSocket() { // Start a WebSocket server
   webserver.addHandler(&WebSocket);             // start the websocket server
   log_message((char*)F("WebSocket server started."));
 }
-void notifyClients(String Message) {
+void notifyClients(String &Message) {
   //   if (webSocket.connectedClients() > 0) {
 //     webSocket.broadcastTXT(string, strlen(string));
 //   }
@@ -1656,7 +1663,10 @@ void handleWebSocketMessage_sensors(String message) {
 
             #endif
             updateDatatoWWW_received(i);
-            notifyClients("{\""+String(placeholdername)+"\":\""+String(ASS[i].Value)+"\"}");
+            String tmpStr = F("{");
+            tmpStr += build_JSON_Payload(placeholdername, ASS[i].Value, true, "\"");
+            tmpStr += F("{");
+            notifyClients(tmpStr);
   //          notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
           }
         }
@@ -1883,6 +1893,23 @@ void webhandleFileUpload(AsyncWebServerRequest *request, String filename, size_t
       if ( filename.indexOf("index.htm") >-1 ) restart(F("Restart After update main index.html file"));
     }
 }
+
+#ifdef ESP32
+//Task1code: blinks an LED every 1000 ms
+void Task1code( void * pvParameters ){
+  Serial.printf("Task1 running on core %i ", String(xPortGetCoreID()).c_str());
+  sprintf(log_chars, "Task1 running on core %i ", String(xPortGetCoreID()).c_str());
+  log_message(log_chars);
+
+  for(;;){
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    delay(1000);
+
+  }
+}
+#endif
+
+
 //***********************************************************************************************************************************************************************************************
 void MainCommonSetup()  {
   #ifndef SerialSpeed
@@ -1950,7 +1977,24 @@ void MainCommonSetup()  {
   #ifdef enableMESHNETWORK
   Setup_MeshWiFi();
   #endif
+  #ifdef ESP32
+  //Start one core in setup and loop ;)
+  xPortGetCoreID();
+    //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
+  xTaskCreatePinnedToCore(
+                    Task1code,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    maxLogSize*2,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    1);          /* pin task to core 0 */
+  delay(500);
+  #endif
 }
+
+
+
 //***********************************************************************************************************************************************************************************************
 
 char* toCharPointer (String ptrS) {
@@ -2024,10 +2068,12 @@ void MainCommonLoop()
   #ifdef doubleResDet
   drd->loop();
   #endif
-  if ((millis()/1000) % 5 == 0) log_message((char*)F("MainLoop: ArduinoOTA"));
   #ifdef enableArduinoOTA
   // Handle OTA first.
   ArduinoOTA.handle();
+    #ifdef debug
+    if ((millis()/1000) % 5 == 0) log_message((char*)F("MainLoop: ArduinoOTA"));
+    #endif
   #endif
   #ifdef debug
   log_message((char*)F("MainLoop: checkWifi"));
@@ -2073,7 +2119,8 @@ void MainCommonLoop()
     log_message((char*)F("MainLoopInLoop: notifyclients to /ws in JSON"));
     #endif
     #if defined enableMQTT || defined enableMQTTAsync
-    notifyClients(getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON));
+    String tmpStrmqtt = getValuesToWebSocket_andWebProcessor(ValuesToWSWPinJSON);
+    notifyClients(tmpStrmqtt);
     #endif
     // check mqtt
     #ifdef enableMQTT
@@ -2087,22 +2134,22 @@ void MainCommonLoop()
       mqttReconnect();
     }
   #endif
-  #ifdef ENABLE_INFLUX
-    #ifdef debug
-    log_message((char*)F("MainLoopInLoop: Influx validateconnection"));
-    #endif
-    InfluxStatus = InfluxClient.validateConnection();
-    if (InfluxStatus)
-    {
-      sprintf(log_chars, "Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
-      log_message(log_chars,0);
-    }
-    else
-    {
-      sprintf(log_chars, "InfluxDB connection failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
-      log_message(log_chars,0);
-    }
-  #endif
+  // #ifdef ENABLE_INFLUX
+  //   #ifdef debug
+  //   log_message((char*)F("MainLoopInLoop: Influx validateconnection"));
+  //   #endif
+  //   InfluxStatus = InfluxClient.validateConnection();
+  //   if (InfluxStatus)
+  //   {
+  //     sprintf(log_chars, "Connected to InfluxDB: %s", String(InfluxClient.getServerUrl()).c_str());
+  //     log_message(log_chars,0);
+  //   }
+  //   else
+  //   {
+  //     sprintf(log_chars, "InfluxDB connection failed: %s", String(InfluxClient.getLastErrorMessage()).c_str());
+  //     log_message(log_chars,0);
+  //   }
+  // #endif
     #ifndef ESP32
     wdt_reset();
     #endif
@@ -2153,7 +2200,7 @@ void MainCommonLoop()
     stats += build_JSON_Payload( F("Hall"), String(hallRead()), false, payloadvalue_startend_val);
     #endif
     stats += build_JSON_Payload( F("mqttReconnects"), String(mqttReconnects), false, payloadvalue_startend_val);
-    stats += F("}");
+    // stats += F("}");
     #ifdef debug
     log_message((char*)F("MainLoopInLoop: mqttAsync send stats"));
     #endif //debug
@@ -2164,7 +2211,7 @@ void MainCommonLoop()
     // get new data
     //  if (!heishamonSettings.listenonly) send_panasonic_query();
     // Make sure the LWT is set to Online, even if the broker have marked it dead.
-    #ifdef debug
+    #ifdef debugweb
     log_message((char*)F("MainLoopInLoop: mqttAsync send WillTopic"));
     #endif //debug
     topicStr = String(WILL_TOPIC);
@@ -2197,12 +2244,13 @@ void MainCommonLoop()
     updateMQTTData();
     #endif //defined enableMQTT || enableMQTTAsync
   }
-
+#ifndef ESP32
   if ((millis() % 600) < 100) {
     #ifdef debug
     log_message((char*)F("MainLoop3rdTimed: Ledblonk"));
     #endif //debug
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));}
+#endif
 }
 
 //***********************************************************************************************************************************************************************************************
@@ -2398,18 +2446,18 @@ void onMqttMessage(char* topicAMCP, char* payloadAMCP, AsyncMqttClientMessagePro
   { //check if received payload is valid json if not save to var. I assume that index is same and one after another and not mixed with other payloads
     receivedtmpString = "\0";
     receivedtmpIdx = 0;
-    #ifdef debug1
-    sprintf(log_chars,"                 PayloadStrTmPAMCP to callback2: %s, PayloadStrTmPAMCP.length(): %s, len= %s, total= %s, receivedtmpString.len: %s",PayloadStrTmPAMCP.c_str(), String(PayloadStrTmPAMCP.length()).c_str(), String(len).c_str(), \
-    String(total).c_str(), String(receivedtmpString.length()).c_str());
+    #ifdef debugweb
+    sprintf(log_chars,"                 PayloadStrTmPAMCP to callback2: %s, length: %u, len= %u, total= %u, receivedtmpString.len: %u", PayloadStrTmPAMCP.c_str(), (u_int)PayloadStrTmPAMCP.length(), (u_int)lenAMCP, \
+     (u_int)total, (u_int)receivedtmpString.length());
     log_message(log_chars);
     #endif
     mqttCallbackAsString(topicAMCP_Str, PayloadStrTmPAMCP);
   } else
   {
     if (receivedtmpIdx == total) {
-      #ifdef debug1
-      sprintf(log_chars,"               PayloadStrTmPAMCP to callback2: %s, PayloadStrTmPAMCP.length(): %s, len= %s, total= %s, receivedtmpString.len: %s",PayloadStrTmPAMCP.c_str(), String(PayloadStrTmPAMCP.length()).c_str(), String(len).c_str(), \
-                String(total).c_str(), String(receivedtmpString.length()).c_str());
+      #ifdef debugweb
+      sprintf(log_chars,"               PayloadStrTmPAMCP to callback2 receivedtmpIdx == total: %s, length: %u, len= %u, total= %u, receivedtmpString.len: %u", PayloadStrTmPAMCP.c_str(), (u_int)PayloadStrTmPAMCP.length(), (u_int)lenAMCP, \
+                (u_int)total, (u_int)receivedtmpString.length());
       log_message(log_chars);
       #endif
       mqttCallbackAsString(topicAMCP_Str, receivedtmpString);
@@ -2553,7 +2601,8 @@ void handleUpdate(AsyncWebServerRequest *request) {
    // Disable client connections
    WebSocket.enable(false);
    // Advertise connected clients what's going on
-   notifyClients("Web OTA Update Started");
+   String tmpStrnc = F("Web OTA Update Started");
+   notifyClients(tmpStrnc);
    // Close them
    WebSocket.closeAll();
   #endif
@@ -2782,21 +2831,25 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
 #if defined enableMQTT || defined enableMQTTAsync
 uint16_t publishMQTT(String &mqttTopicxx, String &mqttPayloadxx, int mqtt_Retainv = 1, u_int qos = 0) {
     char mqttPayloadSend [maxLenMQTTPayload];
-    if (mqttPayloadxx.indexOf(",")>-1) {
+    // if (mqttPayloadxx.indexOf(",")>-1) {
       sprintf(mqttPayloadSend, "{%s}", mqttPayloadxx.c_str());
-    } else {
-      sprintf(mqttPayloadSend, "%s", mqttPayloadxx.c_str());
-    }
-    sprintf(log_chars, "(publishMQTT) MQTT Topic %s Size: %s, Payload Size: %s", mqttTopicxx.c_str(), String(mqttTopicxx.length()).c_str(), String(mqttPayloadxx.length()).c_str());
+    // } else {
+    //   sprintf(mqttPayloadSend, "%s", mqttPayloadxx.c_str());
+    // }
+    #ifdef debug2
+    sprintf(log_chars, "(publishMQTT) MQTT Topic %s Size: %u, Payload Size: %u", mqttTopicxx.c_str(), (u_int)mqttTopicxx.length(), (u_int)mqttPayloadxx.length());
     log_message(log_chars);
+    #endif
     uint16_t packetIdSub = 0;
-    #ifdef enableMQTT
-    mqttclient.publish(mqttTopicxx.c_str(), mqttPayloadxx.c_str(), mqtt_Retainv);
-    #endif
-    #ifdef enableMQTTAsync
-    packetIdSub = mqttclient.publish(mqttTopicxx.c_str(), qos , mqtt_Retainv, mqttPayloadSend);
-    log_message((char*)String(packetIdSub).c_str());
-    #endif
+    if (mqttPayloadxx.length()>0) {
+      #ifdef enableMQTT
+      mqttclient.publish(mqttTopicxx.c_str(), mqttPayloadxx.c_str(), mqtt_Retainv);
+      #endif
+      #ifdef enableMQTTAsync
+      packetIdSub = mqttclient.publish(mqttTopicxx.c_str(), qos , mqtt_Retainv, mqttPayloadSend);
+      log_message((char*)String(packetIdSub).c_str());
+      #endif
+    }
     return packetIdSub;
 }
 #endif
