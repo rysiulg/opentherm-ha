@@ -82,6 +82,10 @@ String WaterPumpStatus_json = ("boilroom_pump1Water");
 String NEWS_GET_TOPIC = String(COWODA0_SENSORS_TOPIC);          // pompa CO status     IF CHANGE TOPIC -CHANGE CONFIGURATION VERSION !!!!!
 String NEWStemp_json = ("outside_temp_Avg");
 
+String COWATER_TOPIC = ("COWODA0/sensor/boilroom/attrib");   // temperatura outside avg NEWS
+String COWATER_json = ("boilroom_temp_Water");
+
+
 
 String ROOMS_F1_GET_TOPIC = ("FLOORH1/room/attrib_0");          // pompa CO status value_json.FL2_room_temperature_0  FL2_room_temperature_setpoint_0
 String roomF1temp_json = ("room_temperature_0");

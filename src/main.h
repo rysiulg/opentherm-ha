@@ -58,7 +58,8 @@ float dhwTarget = 49.5, // domyslna temperatura docelowa wody uzytkowej
       histCWU = 5,             //histereza dla cwu -obnizenie progu aktywacji grzania
       histCO = 0,             //histereza dla co -obnizenie progu aktywacji grzania
       histlo = 0,             //min wartosc histerezy
-      histhi = histerezaCOCWU;             //max wartosc histerezy
+      histhi = histerezaCOCWU,             //max wartosc histerezy
+      temp_Water2 = 0;                  //remote temp lower part
 
 
 
@@ -70,7 +71,8 @@ unsigned long ts = 0, new_ts = 0, // timestamp
               lastmqtt_reconnect = 0,
               lastSaveConfig = 0,
               lastroomtempSet = 0,
-              WiFipreviousMillis = 0;
+              WiFipreviousMillis = 0,
+              temp_Water2_time = 0;     //for remote temp water
 unsigned long long start_flame_time = 0,    //Flame Starts work
                    start_flame_time_fordisplay = 0,  //for display on status card flame time
                    flame_time_total = 0,         //total sum of flametime

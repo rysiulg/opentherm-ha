@@ -33,6 +33,10 @@ void addusage_local_values_load(String dane, int EpromPosition) {
   if (dane.indexOf("roomF2temp_json") >= 0)       { tmpstrval = getJsonVal(dane, "roomF2temp_json"); tmpstrval.replace("\"",""); roomF2temp_json = tmpstrval; }
   if (dane.indexOf("roomF2tempset_json") >= 0)    { tmpstrval = getJsonVal(dane, "roomF2tempset_json"); tmpstrval.replace("\"",""); roomF2tempset_json = tmpstrval; }
 
+  if (dane.indexOf("COWATER_TOPIC") >= 0)    { tmpstrval = getJsonVal(dane, "COWATER_TOPIC"); tmpstrval.replace("\"",""); COWATER_TOPIC = tmpstrval; }
+  if (dane.indexOf("COWATER_json") >= 0)       { tmpstrval = getJsonVal(dane, "COWATER_json"); tmpstrval.replace("\"",""); COWATER_json = tmpstrval; }
+
+
   unsigned long long tmpval = 0;
   char * pEnd;
     if (dane.indexOf("flame_time_total") >= 0) {
@@ -106,6 +110,8 @@ String addusage_local_values_save(int EpromPosition = 0) {
   retval += build_JSON_Payload(F("histCWU"), String(histCWU), false, "\"");
   retval += build_JSON_Payload(F("histCO"), String(histCO), false, "\"");
 
+  retval += build_JSON_Payload(F("COWATER_TOPIC"), String(COWATER_TOPIC), false, "\"");
+  retval += build_JSON_Payload(F("COWATER_json"), String(COWATER_json), false, "\"");
 
   if (EpromPosition > 0) {
    unsigned long long runtmp_ull = 0;

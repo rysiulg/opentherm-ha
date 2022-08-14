@@ -55,9 +55,13 @@
 #define ASS_tempCOhisterezaStr "sliderValue6"
 #define ASS_calcCO 26
 #define ASS_calcCOStr "calcCO"
+#define ASS_temp_Water2 27
+#define ASS_temp_Water2Str "temp_Water2"
+#define ASS_temp_Water2_time 28
+#define ASS_temp_Water2_timeStr "temp_Water2_time"
 
 
-#define ASS_Num (26 + 1)              //number of ASS definitions
+#define ASS_Num (28 + 1)              //number of ASS definitions
 #define numDecimalsWWW 1
 #define cutoff_histereza 0.9        //histereza cutoff and roomtemp/roomtempset
 #define dhwTargetStart 51           // domyslna temperatura docelowa wody uzytkowej

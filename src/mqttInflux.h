@@ -180,7 +180,7 @@ void updateMQTTData() {
     log_message((char*)F("mqtt publish HomeAssistant start"));
     #endif
 
-    HADiscovery(String(LOG_GET_TOPIC), String(OT), String(LOGS), String(HA_SENSORS_TOPIC));
+//    HADiscovery(String(LOG_GET_TOPIC), String(OT), String(LOGS), String(HA_SENSORS_TOPIC));
     HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(ROOM_OTHERS_TOPIC), String(OT), String(ROOM_OTHERS_PRESSURE), String(HA_SENSORS_TOPIC), "pressure", "hPa");
@@ -188,7 +188,7 @@ void updateMQTTData() {
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_SOFTWARE_CH_STATE), String(HA_BINARY_TOPIC), "heat");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_RET), String(HA_SENSORS_TOPIC), "temperature");
@@ -201,8 +201,8 @@ void updateMQTTData() {
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
-    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "none", "s", "total_increasing", "mdi:fire");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(HA_BINARY_TOPIC), "problem");
     HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(HA_BINARY_TOPIC));
@@ -376,6 +376,22 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
       log_message(log_chars);
     }
   }
+  if (topicStrFromMQTT.indexOf(String(COWATER_TOPIC))==0 and payloadStrFromMQTT.indexOf(String(COWATER_json))>=0)              //NEWS averange temp -outside temp
+  {
+    String ident = "COWATER_json temp ";
+    String tmpStrmqtt = getJsonVal(payloadStrFromMQTT, String(COWATER_json));
+    if (PayloadtoValidFloatCheck(tmpStrmqtt))          //invalid val is displayed in funct
+    {
+      temp_Water2 = PayloadtoValidFloat(tmpStrmqtt, true);   //true to get output to serial and webserial
+      sprintf(log_chars, "%s updated from MQTT to: %s", ident.c_str(), String(COWATER_json).c_str());
+      log_message(log_chars);
+      temp_Water2_time = millis();
+      //      receivedmqttdata = true;    //makes every second run mqtt send and influx
+    } else {
+      //sprintf(log_chars, "%s not updated from MQTT: %s, %s", ident.c_str(), getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)).c_str(), String(PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)))).c_str());
+      log_message(log_chars);
+    }
+  } else
   if (topicStrFromMQTT.indexOf(String(NEWS_GET_TOPIC))==0 and payloadStrFromMQTT.indexOf(String(NEWStemp_json))>=0)              //NEWS averange temp -outside temp
   {
     String ident = "NEWS temp ";
@@ -392,7 +408,7 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
       //sprintf(log_chars, "%s not updated from MQTT: %s, %s", ident.c_str(), getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)).c_str(), String(PayloadtoValidFloatCheck(getJsonVal(payloadStrFromMQTT, String(NEWStemp_json)))).c_str());
       log_message(log_chars);
     }
-  }
+  } else
   if (topicStrFromMQTT.indexOf(String(ROOM_TEMP_SET_TOPIC))==0 and !payloadStrFromMQTT.startsWith("{"))           // Rooms autosetp.roomtemp for auto mode
   {
     String ident = "Rooms Current roomtemp ";
@@ -563,35 +579,30 @@ void mqttCallbackAsString(String &topicStrFromMQTT, String &payloadStrFromMQTT) 
 void mqttReconnect_subscribe_list()
 {
   log_message((char*)F("MQTT Reconnect Subscribe List..."));
-  #ifdef enableMQTT
-  mqttclient.subscribe(String(TEMP_SETPOINT_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(MODE_SET_TOPIC).c_str());
-//  mqttclient.subscribe(String(ROOM_TEMP_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(TEMP_DHW_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(STATE_DHW_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(SETPOINT_OVERRIDE_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(SETPOINT_OVERRIDE_RESET_TOPIC).c_str());
-  mqttclient.subscribe(String(NEWS_GET_TOPIC).c_str());
-  mqttclient.subscribe(String(COPUMP_GET_TOPIC).c_str());
-  mqttclient.subscribe(String(TEMP_CUTOFF_SET_TOPIC).c_str());
-  mqttclient.subscribe(String(ROOMS_F1_GET_TOPIC).c_str());
-  mqttclient.subscribe(String(ROOMS_F2_GET_TOPIC).c_str());
-  #endif
-  #ifdef enableMQTTAsync
-  uint16_t packetIdSub;
-  packetIdSub = mqttclient.subscribe(String(TEMP_SETPOINT_SET_TOPIC).c_str(),QOS);
-  if (packetIdSub == 0) packetIdSub = 0;
-  packetIdSub = mqttclient.subscribe(String(MODE_SET_TOPIC).c_str(),QOS);
-//  mqttclient.subscribe(String(ROOM_TEMP_SET_TOPIC).c_str());
-  packetIdSub = mqttclient.subscribe(String(TEMP_DHW_SET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(STATE_DHW_SET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(SETPOINT_OVERRIDE_SET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(SETPOINT_OVERRIDE_RESET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(NEWS_GET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(COPUMP_GET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(TEMP_CUTOFF_SET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(ROOMS_F1_GET_TOPIC).c_str(),QOS);
-  packetIdSub = mqttclient.subscribe(String(ROOMS_F2_GET_TOPIC).c_str(),QOS);
-  #endif
+  String mqttTopictmp = TEMP_SETPOINT_SET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+  mqttTopictmp = MODE_SET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = TEMP_DHW_SET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = STATE_DHW_SET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = String(SETPOINT_OVERRIDE_SET_TOPIC);
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = String(SETPOINT_OVERRIDE_RESET_TOPIC);
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = NEWS_GET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+   mqttTopictmp = COPUMP_GET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+  mqttTopictmp = TEMP_CUTOFF_SET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+  mqttTopictmp = ROOMS_F1_GET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+  mqttTopictmp = ROOMS_F2_GET_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+  mqttTopictmp = COWATER_TOPIC;
+  SubscribeMQTT(mqttTopictmp, QOS);
+
 }
 #endif

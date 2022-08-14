@@ -138,6 +138,8 @@ String get_PlaceholderName(u_int i)
     case ASS_calcCWU: return PSTR(ASS_calcCWUStr); break;
     case ASS_tempCOhistereza: return PSTR(ASS_tempCOhisterezaStr); break;
     case ASS_calcCO: return PSTR(ASS_calcCOStr); break;
+    case ASS_temp_Water2: return PSTR(ASS_temp_Water2Str); break;
+    case ASS_temp_Water2_time: return PSTR(ASS_temp_Water2_timeStr); break;
   }
   return "\0";
 }
@@ -268,6 +270,12 @@ void updateDatatoWWW() //default false so if true than update
     SaveAssValue(ASS_EnableHeatingCO,     heatingEnabled ? "on" : "off" );
     SaveAssValue(ASS_ecoMode,             ecoMode ? "on" : "off" );
 
+    SaveAssValue(ASS_temp_Water2,              String(temp_Water2, decimalPlaces) );
+    SaveAssValue(ASS_temp_Water2_time,         uptimedana(temp_Water2_time) );
+
+
+
+
     ptrS = "\0";
     String spanbr = F("</span></br>");
     if (status_FlameOn) {
@@ -334,6 +342,10 @@ String local_specific_web_processor_vars(String var) {
   if (var == "roomF2temp_json") { return String(roomF2temp_json);
   } else
   if (var == "roomF2tempset_json") { return String(roomF2tempset_json);
+  } else
+  if (var == "COWATER_TOPIC") { return String(COWATER_TOPIC);
+  } else
+  if (var == "COWATER_json") { return String(COWATER_json);
   } else
   #endif
   if (var == "histlo") { return String(histlo, decimalPlaces);
