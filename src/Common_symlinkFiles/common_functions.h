@@ -590,7 +590,7 @@ void log_message(char* string, u_int specialforce = logStandard)  //         log
     if (mqttclient.connected() && !starting)
     {
       String mqttTopic = String(LOG_TOPIC);
-      send_string = send_string.substring(1, send_string.length()-1);                             //cut start and end brackets json
+      //send_string = send_string.substring(1, send_string.length()-1);                             //cut start and end brackets json
       publishMQTT(mqttTopic, send_string, mqtt_Retain, QOS);
     }
   }
@@ -617,7 +617,7 @@ uint16_t publishMQTT(String &mqttTopicxx, String &mqttPayloadxx, int mqtt_Retain
       #endif
       #ifdef enableMQTTAsync
       packetIdSub = mqttclient.publish(mqttTopicxx.c_str(), qos , mqtt_Retainv, mqttPayloadSend);
-      log_message((char*)String(packetIdSub).c_str());
+      //log_message((char*)String(packetIdSub).c_str());
       #endif
     }
     return packetIdSub;
@@ -660,7 +660,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
   #define voltageswitch 9
   #define currentswitch 10
   #define frequencyswitch 11
-  #define timestampswitch 12
+  #define durationswitch 12
   DeviceClass.toLowerCase();
   stateClass.toLowerCase();
   HAicon.toLowerCase();
@@ -679,7 +679,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
     if (DeviceClass.indexOf("voltage") >= 0) DCswitch = voltageswitch;
     if (DeviceClass.indexOf("current") >= 0) DCswitch = currentswitch;
     if (DeviceClass.indexOf("frequency") >= 0) DCswitch = frequencyswitch;
-    if (DeviceClass.indexOf("timestamp") >= 0) DCswitch = timestampswitch;
+    if (DeviceClass.indexOf("duration") >= 0) DCswitch = durationswitch;
 
 
 
@@ -748,7 +748,7 @@ void HADiscovery(String sensorswitchValTopic, String appendname, String nameval,
         if (HAicon.length() == 0) HAicon = "mdi:mdiCarSpeedLimiter";
         break;
       }
-      case timestampswitch: {
+      case durationswitch: {
         if (unitClass.length() == 0 || unitClass == " ") unitClass = "s";  ////cbar, bar, hPa, inHg, kPa, mbar, Pa, psi
         if (HAicon.length() == 0) HAicon = "mdi:fire";
         break;
@@ -2201,7 +2201,7 @@ void updateDatatoWWW_common()
     ptr += log_chars;
     #endif
     #ifdef ENABLE_INFLUX
-    sprintf(log_chars,"</br>InfluxDB: <b>%s</b>", (InfluxClient.isConnected())?msg_Connected : msg_disConnected);
+    sprintf(log_chars,"</br>InfluxDB: <b>%s</b>", (InfluxStatus)?msg_Connected : msg_disConnected);
     ptr += log_chars;
     #endif
     if (ESPlastResetReason.length() > 0) {

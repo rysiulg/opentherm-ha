@@ -139,10 +139,11 @@ void opentherm_update_data()
     response = OpenTherm.setBoilerStatus(COHeat, enableHotWater, enableCooling); // enableOutsideTemperatureCompensation
 
     OpenThermResponseStatus responseStatus = OpenTherm.getLastResponseStatus();
-    LastboilerResponse = String(response, HEX);
-    LastboilerResponse += F(", Status: <B>");
+    LastboilerResponse = F("\"response\"");
+    LastboilerResponse += String(response, HEX);
+    LastboilerResponse += F(", \"Status\": \"");
     LastboilerResponse += OpenTherm.statusToString(responseStatus);
-    LastboilerResponse += "</B>";
+    LastboilerResponse += "\"";
 
     if (responseStatus != OpenThermResponseStatus::SUCCESS)
     {

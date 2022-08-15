@@ -71,13 +71,15 @@ void updateMQTTData() {
   log_message((char*)F("Sending data to MQTT ..."));
   const String deviceid = "\"dev\":{\"ids\":\""+String(me_lokalizacja)+"\",\"name\":\""+String(me_lokalizacja)+"\",\"sw\":\"" + String(version) + "\",\"mdl\": \""+String(me_lokalizacja)+"\",\"mf\":\"" + String(MFG) + "\"}";
   const String payloadvalue_startend_val = F(""); // value added before and after value send to mqtt queue
-  const String payloadON = F("1");
-  const String payloadOFF = F("0");
+  const String payloadON = F("\"ON\"");
+  const String payloadOFF = F("\"OFF\"");
   String  topictmp = "\0";
   String payBuilder = "\0";
   wdt_reset();
   topictmp = String(LOG_GET_TOPIC);
-  payBuilder = LastboilerResponse;
+  payBuilder = "{";
+  payBuilder += LastboilerResponse;\
+  payBuilder += "}";
   publishMQTT(topictmp, payBuilder);
   String boilermode = "\"";
     boilermode += Boiler_Mode();
@@ -188,7 +190,7 @@ void updateMQTTData() {
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_TEMPERATURE_SETPOINT), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_CH_STATE), String(HA_BINARY_TOPIC), "heat");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(HOT_WATER_SOFTWARE_CH_STATE), String(HA_BINARY_TOPIC), "heat");
-    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
+    HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_TIME_SEC_DHW_TOTAL), String(HA_SENSORS_TOPIC), "duration", "s", "total_increasing");
     HADiscovery(String(HOT_WATER_TOPIC), String(OT), String(FLAME_W_DHW_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE), String(HA_SENSORS_TOPIC), "temperature");
     HADiscovery(String(BOILER_TOPIC), String(OT), String(BOILER_TEMPERATURE_RET), String(HA_SENSORS_TOPIC), "temperature");
@@ -201,8 +203,8 @@ void updateMQTTData() {
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_LEVEL), String(HA_SENSORS_TOPIC), "power", "%", "\0", "mdi:fire");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
-    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
-    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "timestamp", "s", "total_increasing");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_TOTAL), String(HA_SENSORS_TOPIC), "duration", "s", "total_increasing");
+    HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_TIME_SEC_CH_TOTAL), String(HA_SENSORS_TOPIC), "duration", "s", "total_increasing");
     HADiscovery(String(FLAME_TOPIC), String(OT), String(FLAME_W_CH_TOTAL), String(HA_SENSORS_TOPIC), "energy", "kWh", "total_increasing", "mdi:fire");
     HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_FAULT), String(HA_BINARY_TOPIC), "problem");
     HADiscovery(String(DIAG_TOPIC), String(OT), String(DIAGS_OTHERS_DIAG), String(HA_BINARY_TOPIC));
