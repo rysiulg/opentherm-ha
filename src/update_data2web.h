@@ -317,7 +317,7 @@ void updateDatatoWWW() //default false so if true than update
 
     ptrS = ASS[ASS_MemStats].Value;
     ptrS += "<br>OT : ";
-    ptrS += (LastboilerResponse);
+    ptrS += LastboilerResponse;
     SaveAssValue(ASS_MemStats, ptrS );
 
 #endif

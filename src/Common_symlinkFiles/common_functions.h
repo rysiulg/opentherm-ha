@@ -2068,7 +2068,8 @@ void Task1code( void * pvParameters ){
   for(;;){
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     delay(1000);
-
+    doubleResetDetect();
+    if (mqttReconnects>100) restart("Core 1 mqtt more than 100");
   }
 }
 #endif

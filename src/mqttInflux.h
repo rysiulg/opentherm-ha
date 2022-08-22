@@ -44,7 +44,7 @@ void updateInfluxDB() {
   InfluxSensor.addField(String(DIAGS_OTHERS_FAULT), status_Fault ? 1 : 0);
   InfluxSensor.addField(String(DIAGS_OTHERS_DIAG), status_Diagnostic ? 1 : 0);
   InfluxSensor.addField(String(INTEGRAL_ERROR_GET_TOPIC), ierr);
-  InfluxSensor.addField(String(LOG_GET_TOPIC), LastboilerResponse);
+  InfluxSensor.addField(String(LOG_GET_TOPIC), "\"" + LastboilerResponse + "\"");
 
   // Print what are we exactly writing
   String tmpstring = String(InfluxClient.getLastErrorMessage());
@@ -77,9 +77,9 @@ void updateMQTTData() {
   String payBuilder = "\0";
   wdt_reset();
   topictmp = String(LOG_GET_TOPIC);
-  payBuilder = "{";
+  payBuilder = "{\"";
   payBuilder += LastboilerResponse;\
-  payBuilder += "}";
+  payBuilder += "\"}";
   publishMQTT(topictmp, payBuilder);
   String boilermode = "\"";
     boilermode += Boiler_Mode();
