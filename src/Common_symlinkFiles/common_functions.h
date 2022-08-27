@@ -257,6 +257,7 @@ size_t content_len;
   size_t receivedtmpIdx = 0;
 #endif //enableMQTTAsync
 String ESPlastResetReason = "\0"; //last reset reason
+String reasontxt = "\0";
 //other_Modules
 const String configfile = "/config.cfg";
 
@@ -461,27 +462,29 @@ uint8_t mac[6] = {(uint8_t)strtol(WiFi.macAddress().substring(0,2).c_str(),0,16)
 #ifdef ESP32
 String verbose_print_reset_reason(int reason)
 {
+  Srtring resetreason;
   switch ( reason)
   {
-    case 0  : return ("0: normal startup by power on?");break;
-    case 1  : return ("1:POWERON_RESET Vbat power on reset");break;
-    case 2  : return ("2: ");break;
-    case 3  : return ("3:SW_RESET Software reset digital core");break;
-    case 4  : return ("4:OWDT_RESET Legacy watch dog reset digital core");break;
-    case 5  : return ("5:DEEPSLEEP_RESET Deep Sleep reset digital core");break;
-    case 6  : return ("6:SDIO_RESET Reset by SLC module, reset digital core");break;
-    case 7  : return ("7:TG0WDT_SYS_RESET Timer Group0 Watch dog reset digital core");break;
-    case 8  : return ("8:TG1WDT_SYS_RESET Timer Group1 Watch dog reset digital core");break;
-    case 9  : return ("9:RTCWDT_SYS_RESET RTC Watch dog Reset digital core");break;
-    case 10 : return ("10:INTRUSION_RESET Instrusion tested to reset CPU");break;
-    case 11 : return ("11:TGWDT_CPU_RESET Time Group reset CPU");break;
-    case 12 : return ("12:SW_CPU_RESET Software reset CPU");break;
-    case 13 : return ("13:RTCWDT_CPU_RESET RTC Watch dog Reset CPU");break;
-    case 14 : return ("14:EXT_CPU_RESET for APP CPU, reseted by PRO CPU");break;
-    case 15 : return ("15:RTCWDT_BROWN_OUT_RESET Reset when the vdd voltage is not stable");break;
-    case 16 : return ("16:RTCWDT_RTC_RESET RTC Watch dog reset digital core and rtc module");break;
-    default : return ("NO_MEAN");
+    case 0  : resetreason = F("0: normal startup by power on?");break;
+    case 1  : resetreason = F("1:POWERON_RESET Vbat power on reset");break;
+    case 2  : resetreason = F("2: ");break;
+    case 3  : resetreason = F("3:SW_RESET Software reset digital core");break;
+    case 4  : resetreason = F("4:OWDT_RESET Legacy watch dog reset digital core");break;
+    case 5  : resetreason = F("5:DEEPSLEEP_RESET Deep Sleep reset digital core");break;
+    case 6  : resetreason = F("6:SDIO_RESET Reset by SLC module, reset digital core");break;
+    case 7  : resetreason = F("7:TG0WDT_SYS_RESET Timer Group0 Watch dog reset digital core");break;
+    case 8  : resetreason = F("8:TG1WDT_SYS_RESET Timer Group1 Watch dog reset digital core");break;
+    case 9  : resetreason = F("9:RTCWDT_SYS_RESET RTC Watch dog Reset digital core");break;
+    case 10 : resetreason = F("10:INTRUSION_RESET Instrusion tested to reset CPU");break;
+    case 11 : resetreason = F("11:TGWDT_CPU_RESET Time Group reset CPU");break;
+    case 12 : resetreason = F("12:SW_CPU_RESET Software reset CPU");break;
+    case 13 : resetreason = F("13:RTCWDT_CPU_RESET RTC Watch dog Reset CPU");break;
+    case 14 : resetreason = F("14:EXT_CPU_RESET for APP CPU, reseted by PRO CPU");break;
+    case 15 : resetreason = F("15:RTCWDT_BROWN_OUT_RESET Reset when the vdd voltage is not stable");break;
+    case 16 : resetreason = F("16:RTCWDT_RTC_RESET RTC Watch dog reset digital core and rtc module");break;
+    default : resetreason = F("NO_MEAN");
   }
+  return resetreason;
 }
 #endif
 //***********************************************************************************************************************************************************************************************
@@ -497,9 +500,9 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
 //***********************************************************************************************************************************************************************************************
 String get_lastResetReason()
 {
+  String lrr = "LsR";
   #ifndef ESP32
   rst_info *resetInfo;
-  String lrr = "\0";
   resetInfo = ESP.getResetInfoPtr();
   int resetNO = resetInfo->reason;
   switch (resetNO){
@@ -510,9 +513,8 @@ String get_lastResetReason()
     case REASON_SOFT_RESTART: lrr = F("4: software restart, system_restart , GPIO status won’t change"); break;
     case REASON_DEEP_SLEEP_AWAKE: lrr = F("5 wake up from deep-sleep"); break;
     case REASON_EXT_SYS_RST: lrr = F("6 external system reset"); break;
-    default: lrr = String(resetNO) + ": unknown"; break;
+    default: lrr = String(resetNO); lrr += F(": unknown"); break;
   }
-  return lrr;
   #else
     // #ifdef ESP_IDF_VERSION_MAJOR // IDF 4+
     // #if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
@@ -529,12 +531,12 @@ String get_lastResetReason()
     // #else // ESP32 Before IDF 4.0
     // #include "rom/rtc.h"
     // #endif
-    String lrr = F("Core0: ");
+    lrr = F("Core0: ");
     lrr += verbose_print_reset_reason(esp_rom_get_reset_reason(0));
     lrr += F(",\nCore1: ");
     lrr += verbose_print_reset_reason(esp_rom_get_reset_reason(1));
-    return lrr;
-    #endif
+  #endif
+  return lrr.c_str();
 }
 //***********************************************************************************************************************************************************************************************
 bool check_isValidTemp(float temptmp)
@@ -2101,12 +2103,15 @@ void MainCommonSetup()  {
   Setup_FileSystem();
   if (loadConfig())
   {
+    CRTrunNumber++;
     sprintf(log_chars,"Config loaded. SSID: %s, Pass: %s", ssid, pass);
     log_message(log_chars);
+    SaveConfig();
   }
   else
   {
-    log_message((char*)F("Config not loaded!"));
+    CRTrunNumber++;
+    log_message((char*)F("Config not loaded! SPIFF Format"));
     SPIFFS.format();
     SaveConfig(); // overwrite with the default settings
   }
@@ -2114,7 +2119,6 @@ void MainCommonSetup()  {
   Setup_Mqtt();     //for async version move before wifi
 #endif
   Setup_WiFi();
-  CRTrunNumber++;
   #ifdef enableArduinoOTA
   Setup_OTA();
   #endif
@@ -2133,15 +2137,14 @@ void MainCommonSetup()  {
   #endif
   #if defined enableMQTT
   Setup_Mqtt();     //for async version move before wifi
-  #endif
+  #endif //enableMQTT
   #ifdef ENABLE_INFLUX
   Setup_Influx();
-  #endif
+  #endif //ENABLE_INFLUX
   ESPlastResetReason = get_lastResetReason();
-  log_message((char*)ESPlastResetReason.c_str());
   #ifdef enableMESHNETWORK
   Setup_MeshWiFi();
-  #endif
+  #endif //enableMESHNETWORK
   #ifdef ESP32
   //Start one core in setup and loop ;)
   xPortGetCoreID();
@@ -2198,7 +2201,7 @@ void updateDatatoWWW_common()
     #ifdef enableMQTTAsync
     ptr += F("-Async ");
     #endif
-    sprintf(log_chars,"status: <b>%s</b>, reconnects: <b>%d</b>", (mqttclient.connected())?msg_Connected : msg_disConnected, mqttReconnects);
+    sprintf(log_chars,"status: <b>%s</b>, reconnects: %d (%s)", (mqttclient.connected())?msg_Connected : msg_disConnected, mqttReconnects, reasontxt.c_str());
     ptr += log_chars;
     #endif
     #ifdef ENABLE_INFLUX
@@ -2209,6 +2212,7 @@ void updateDatatoWWW_common()
       String ptrtmp = ESPlastResetReason;
       ptrtmp.replace("\n","<br>");
       sprintf(log_chars,"</br>Last reset: <b>%s</b>", ptrtmp.c_str());
+      ptr += log_chars;
     }
     SaveAssValue(ASS_MemStats, ptr );
     updateDatatoWWW();
@@ -2325,7 +2329,7 @@ void MainCommonLoop()
     #ifdef enableMQTTAsync
     message += F("-Async ");
     #endif //enableMQTTAsync
-    sprintf(log_chars,"status: %s, reconnects: %d", (mqttclient.connected())?msg_Connected : msg_disConnected, mqttReconnects);
+    sprintf(log_chars,"status: %s, reconnects: %d (%s)", (mqttclient.connected())?msg_Connected : msg_disConnected, mqttReconnects, reasontxt.c_str());
     message += log_chars;
     #endif //defined enableMQTT || defined enableMQTTAsync
     #ifdef ENABLE_INFLUX
@@ -2490,6 +2494,11 @@ void onWifiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info) {
 void connectToMqtt() {
   log_message((char*)F("MQTT: Connecting to MQTT..."));
   mqttReconnects++;
+  if (mqttReconnects > 100) restart(F("MQTT Exceed max reconnect"));
+  //add clientid -there is some reason with protocol error and unknown name on mqtt log
+  // char clientid[sensitive_size];
+  // strcpy(clientid, String(BASE_TOPIC).c_str() );
+  // mqttclient.setClientId(clientid);
   mqttclient.connect();
 }
 #endif
@@ -2499,6 +2508,7 @@ void onMqttConnect(bool sessionPresent) {
   log_message((char*)F("MQTT: Connected to MQTT."));
   sprintf(log_chars,"Session present: %s", String(sessionPresent?"Yes":"No").c_str());
   log_message(log_chars);
+  mqttReconnects = 0;
 
   // uint16_t packetIdSub = mqttclient.subscribe("test/lol", 2);
   // sprintf(log_chars,"Subscribing at QoS 2, packetId: %s", String(packetIdSub).c_str());
@@ -2526,7 +2536,7 @@ void onMqttConnect(bool sessionPresent) {
 int _retriesCount = 0;
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   Serial.println((uint8_t)reason);
-  String reasontxt = "\0";
+  reasontxt = "\0";
   if (AsyncMqttClientDisconnectReason::TCP_DISCONNECTED == reason) reasontxt = "0. TCP_DISCONNECTED";
   if (AsyncMqttClientDisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION == reason) reasontxt = "1. MQTT_UNACCEPTABLE_PROTOCOL_VERSION";
   if (AsyncMqttClientDisconnectReason::MQTT_IDENTIFIER_REJECTED == reason) reasontxt = "2. MQTT_IDENTIFIER_REJECTED";
@@ -2988,7 +2998,7 @@ bool loadConfig() {
       CRT = (u_int) getJsonVal(dane, "CRT").toInt();
       if (CRT > CRTrunNumber) CRTrunNumber = CRT;
     }
-    sprintf(log_chars,"Config loaded. SSID: %s, CRT: %s",String(ssid).c_str(), String(CRT).c_str());
+    sprintf(log_chars,"Config loaded. SSID: %s, CRT: %s",String(ssid).c_str(), String(CRTrunNumber).c_str());
     log_message(log_chars);
     EEPROM.end();
     return true; // return 1 if config loaded
